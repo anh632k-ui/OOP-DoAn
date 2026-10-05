@@ -1,0 +1,80 @@
+@startuml
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+title MED-06 - COMPONENT DIAGRAM
+
+actor Guest
+actor Attendee
+actor Organizer
+actor "Check-in Staff" as Staff
+actor Administrator as Admin
+
+component "Next.js Web App" as FE {
+  [Public Event UI]
+  [Attendee UI]
+  [Organizer UI]
+  [Check-in UI]
+  [Admin UI]
+}
+
+component "NestJS Modular Monolith" as BE {
+  [Auth Module]
+  [Users Module]
+  [Events Module]
+  [Sessions Module]
+  [Registrations Module]
+  [Allocation Module]
+  [Waitlist Module]
+  [Tickets Module]
+  [CheckIn Module]
+  [Accessibility Module]
+  [Search Module]
+  [AntiBot / RateLimit]
+}
+
+database "PostgreSQL" as DB
+cloud "Object Storage\n(S3/MinIO compatible)" as OS
+
+Guest --> [Public Event UI]
+Attendee --> [Attendee UI]
+Organizer --> [Organizer UI]
+Staff --> [Check-in UI]
+Admin --> [Admin UI]
+
+FE --> BE : REST/JSON over HTTPS
+
+[Auth Module] --> DB
+[Users Module] --> DB
+[Events Module] --> DB
+[Sessions Module] --> DB
+[Registrations Module] --> DB
+[Allocation Module] --> DB
+[Waitlist Module] --> DB
+[Tickets Module] --> DB
+[CheckIn Module] --> DB
+[Accessibility Module] --> DB
+[Search Module] --> DB : PostgreSQL FTS/ILIKE
+
+[Events Module] --> OS : event images
+[Registrations Module] --> [AntiBot / RateLimit]
+[Registrations Module] --> [Allocation Module]
+[Allocation Module] --> [Waitlist Module]
+[Allocation Module] --> [Tickets Module]
+[CheckIn Module] --> [Tickets Module]
+[Events Module] --> [Accessibility Module]
+
+note right of BE
+Một deployable backend duy nhất.
+Module tách trách nhiệm theo domain,
+không dùng microservices trong MVP.
+end note
+
+note bottom of [Allocation Module]
+Chứa TicketAllocationStrategy,
+FcfsAllocationStrategy và
+LotteryAllocationStrategy.
+end note
+
+@enduml
