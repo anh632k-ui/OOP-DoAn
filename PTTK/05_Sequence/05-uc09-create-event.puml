@@ -1,0 +1,67 @@
+@startuml
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+title MED-06 - SEQUENCE UC09 TẠO SỰ KIỆN VÀ THIẾT LẬP BAN ĐẦU
+
+actor Organizer
+boundary "Next.js Organizer UI" as UI
+control "EventController" as EC
+control "EventService" as ES
+control "SessionController" as SC
+control "SessionService" as SS
+control "AccessibilityController" as ACC
+control "AccessibilityService" as ACS
+entity "EventRepository" as ER
+entity "EventSessionRepository" as ESR
+entity "AccessibilityRepository" as AR
+
+autonumber
+Organizer -> UI : Nhập thông tin Event
+UI -> EC : POST /events
+EC -> ES : createEvent(organizerId, eventData)
+ES -> ES : validate venue/date/basic data
+ES -> ER : create(status=DRAFT, organizerId)
+ER --> ES : Event DRAFT
+ES --> EC : Event
+EC --> UI : 201 + Event
+
+note over ES,ER
+Event DRAFT được phép chưa có EventSession.
+Không được publish ở trạng thái dữ liệu chưa hợp lệ.
+end note
+
+Organizer -> UI : Thêm một suất cho Event
+UI -> SC : POST /events/{eventId}/sessions
+SC -> SS : createSession(eventId, organizerId, sessionData)
+SS -> ER : findOwnedById(eventId, organizerId)
+ER --> SS : Event DRAFT
+SS -> SS : validate time/capacity/window/policy
+SS -> ESR : create(EventSession DRAFT)
+ESR --> SS : EventSession
+SS --> SC : EventSession
+SC --> UI : 201 + session
+
+opt Organizer khai báo accessibility
+  Organizer -> UI : Chọn AccessibilityFeature
+  UI -> ACC : PUT /events/{eventId}/accessibility
+  ACC -> ACS : setEventFeatures(eventId, organizerId, featureIds)
+  ACS -> ER : findOwnedById(eventId, organizerId)
+  ER --> ACS : Event
+  ACS -> AR : replaceEventFeatures(eventId, featureIds)
+  AR --> ACS : done
+  ACS --> ACC : success
+  ACC --> UI : 204
+end
+
+UI --> Organizer : Hiển thị Event DRAFT đã thiết lập
+
+note over ES,SS
+UC11 publish Event sẽ kiểm tra lại:
+- ownership
+- >= 1 EventSession hợp lệ
+- dữ liệu Event/Session thỏa business rules.
+end note
+
+@enduml
