@@ -7,12 +7,13 @@ title MED-06 - STATE REGISTRATION
 
 PENDING --> CONFIRMED : FCFS còn chỗ\nhoặc trúng LOTTERY
 PENDING --> WAITLISTED : FCFS hết chỗ\nhoặc không trúng LOTTERY
-PENDING --> CANCELLED : attendee hủy
+PENDING --> CANCELLED : attendee hủy\nhoặc session bị hủy
 
 WAITLISTED --> CONFIRMED : promote từ waitlist
-WAITLISTED --> CANCELLED : attendee hủy
+WAITLISTED --> CANCELLED : attendee hủy\nhoặc session bị hủy
 
 CONFIRMED --> CANCELLED : attendee hủy trước session\nTicket chưa USED
+CONFIRMED --> CANCELLED : session bị hủy\nTicket VALID -> CANCELLED
 
 CONFIRMED --> [*] : session hoàn tất
 CANCELLED --> [*]
@@ -26,6 +27,8 @@ end note
 note right of WAITLISTED
 WAITLISTED phải có WaitlistEntry ACTIVE.
 Khi promote: WaitlistEntry -> PROMOTED.
+position là thứ tự ưu tiên, không nhất thiết
+là thứ hạng hiển thị sau các lần hủy.
 end note
 
 @enduml
