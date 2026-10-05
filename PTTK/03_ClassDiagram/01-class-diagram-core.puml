@@ -261,7 +261,7 @@ Registration "1" *-- "0..1" WaitlistEntry : waitlist >
 Registration "1" *-- "0..1" Ticket : ticket >
 Ticket "1" *-- "0..1" CheckIn : check-in >
 User "1" -- "0..*" CheckIn : performs >
-EventSession "1" *-- "0..*" AllocationRun : allocation history >
+EventSession "1" *-- "0..1" AllocationRun : allocation history >
 User "1" -- "0..*" AllocationRun : executes >
 
 User --> UserRole
