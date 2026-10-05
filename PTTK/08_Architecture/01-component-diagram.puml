@@ -1,80 +1,63 @@
 @startuml
+left to right direction
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
 skinparam componentStyle rectangle
 skinparam packageStyle rectangle
 
 title MED-06 - COMPONENT DIAGRAM
 
-actor Guest
-actor Attendee
-actor Organizer
-actor "Check-in Staff" as Staff
-actor Administrator as Admin
+actor "Web User" as User
+component "Next.js Web App" as FE
 
-component "Next.js Web App" as FE {
-  [Public Event UI]
-  [Attendee UI]
-  [Organizer UI]
-  [Check-in UI]
-  [Admin UI]
-}
+rectangle "NestJS Modular Monolith" as BE {
+  [HTTP API / Controllers] as API
 
-component "NestJS Modular Monolith" as BE {
-  [Auth Module]
-  [Users Module]
-  [Events Module]
-  [Sessions Module]
-  [Registrations Module]
-  [Allocation Module]
-  [Waitlist Module]
-  [Tickets Module]
-  [CheckIn Module]
-  [Accessibility Module]
-  [Search Module]
-  [AntiBot / RateLimit]
+  [Auth & Users] as IAM
+  [Events & Sessions] as EVT
+  [Accessibility & Search] as QUERY
+  [Registrations] as REG
+  [Allocation & Waitlist] as ALLOC
+  [Tickets & Check-in] as TIX
+
+  [Repositories / Persistence] as DATA
+
+  API --> IAM
+  API --> EVT
+  API --> QUERY
+  API --> REG
+  API --> ALLOC
+  API --> TIX
+
+  REG --> ALLOC : FCFS / LOTTERY
+  ALLOC --> TIX : issue ticket
+  EVT --> QUERY : event metadata
+
+  IAM ..> DATA
+  EVT ..> DATA
+  QUERY ..> DATA
+  REG ..> DATA
+  ALLOC ..> DATA
+  TIX ..> DATA
 }
 
 database "PostgreSQL" as DB
-cloud "Object Storage\n(S3/MinIO compatible)" as OS
+cloud "Object Storage\nS3 / MinIO" as OS
 
-Guest --> [Public Event UI]
-Attendee --> [Attendee UI]
-Organizer --> [Organizer UI]
-Staff --> [Check-in UI]
-Admin --> [Admin UI]
+User --> FE
+FE --> API : HTTPS REST/JSON
+DATA --> DB
+EVT --> OS : event images
 
-FE --> BE : REST/JSON over HTTPS
-
-[Auth Module] --> DB
-[Users Module] --> DB
-[Events Module] --> DB
-[Sessions Module] --> DB
-[Registrations Module] --> DB
-[Allocation Module] --> DB
-[Waitlist Module] --> DB
-[Tickets Module] --> DB
-[CheckIn Module] --> DB
-[Accessibility Module] --> DB
-[Search Module] --> DB : PostgreSQL FTS/ILIKE
-
-[Events Module] --> OS : event images
-[Registrations Module] --> [AntiBot / RateLimit]
-[Registrations Module] --> [Allocation Module]
-[Allocation Module] --> [Waitlist Module]
-[Allocation Module] --> [Tickets Module]
-[CheckIn Module] --> [Tickets Module]
-[Events Module] --> [Accessibility Module]
-
-note right of BE
-Một deployable backend duy nhất.
-Module tách trách nhiệm theo domain,
-không dùng microservices trong MVP.
+note bottom of ALLOC
+TicketAllocationStrategy
+FCFS + LOTTERY
 end note
 
-note bottom of [Allocation Module]
-Chứa TicketAllocationStrategy,
-FcfsAllocationStrategy và
-LotteryAllocationStrategy.
+note bottom of BE
+Một backend deployable duy nhất;
+module hóa theo domain, không dùng microservices trong MVP.
 end note
 
 @enduml
