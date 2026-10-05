@@ -1,0 +1,32 @@
+@startuml
+skinparam shadowing false
+
+title MED-06 - STATE EVENT SESSION
+
+[*] --> DRAFT : tạo EventSession
+DRAFT --> REGISTRATION_OPEN : mở đăng ký
+DRAFT --> CANCELLED : hủy suất
+
+REGISTRATION_OPEN --> REGISTRATION_CLOSED : đến thời điểm đóng\nhoặc Organizer đóng
+REGISTRATION_OPEN --> CANCELLED : hủy suất
+
+REGISTRATION_CLOSED --> ONGOING : đến thời điểm bắt đầu
+REGISTRATION_CLOSED --> CANCELLED : hủy suất
+
+ONGOING --> COMPLETED : kết thúc suất
+ONGOING --> CANCELLED : hủy bất thường
+
+COMPLETED --> [*]
+CANCELLED --> [*]
+
+note right of REGISTRATION_OPEN
+Chỉ trạng thái này + đúng registration window
+mới nhận Registration mới.
+end note
+
+note right of REGISTRATION_CLOSED
+LOTTERY AllocationRun được phép chạy
+sau khi đăng ký đã đóng.
+end note
+
+@enduml
