@@ -44,9 +44,35 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - [x] Domain Model
 - [x] Class Diagram
 - [x] ERD
-- [ ] Sequence Diagram
-- [ ] Activity Diagram
-- [ ] State Diagram
-- [ ] Component/Deployment Diagram
+- [x] Sequence Diagram
+- [x] Activity Diagram
+- [x] State Diagram
+- [x] Component/Deployment Diagram
 
-> Các mục đã đánh dấu chỉ được coi là baseline hiện tại trên `dev`; nếu thay đổi business rule về sau phải cập nhật đồng bộ các sơ đồ phụ thuộc.
+## 6. Bộ sơ đồ hiện có
+### Sequence
+- `05_Sequence/01-uc05-register-session.puml`
+- `05_Sequence/02-uc06-cancel-promote-waitlist.puml`
+- `05_Sequence/03-uc12-lottery-allocation.puml`
+- `05_Sequence/04-uc14-check-in.puml`
+
+### Activity
+- `06_Activity/01-registration-flow.puml`
+- `06_Activity/02-cancel-promote-flow.puml`
+- `06_Activity/03-lottery-allocation-flow.puml`
+
+### State
+- `07_State/01-registration-state.puml`
+- `07_State/02-ticket-state.puml`
+- `07_State/03-event-session-state.puml`
+
+### Architecture
+- `08_Architecture/01-component-diagram.puml`
+- `08_Architecture/02-deployment-diagram.puml`
+
+## 7. Baseline giữa kỳ
+Bộ PTTK hiện tại đã phủ luồng nghiệp vụ cốt lõi: tạo/công bố sự kiện, đăng ký FCFS/LOTTERY, waitlist, phát vé, hủy và promote, check-in, accessibility, chống bot cơ bản, audit allocation và kiến trúc triển khai.
+
+Trước khi merge sang `main`, cần thực hiện một vòng review consistency giữa Requirement -> Use Case -> Domain Model -> Class Diagram -> ERD -> Sequence/Activity/State -> Architecture và preview tất cả file PlantUML để phát hiện lỗi cú pháp/trình bày.
+
+> Các mục đã đánh dấu là baseline hiện tại trên `dev`; nếu thay đổi business rule về sau phải cập nhật đồng bộ các sơ đồ phụ thuộc.
