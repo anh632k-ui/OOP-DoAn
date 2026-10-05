@@ -22,30 +22,31 @@ Attendee.
 2. Hệ thống xác thực người dùng và quyền truy cập.
 3. Hệ thống kiểm tra rate limit/anti-bot rule.
 4. Hệ thống kiểm tra cửa sổ đăng ký và duplicate registration.
-5. Hệ thống tạo Registration.
-6. Hệ thống kiểm tra số chỗ còn lại trong transaction.
+5. Trong transaction có khóa EventSession, hệ thống tạo Registration `PENDING`.
+6. Hệ thống kiểm tra số chỗ còn lại.
 7. Registration chuyển sang `CONFIRMED`.
 8. Hệ thống tạo một Ticket `VALID`.
-9. Hệ thống trả kết quả đăng ký thành công và thông tin vé.
+9. Transaction commit và hệ thống trả kết quả đăng ký thành công.
 
 ### Luồng thay thế A - FCFS hết chỗ
 Tại bước 6, nếu capacity đã đủ:
 1. Registration chuyển sang `WAITLISTED`.
-2. Hệ thống tạo `WaitlistEntry` ở vị trí kế tiếp theo FCFS.
+2. Hệ thống tạo `WaitlistEntry` ở thứ tự tiếp theo theo FCFS.
 3. Không phát Ticket.
-4. Trả trạng thái waitlist cho Attendee.
+4. Transaction commit và trả trạng thái waitlist cho Attendee.
 
 ### Luồng thay thế B - LOTTERY
-Sau bước 5:
-1. Registration giữ trạng thái `PENDING`.
+Sau khi kiểm tra hợp lệ:
+1. Hệ thống tạo Registration `PENDING`.
 2. Không phát Ticket ngay.
 3. Sau khi cửa sổ đăng ký đóng, UC12 thực hiện AllocationRun.
 
 ### Ngoại lệ
 - Ngoài thời gian đăng ký: từ chối.
-- Đã đăng ký cùng suất: từ chối.
+- Đã từng có Registration cùng suất trong MVP: từ chối tạo bản ghi thứ hai.
 - Tài khoản bị khóa hoặc vượt rate limit: từ chối.
 - Session bị hủy/không còn nhận đăng ký: từ chối.
+- Vi phạm unique constraint do request đồng thời: rollback và trả lỗi duplicate.
 
 ### Hậu điều kiện
 - FCFS: Registration là `CONFIRMED` hoặc `WAITLISTED`.
@@ -69,18 +70,19 @@ Attendee.
 
 ### Luồng chính - hủy Registration đã xác nhận
 1. Attendee yêu cầu hủy Registration.
-2. Hệ thống kiểm tra quyền sở hữu và điều kiện hủy.
-3. Registration chuyển `CANCELLED`.
-4. Ticket `VALID` tương ứng chuyển `CANCELLED`.
-5. Hệ thống kiểm tra waitlist của EventSession.
-6. Nếu có người chờ, lấy người đứng đầu theo thứ tự hợp lệ.
-7. Registration của người đó chuyển `CONFIRMED`.
-8. WaitlistEntry được đánh dấu đã promote/loại khỏi hàng chờ hoạt động.
-9. Hệ thống phát Ticket `VALID` mới cho người được promote.
+2. Hệ thống kiểm tra quyền sở hữu, trạng thái Session và Ticket hiện tại.
+3. Hệ thống khóa EventSession trong transaction.
+4. Registration chuyển `CANCELLED`.
+5. Ticket `VALID` tương ứng chuyển `CANCELLED`.
+6. Hệ thống kiểm tra waitlist của EventSession theo `position` tăng dần.
+7. Nếu có người chờ, lấy entry `ACTIVE` đầu tiên.
+8. Registration của người đó chuyển `CONFIRMED`.
+9. WaitlistEntry chuyển `PROMOTED`.
+10. Hệ thống phát Ticket `VALID` mới cho người được promote và commit transaction.
 
 ### Luồng thay thế
 - Registration đang `PENDING`: chuyển thẳng `CANCELLED`, không promote vì chưa chiếm capacity.
-- Registration đang `WAITLISTED`: chuyển `CANCELLED` và rời waitlist, không phát Ticket.
+- Registration đang `WAITLISTED`: chuyển `CANCELLED`, WaitlistEntry chuyển `CANCELLED`, không promote vì chưa chiếm capacity.
 - Không có người trong waitlist: kết thúc sau khi giải phóng chỗ.
 
 ### Hậu điều kiện
@@ -102,47 +104,50 @@ Organizer đã đăng nhập và có role phù hợp.
 1. Organizer nhập tên, mô tả, địa điểm, thời gian tổng quan, ảnh và thông tin liên quan.
 2. Hệ thống validate dữ liệu.
 3. Hệ thống tạo Event ở trạng thái `DRAFT` và gán ownership cho Organizer.
-4. Organizer bổ sung EventSession.
-5. Organizer khai báo AccessibilityFeature.
-6. Sau khi đủ dữ liệu, Organizer có thể dùng UC11 để công bố/mở đăng ký.
+4. Event `DRAFT` có thể tạm thời chưa có EventSession.
+5. Organizer bổ sung EventSession và AccessibilityFeature.
+6. Sau khi có ít nhất một EventSession hợp lệ và đủ dữ liệu, Organizer có thể dùng UC11 để công bố/mở đăng ký.
 
 ### Quy tắc
 - Organizer chỉ sửa Event do mình sở hữu.
-- Event chưa đủ dữ liệu/suất hợp lệ không được công bố.
+- Event chưa có ít nhất một suất hợp lệ không được công bố.
 - Ảnh chỉ lưu URL/metadata trong PostgreSQL; file nằm ở object storage.
 
 ---
 
 ## UC12 - Thực hiện phân bổ vé
 ### Mục tiêu
-Phân bổ vé theo `AllocationPolicy`, đặc biệt là LOTTERY, đảm bảo công bằng, không vượt capacity và có khả năng audit.
+Phân bổ vé theo `LOTTERY`, đảm bảo công bằng, không vượt capacity và có khả năng audit.
 
 ### Actor chính
 Organizer.
 
 ### Tiền điều kiện
 - Organizer sở hữu Event chứa EventSession.
-- Cửa sổ đăng ký đã đóng đối với LOTTERY.
-- Chưa có AllocationRun hoàn tất cho cùng đợt/phạm vi phân bổ.
+- EventSession có `AllocationPolicy = LOTTERY`.
+- Cửa sổ đăng ký đã đóng.
+- Chưa tồn tại AllocationRun đã commit cho EventSession này.
 
 ### Luồng chính - LOTTERY
 1. Organizer yêu cầu chạy allocation cho EventSession.
-2. Hệ thống khóa/đảm bảo không có hai AllocationRun cạnh tranh.
-3. Hệ thống lấy tập Registration `PENDING` hợp lệ.
-4. Hệ thống tính số slot khả dụng theo capacity và số chỗ đã được xác nhận hợp lệ.
-5. Hệ thống tạo thứ tự ngẫu nhiên công bằng cho tập ứng viên.
-6. Tối đa số slot đầu tiên được chuyển `CONFIRMED`.
-7. Mỗi Registration được xác nhận được phát đúng một Ticket `VALID`.
-8. Các Registration còn lại chuyển `WAITLISTED` theo chính thứ tự rút.
-9. Hệ thống ghi `AllocationRun` cùng metadata phục vụ audit.
-10. Hệ thống commit toàn bộ kết quả trong transaction.
+2. Hệ thống khóa EventSession để ngăn hai run cạnh tranh.
+3. Hệ thống kiểm tra chưa có AllocationRun cho session.
+4. Hệ thống lấy tập Registration `PENDING` hợp lệ.
+5. Hệ thống tính số slot khả dụng theo capacity và số chỗ đã được xác nhận hợp lệ.
+6. `LotteryAllocationStrategy` tạo thứ tự ngẫu nhiên công bằng cho tập ứng viên.
+7. Tối đa số slot đầu tiên được chuyển `CONFIRMED`.
+8. Mỗi Registration được xác nhận được phát đúng một Ticket `VALID`.
+9. Các Registration còn lại chuyển `WAITLISTED` theo chính thứ tự rút và tạo WaitlistEntry theo draw position.
+10. Hệ thống ghi `AllocationRun` gồm người kích hoạt, counts và metadata phục vụ audit.
+11. Hệ thống commit toàn bộ kết quả trong một transaction.
 
 ### Luồng FCFS
-FCFS được áp dụng chủ yếu trong UC05 tại thời điểm Registration đến hệ thống. UC12 vẫn có thể dùng để xem/audit trạng thái phân bổ, không cần batch draw như LOTTERY.
+FCFS được áp dụng trực tiếp trong UC05 tại thời điểm Registration đến hệ thống. Trong MVP không chạy batch AllocationRun cho FCFS; có thể kiểm chứng FCFS qua `registeredAt`, trạng thái Registration, Ticket và log/transaction history.
 
 ### Hậu điều kiện
 - Số Registration `CONFIRMED` không vượt capacity.
-- Kết quả allocation có bản ghi audit.
+- Chỉ một AllocationRun LOTTERY có thể commit cho EventSession.
+- Kết quả allocation có dữ liệu audit gồm người kích hoạt và metadata thuật toán.
 - Người không trúng LOTTERY được xếp waitlist theo thứ tự đã rút.
 
 ---
@@ -160,13 +165,13 @@ CheckInStaff.
 
 ### Luồng chính
 1. Staff quét QR hoặc nhập ticket code.
-2. Hệ thống tìm Ticket.
+2. Hệ thống tìm và khóa Ticket cần kiểm tra.
 3. Hệ thống kiểm tra Ticket ở trạng thái `VALID`.
 4. Hệ thống kiểm tra chưa có CheckIn thành công cho Ticket.
-5. Hệ thống kiểm tra ngữ cảnh EventSession phù hợp.
+5. Hệ thống kiểm tra Ticket qua Registration thuộc đúng EventSession.
 6. Hệ thống tạo CheckIn record.
 7. Ticket chuyển `USED`.
-8. Hệ thống trả kết quả check-in thành công.
+8. Hệ thống commit và trả kết quả check-in thành công.
 
 ### Ngoại lệ
 - Ticket không tồn tại: từ chối.
