@@ -1,47 +1,49 @@
 @startuml
-top to bottom direction
+left to right direction
+skinparam monochrome true
 skinparam shadowing false
-skinparam packageStyle rectangle
+skinparam defaultFontSize 14
 skinparam usecase {
+  BackgroundColor White
   BorderColor Black
-  ArrowColor Black
+  FontColor Black
 }
 
-title MED-06 - USE CASE RELATIONS
+title MED-06 - USE CASE RELATIONS (CHI TIẾT)
 
-rectangle "Đăng ký suất" {
-  usecase "UC05\nĐăng ký một suất" as UC05
-  usecase "Kiểm tra chống bot" as BOT
-  usecase "Kiểm tra cửa sổ đăng ký" as WINDOW
-  usecase "Xác định chính sách phân bổ" as POLICY
-}
+usecase "UC05\nĐăng ký một suất" as UC05
+usecase "Kiểm tra\nchống bot" as BOT
+usecase "Kiểm tra cửa sổ\nđăng ký" as WINDOW
+usecase "Xác định chính sách\nphân bổ" as POLICY
 
-rectangle "Hủy và waitlist" {
-  usecase "UC06\nHủy đăng ký" as UC06
-  usecase "Promote người tiếp theo\ntừ waitlist" as PROMOTE
-}
+usecase "UC06\nHủy đăng ký" as UC06
+usecase "Promote người tiếp theo\ntừ waitlist" as PROMOTE
 
-rectangle "Phân bổ và check-in" {
-  usecase "UC12\nThực hiện phân bổ vé" as UC12
-  usecase "UC14\nCheck-in vé" as UC14
-  usecase "Xác minh vé hợp lệ\nvà chưa sử dụng" as VALIDATE
-}
+usecase "UC12\nThực hiện phân bổ vé" as UC12
+usecase "UC14\nCheck-in vé" as UC14
+usecase "Xác minh vé hợp lệ\nvà chưa sử dụng" as VALIDATE
+
+' Bố trí hai cụm chính, tránh kéo thành một dải ngang rất dài.
+UC05 -[hidden]down- UC06
+UC06 -[hidden]down- UC12
+UC12 -[hidden]down- UC14
+
+BOT -[hidden]down- WINDOW
+WINDOW -[hidden]down- POLICY
+POLICY -[hidden]down- PROMOTE
+PROMOTE -[hidden]down- VALIDATE
 
 UC05 .> BOT : <<include>>
 UC05 .> WINDOW : <<include>>
 UC05 .> POLICY : <<include>>
-PROMOTE .> UC06 : <<extend>>\n[khi CONFIRMED bị hủy\nvà waitlist còn người]
+PROMOTE .> UC06 : <<extend>>
 UC12 .> POLICY : <<include>>
 UC14 .> VALIDATE : <<include>>
 
-note right of UC05
-FCFS xử lý ngay khi đăng ký.
-LOTTERY giữ Registration = PENDING.
-end note
-
-note right of UC12
-LOTTERY chạy sau khi đóng đăng ký
-và tạo AllocationRun để audit.
+note bottom of PROMOTE
+Điều kiện extend:
+Registration CONFIRMED bị hủy
+và waitlist còn người.
 end note
 
 @enduml
