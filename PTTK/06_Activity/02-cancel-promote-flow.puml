@@ -1,0 +1,46 @@
+@startuml
+skinparam shadowing false
+
+title MED-06 - ACTIVITY HỦY ĐĂNG KÝ + PROMOTE WAITLIST (UC06)
+
+start
+:Attendee yêu cầu hủy Registration;
+:Kiểm tra ownership và điều kiện hủy;
+
+if (Được phép hủy?) then (Có)
+else (Không)
+  :Từ chối yêu cầu;
+  stop
+endif
+
+if (Registration = PENDING?) then (Có)
+  :Registration -> CANCELLED;
+  :Không promote waitlist;
+  stop
+else (Không)
+endif
+
+if (Registration = WAITLISTED?) then (Có)
+  :Registration -> CANCELLED;
+  :WaitlistEntry -> CANCELLED;
+  :Không promote vì chưa chiếm slot;
+  stop
+else (CONFIRMED)
+endif
+
+:Khóa EventSession trong transaction;
+:Registration -> CANCELLED;
+:Hủy Ticket VALID tương ứng;
+
+if (Waitlist còn ACTIVE entry?) then (Có)
+  :Lấy entry đầu tiên theo thứ tự;
+  :Registration chờ -> CONFIRMED;
+  :WaitlistEntry -> PROMOTED;
+  :Phát Ticket VALID mới;
+else (Không)
+  :Giữ slot trống;
+endif
+
+:Commit transaction;
+stop
+@enduml
