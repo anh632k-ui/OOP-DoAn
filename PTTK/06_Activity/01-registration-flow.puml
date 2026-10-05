@@ -1,53 +1,48 @@
 @startuml
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
 
-title MED-06 - ACTIVITY ĐĂNG KÝ SUẤT (UC05)
+title MED-06 - ACTIVITY UC05: ĐĂNG KÝ MỘT SUẤT
 
+|Attendee|
 start
-:Attendee chọn EventSession;
+:Chọn EventSession;
 :Gửi yêu cầu đăng ký;
 
-if (Tài khoản ACTIVE?) then (Có)
+|Hệ thống|
+:Kiểm tra tài khoản, anti-bot,
+duplicate và registration window;
+
+if (Yêu cầu hợp lệ?) then (Có)
 else (Không)
-  :Từ chối yêu cầu;
+  :Từ chối đăng ký;
+  |Attendee|
+  :Nhận thông báo lỗi;
   stop
 endif
-
-if (Vượt rate limit?) then (Có)
-  :Từ chối do anti-bot;
-  stop
-else (Không)
-endif
-
-if (Đã có Registration cùng session?) then (Có)
-  :Từ chối đăng ký trùng;
-  stop
-else (Không)
-endif
-
-if (Đúng cửa sổ đăng ký\nvà session cho phép đăng ký?) then (Có)
-else (Không)
-  :Từ chối do session/window không hợp lệ;
-  stop
-endif
-
-:Tạo Registration = PENDING;
 
 if (AllocationPolicy = FCFS?) then (Có)
-  :Khóa session / bảo vệ transaction;
-  :Đếm Registration CONFIRMED;
-  if (confirmed < capacity?) then (Còn chỗ)
+  :Khóa EventSession trong transaction;
+  :Tạo Registration PENDING;
+  :Kiểm tra số chỗ còn lại;
+
+  if (Còn chỗ?) then (Có)
     :Registration -> CONFIRMED;
     :Phát Ticket VALID;
-    :Trả kết quả đăng ký thành công;
-  else (Hết chỗ)
+    |Attendee|
+    :Nhận vé điện tử;
+  else (Không)
     :Registration -> WAITLISTED;
-    :Tạo WaitlistEntry;
-    :Trả vị trí waitlist;
+    :Tạo WaitlistEntry ACTIVE;
+    |Attendee|
+    :Nhận vị trí waitlist;
   endif
+
 else (LOTTERY)
-  :Giữ Registration = PENDING;
-  :Chờ đóng đăng ký và AllocationRun;
+  :Tạo Registration PENDING;
+  |Attendee|
+  :Chờ AllocationRun sau khi đóng đăng ký;
 endif
 
 stop
