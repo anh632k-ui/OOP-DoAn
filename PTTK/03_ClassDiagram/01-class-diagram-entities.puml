@@ -1,14 +1,17 @@
 @startuml
-left to right direction
+top to bottom direction
+skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
-skinparam nodesep 30
-skinparam ranksep 40
+skinparam defaultFontSize 13
+skinparam nodesep 50
+skinparam ranksep 55
+hide circle
+hide stereotypes
 
 title MED-06 - CLASS DIAGRAM: DOMAIN ENTITIES
 
-class User <<entity>> {
+class User {
   - id: UUID
   - fullName: string
   - email: string
@@ -16,37 +19,39 @@ class User <<entity>> {
   - status: AccountStatus
   + isActive(): boolean
 }
-
-class Venue <<entity>> {
+class Venue {
   - id: UUID
   - name: string
-  - address: string
   - capacity: int
   + canHost(capacity: int): boolean
 }
-
-class Event <<entity>> {
+class AccessibilityFeature {
+  - id: UUID
+  - name: string
+}
+class Event {
   - id: UUID
   - name: string
   - status: EventStatus
-  - imageUrl: string
-  + canPublish(validSessionCount: int): boolean
+  + canPublish(): boolean
   + publish(): void
   + cancel(): void
 }
-
-class EventSession <<entity>> {
+class EventSession {
   - id: UUID
   - startTime: DateTime
-  - endTime: DateTime
   - capacity: int
   - allocationPolicy: AllocationPolicy
   - status: SessionStatus
-  + isRegistrationOpen(now: DateTime): boolean
-  + availableSlots(confirmedCount: int): int
+  + isRegistrationOpen(now): boolean
+  + availableSlots(confirmedCount): int
 }
-
-class Registration <<entity>> {
+class AllocationRun {
+  - id: UUID
+  - policy: AllocationPolicy
+  - executedAt: DateTime
+}
+class Registration {
   - id: UUID
   - registeredAt: DateTime
   - status: RegistrationStatus
@@ -54,16 +59,13 @@ class Registration <<entity>> {
   + markWaitlisted(): void
   + cancel(): void
 }
-
-class WaitlistEntry <<entity>> {
+class WaitlistEntry {
   - id: UUID
   - position: long
   - status: WaitlistStatus
   + promote(): void
-  + cancel(): void
 }
-
-class Ticket <<entity>> {
+class Ticket {
   - id: UUID
   - ticketCode: string
   - status: TicketStatus
@@ -71,47 +73,27 @@ class Ticket <<entity>> {
   + markUsed(): void
   + cancel(): void
 }
-
-class CheckIn <<entity>> {
+class CheckIn {
   - id: UUID
   - checkedInAt: DateTime
   - method: CheckInMethod
 }
 
-class AccessibilityFeature <<entity>> {
-  - id: UUID
-  - name: string
-}
-
-class AllocationRun <<entity>> {
-  - id: UUID
-  - executedByUserId: UUID
-  - policy: AllocationPolicy
-  - executedAt: DateTime
-  - candidateCount: int
-  - confirmedCount: int
-}
-
-User "1" -- "0..*" Event : organizes >
-Venue "1" -- "0..*" Event : hosts >
-Event "1" *-- "0..*" EventSession : contains >
-Event "0..*" -- "0..*" AccessibilityFeature : supports >
-
-User "1" -- "0..*" Registration : submits >
-EventSession "1" -- "0..*" Registration : receives >
+Venue "1" -- "0..*" Event : hosts
+User "1" -- "0..*" Event : organizes
+Event "1" *-- "0..*" EventSession
+Event "0..*" -- "0..*" AccessibilityFeature
+EventSession "1" -- "0..*" Registration
+User "1" -- "0..*" Registration
+EventSession "1" *-- "0..1" AllocationRun
 Registration "1" *-- "0..1" WaitlistEntry
 Registration "1" *-- "0..1" Ticket
 Ticket "1" *-- "0..1" CheckIn
-EventSession "1" *-- "0..1" AllocationRun
 
-' Secondary audit links
-User "1" .. "0..*" CheckIn : performs >
-User "1" .. "0..*" AllocationRun : executes >
-
-' Layout helpers
-User -[hidden]-> Venue
-Event -[hidden]-> EventSession
-Registration -[hidden]-> Ticket
-WaitlistEntry -[hidden]-> CheckIn
+User -[hidden]right- Venue
+Venue -[hidden]right- AccessibilityFeature
+EventSession -[hidden]right- AllocationRun
+WaitlistEntry -[hidden]right- Ticket
+Ticket -[hidden]right- CheckIn
 
 @enduml
