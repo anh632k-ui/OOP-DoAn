@@ -31,7 +31,7 @@ rectangle "Cổng quản lý sự kiện văn hóa và vé miễn phí" {
   usecase "UC05\nĐăng ký một suất" as UC05
   usecase "Kiểm tra chống bot\ncơ bản" as INC_BOT
   usecase "Kiểm tra cửa sổ\nđăng ký" as INC_WINDOW
-  usecase "Áp dụng chính sách\nphân bổ" as INC_POLICY
+  usecase "Xác định chính sách\nphân bổ" as INC_POLICY
 
   usecase "UC06\nHủy đăng ký" as UC06
   usecase "Promote người tiếp theo\ntừ waitlist" as INC_PROMOTE
@@ -75,7 +75,7 @@ Admin --> UC15
 UC05 .> INC_BOT : <<include>>
 UC05 .> INC_WINDOW : <<include>>
 UC05 .> INC_POLICY : <<include>>
-UC06 .> INC_PROMOTE : <<extend>>\n[khi vé đã xác nhận bị hủy\nvà waitlist còn người]
+INC_PROMOTE .> UC06 : <<extend>>\n[khi Registration CONFIRMED bị hủy\nvà waitlist còn người]
 UC12 .> INC_POLICY : <<include>>
 UC14 .> INC_VALIDATE_TICKET : <<include>>
 
@@ -94,6 +94,7 @@ end note
 note bottom of UC10
 AccessibilityFeature thuộc dữ liệu sự kiện
 và dùng để hiển thị/lọc trong MVP.
+Quản lý suất bao gồm tạo/cập nhật/mở/đóng/hủy suất.
 end note
 
 @enduml
