@@ -1,0 +1,52 @@
+@startuml
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+title MED-06 - SEQUENCE UC14 CHECK-IN VÉ
+
+actor "Check-in Staff" as Staff
+boundary "Check-in UI" as UI
+control "CheckInController" as CIC
+control "CheckInService" as CIS
+control "TicketService" as TS
+entity "TicketRepository" as TR
+entity "CheckInRepository" as CIR
+entity "EventSessionRepository" as ESR
+
+autonumber
+Staff -> UI : Quét QR / nhập ticketCode
+UI -> CIC : POST /check-ins
+CIC -> CIS : checkIn(staffId, sessionId, ticketCode)
+CIS -> TS : findByCode(ticketCode)
+TS -> TR : findByCodeForUpdate(ticketCode)
+TR --> TS : Ticket
+TS --> CIS : Ticket
+CIS -> ESR : findById(sessionId)
+ESR --> CIS : EventSession
+CIS -> CIS : xác minh ticket thuộc đúng session\nstatus = VALID
+CIS -> CIR : existsByTicketId(ticket.id)
+CIR --> CIS : false
+
+alt Ticket hợp lệ và chưa dùng
+  group Transaction
+    CIS -> CIR : create(ticketId, staffId, method, now)
+    CIR --> CIS : CheckIn
+    CIS -> TR : updateStatus(ticket.id, USED)
+    TR --> CIS : done
+  end
+  CIS --> CIC : CheckIn success
+  CIC --> UI : 201 + success
+  UI --> Staff : Cho phép khách vào
+else Ticket không hợp lệ / đã dùng / sai session
+  CIS --> CIC : domain error
+  CIC --> UI : 4xx + reason
+  UI --> Staff : Từ chối check-in
+end
+
+note over TR,CIR
+DB UNIQUE(check_ins.ticket_id) + row lock/transaction
+đảm bảo hai request đồng thời không thể cùng check-in một Ticket.
+end note
+
+@enduml
