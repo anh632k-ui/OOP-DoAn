@@ -118,7 +118,8 @@ entity "event_accessibility" as event_accessibility {
 entity "allocation_runs" as allocation_runs {
   * id : UUID <<PK>>
   --
-  session_id : UUID <<FK>>
+  session_id : UUID <<FK, UQ>>
+  executed_by_user_id : UUID <<FK>>
   policy : allocation_policy
   executed_at : TIMESTAMPTZ
   candidate_count : INTEGER
@@ -128,7 +129,7 @@ entity "allocation_runs" as allocation_runs {
 
 users ||--o{ events : organizer_id
 venues ||--o{ events : venue_id
-events ||--|{ event_sessions : event_id
+events ||--o{ event_sessions : event_id
 
 users ||--o{ registrations : attendee_id
 event_sessions ||--o{ registrations : session_id
@@ -140,12 +141,20 @@ users ||--o{ check_ins : staff_id
 events ||--o{ event_accessibility : event_id
 accessibility_features ||--o{ event_accessibility : accessibility_feature_id
 
-event_sessions ||--o{ allocation_runs : session_id
+event_sessions ||--o| allocation_runs : session_id
+users ||--o{ allocation_runs : executed_by_user_id
 
 note right of registrations
 DB constraint bắt buộc:
 UNIQUE(attendee_id, session_id)
-=> một Attendee chỉ có một Registration cho một Session.
+=> MVP chỉ có một Registration cho một cặp Attendee/Session
+trong toàn bộ vòng đời, kể cả sau CANCELLED.
+end note
+
+note right of waitlist_entries
+position là thứ tự ưu tiên của queue.
+Thứ hạng ACTIVE hiển thị có thể tính động,
+không cần renumber toàn bộ khi có hủy/promote.
 end note
 
 note right of tickets
@@ -169,11 +178,15 @@ CHECK đề xuất:
 - registration_open_at < registration_close_at
 - capacity <= Venue.capacity được kiểm tra ở service
   vì là rule liên bảng.
+Event DRAFT có thể có 0 session; điều kiện >= 1 session
+được kiểm tra khi publish Event.
 end note
 
 note bottom of allocation_runs
-metadata JSONB lưu dữ liệu audit cần thiết,
-ví dụ algorithm version, random seed/hash,
+UNIQUE(session_id) trong MVP LOTTERY
+=> chỉ một AllocationRun đã commit cho một Session.
+executed_by_user_id phục vụ audit người kích hoạt.
+metadata JSONB lưu algorithm version, random seed/hash,
 ordered candidate ids hoặc bằng chứng tương đương.
 end note
 
