@@ -1,0 +1,24 @@
+@startuml
+skinparam shadowing false
+
+title MED-06 - STATE TICKET
+
+[*] --> VALID : issue khi Registration = CONFIRMED
+VALID --> USED : check-in thành công
+VALID --> CANCELLED : Registration bị hủy\nhoặc EventSession bị hủy
+VALID --> EXPIRED : quá thời hạn sử dụng
+
+USED --> [*]
+CANCELLED --> [*]
+EXPIRED --> [*]
+
+note right of VALID
+Chỉ Ticket VALID mới có thể check-in.
+end note
+
+note right of USED
+USED là trạng thái kết thúc theo luồng thường.
+Không chuyển ngược về VALID.
+end note
+
+@enduml
