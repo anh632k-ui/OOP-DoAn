@@ -20,7 +20,7 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 2. Actor + Use Case.
 3. Domain Model.
 4. Class Diagram.
-5. ERD.
+5. Thiết kế CSDL: ERD + Data Dictionary + PostgreSQL physical schema + indexes/constraints.
 6. Sequence Diagram.
 7. Activity Diagram và State Diagram.
 8. Component/Deployment Architecture.
@@ -45,6 +45,9 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - [x] Domain Model
 - [x] Class Diagram
 - [x] ERD
+- [x] Từ điển dữ liệu
+- [x] PostgreSQL physical schema (DDL)
+- [x] Constraints / indexes / transaction rules của CSDL
 - [x] Sequence Diagram
 - [x] Activity Diagram
 - [x] State Diagram
@@ -55,7 +58,7 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - [x] Refactor layout nhóm sơ đồ 1-4 cho dễ đọc
 - [ ] Preview trực quan toàn bộ `.puml` trong VS Code và chỉnh layout cuối nếu cần
 
-## 6. Bộ sơ đồ hiện có
+## 6. Bộ tài liệu hiện có
 ### 01 - Actor / Use Case
 - `01_Actor_UseCase/01-use-case-overview.puml` - bản tổng quan gọn để đưa vào báo cáo.
 - `01_Actor_UseCase/03-use-case-relations.puml` - include/extend và business relation quan trọng.
@@ -70,9 +73,12 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - `03_ClassDiagram/02-class-diagram-services.puml` - application/domain services.
 - `03_ClassDiagram/03-class-diagram-strategy.puml` - Strategy Pattern cho FCFS/LOTTERY.
 
-### 04 - ERD
-- `04_ERD/01-erd-core.puml` - các bảng nghiệp vụ cốt lõi và constraint chính.
-- `04_ERD/02-erd-supporting.puml` - accessibility và bảng hỗ trợ.
+### 04 - Thiết kế CSDL / ERD
+- `04_ERD/01-erd-core.puml` - các bảng nghiệp vụ cốt lõi và cardinality.
+- `04_ERD/02-erd-supporting.puml` - accessibility và bảng nối.
+- `04_ERD/03-data-dictionary.md` - từ điển dữ liệu chi tiết cho 11 bảng.
+- `04_ERD/04-postgresql-schema.sql` - PostgreSQL DDL: enum, table, PK/FK/UQ/CHECK và indexes.
+- `04_ERD/05-database-design-notes.md` - quyết định thiết kế, transaction boundary và rule phân chia DB/service.
 
 ### 05 - Sequence
 - `05_Sequence/01-uc05-register-session.puml`
@@ -104,6 +110,8 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 ## 7. Baseline giữa kỳ v1
 Bộ PTTK đã phủ và đồng bộ các luồng cốt lõi: tạo/công bố sự kiện, quản lý suất, đăng ký FCFS/LOTTERY, waitlist, phát vé, hủy và promote, check-in, accessibility, chống bot cơ bản, audit allocation, search/object storage và kiến trúc triển khai.
 
+Thiết kế dữ liệu đã được hiện thực hóa từ ERD xuống PostgreSQL DDL. DB bảo vệ integrity cơ bản bằng PK/FK/UNIQUE/CHECK/index; các invariant liên quan concurrency và nhiều bảng được giao cho service + transaction/locking.
+
 Các quyết định đã khóa sau review:
 - Event DRAFT có thể có `0..*` EventSession; publish cần ít nhất 1 session hợp lệ.
 - Một Attendee chỉ có một Registration cho một EventSession trong MVP.
@@ -114,8 +122,8 @@ Các quyết định đã khóa sau review:
 - Event/Session cancellation phải cascade theo business rules đã định nghĩa.
 
 ## 8. Gate trước khi merge sang main
-Về **logic PTTK**, baseline v1 đã review xong và có thể dùng làm nguồn chuẩn để code. Các sơ đồ tổng hợp quá lớn đã được tách thành nhiều hình nhỏ để phục vụ báo cáo và trình chiếu.
+Về **logic PTTK + thiết kế CSDL**, baseline v1 đã review xong và có thể dùng làm nguồn chuẩn để code. Các sơ đồ tổng hợp quá lớn đã được tách thành nhiều hình nhỏ để phục vụ báo cáo và trình chiếu.
 
-Trước khi merge `dev -> main`, mở/preview các file `.puml` trên VS Code để kiểm tra lỗi render, chữ chồng hoặc layout chưa cân đối. Nếu chỉ chỉnh bố cục thì không thay đổi business logic.
+Trước khi merge `dev -> main`, mở/preview các file `.puml` trên VS Code để kiểm tra lỗi render, chữ chồng hoặc layout chưa cân đối; đồng thời chạy thử `04_ERD/04-postgresql-schema.sql` trên PostgreSQL/pgAdmin để xác nhận DDL tạo schema thành công. Nếu chỉ chỉnh bố cục/cú pháp thì không thay đổi business logic.
 
-> Nếu thay đổi business rule, phải cập nhật đồng bộ Requirement -> Use Case -> Domain/Class -> ERD -> Dynamic Diagram -> API/Test liên quan theo `09_Review/01-consistency-review.md`.
+> Nếu thay đổi business rule, phải cập nhật đồng bộ Requirement -> Use Case -> Domain/Class -> Database/ERD -> Dynamic Diagram -> API/Test liên quan theo `09_Review/01-consistency-review.md`.
