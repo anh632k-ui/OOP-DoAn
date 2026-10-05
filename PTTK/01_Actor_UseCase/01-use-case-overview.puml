@@ -11,12 +11,16 @@ skinparam usecase {
 title MED-06 - USE CASE TỔNG QUAN
 
 actor Guest
+actor "Authenticated User" as AuthUser
 actor Attendee
 actor Organizer
 actor "Check-in Staff" as Staff
 actor Administrator as Admin
 
-Guest <|-- Attendee
+AuthUser <|-- Attendee
+AuthUser <|-- Organizer
+AuthUser <|-- Staff
+AuthUser <|-- Admin
 
 rectangle "Cổng quản lý sự kiện văn hóa và vé miễn phí" {
   usecase "UC01\nĐăng ký tài khoản" as UC01
@@ -51,6 +55,8 @@ Guest --> UC01
 Guest --> UC02
 Guest --> UC03
 Guest --> UC04
+AuthUser --> UC03
+AuthUser --> UC04
 
 Attendee --> UC05
 Attendee --> UC06
@@ -72,6 +78,11 @@ UC05 .> INC_POLICY : <<include>>
 UC06 .> INC_PROMOTE : <<extend>>\n[khi vé đã xác nhận bị hủy\nvà waitlist còn người]
 UC12 .> INC_POLICY : <<include>>
 UC14 .> INC_VALIDATE_TICKET : <<include>>
+
+note right of AuthUser
+Actor khái quát cho tài khoản đã đăng nhập.
+Không phải role lưu trong CSDL.
+end note
 
 note right of UC12
 FCFS được áp dụng tại thời điểm đăng ký.
