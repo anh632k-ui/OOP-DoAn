@@ -1,0 +1,50 @@
+@startuml
+skinparam shadowing false
+
+title MED-06 - DEPLOYMENT DIAGRAM
+
+node "User Device" as CLIENT {
+  artifact "Web Browser" as Browser
+}
+
+node "Docker Host / Server" as HOST {
+  node "frontend container" as FEC {
+    artifact "Next.js App" as NextApp
+  }
+
+  node "backend container" as BEC {
+    artifact "NestJS API" as NestAPI
+  }
+
+  node "database container" as DBC {
+    database "PostgreSQL" as PG
+  }
+
+  node "object-storage container\n(dev/test)" as OSC {
+    artifact "MinIO" as MinIO
+  }
+}
+
+cloud "S3-compatible Object Storage\n(production option)" as S3
+
+Browser --> NextApp : HTTPS
+NextApp --> NestAPI : REST/JSON HTTPS
+NestAPI --> PG : PostgreSQL connection
+NestAPI --> MinIO : S3 API (dev/test)
+NestAPI ..> S3 : S3 API (production)
+
+note right of HOST
+Docker Compose có thể chạy:
+- frontend
+- backend
+- PostgreSQL
+- MinIO
+cho môi trường đồ án.
+end note
+
+note bottom of NestAPI
+Search MVP dùng PostgreSQL.
+Không cần Elasticsearch/Kafka/Kubernetes.
+end note
+
+@enduml
