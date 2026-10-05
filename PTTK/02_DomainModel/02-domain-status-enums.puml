@@ -1,0 +1,87 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+title MED-06 - DOMAIN STATUS / ENUMS
+
+enum UserRole {
+  ATTENDEE
+  ORGANIZER
+  STAFF
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  LOCKED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum AllocationPolicy {
+  FCFS
+  LOTTERY
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+}
+
+enum WaitlistStatus {
+  ACTIVE
+  PROMOTED
+  CANCELLED
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
+  EXPIRED
+}
+
+enum CheckInMethod {
+  QR
+  MANUAL_CODE
+}
+
+class User
+class Event
+class EventSession
+class Registration
+class WaitlistEntry
+class Ticket
+class CheckIn
+class AllocationRun
+
+User --> UserRole
+User --> AccountStatus
+Event --> EventStatus
+EventSession --> SessionStatus
+EventSession --> AllocationPolicy
+Registration --> RegistrationStatus
+WaitlistEntry --> WaitlistStatus
+Ticket --> TicketStatus
+CheckIn --> CheckInMethod
+AllocationRun --> AllocationPolicy
+
+@enduml
