@@ -1,31 +1,22 @@
 @startuml
+left to right direction
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam state {
+  BackgroundColor White
+  BorderColor Black
+}
 
-title MED-06 - STATE EVENT
+title MED-06 - STATE: EVENT
 
-[*] --> DRAFT : Organizer tạo Event
-
-DRAFT --> PUBLISHED : publish\n[có >= 1 EventSession hợp lệ]
-DRAFT --> CANCELLED : hủy Event
-
-PUBLISHED --> COMPLETED : toàn bộ lịch sự kiện kết thúc
-PUBLISHED --> CANCELLED : hủy Event
-
+[*] --> DRAFT : tạo Event
+DRAFT --> PUBLISHED : publish [>= 1 Session hợp lệ]
+PUBLISHED --> COMPLETED : toàn bộ lịch kết thúc
 COMPLETED --> [*]
+
+DRAFT --> CANCELLED : hủy
+PUBLISHED --> CANCELLED : hủy
 CANCELLED --> [*]
-
-note right of DRAFT
-Event DRAFT được phép tạm thời
-chưa có EventSession.
-Không được publish nếu chưa có
-ít nhất một EventSession hợp lệ.
-end note
-
-note right of CANCELLED
-Hủy Event phải dẫn tới hủy
-các EventSession chưa hoàn tất.
-Các Registration/Ticket của từng Session
-được xử lý theo rule hủy Session.
-end note
 
 @enduml
