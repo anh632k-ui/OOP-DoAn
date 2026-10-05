@@ -1,0 +1,76 @@
+@startuml
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+title MED-06 - SEQUENCE UC05 ĐĂNG KÝ MỘT SUẤT
+
+actor Attendee
+boundary "Next.js UI" as UI
+control "RegistrationController" as RC
+control "RegistrationService" as RS
+control "BotProtectionService" as BPS
+entity "EventSessionRepository" as ESR
+entity "RegistrationRepository" as RR
+control "AllocationService" as AS
+control "FcfsAllocationStrategy" as FCFS
+control "WaitlistService" as WS
+control "TicketService" as TS
+entity "TicketRepository" as TR
+
+autonumber
+Attendee -> UI : Chọn EventSession và nhấn Đăng ký
+UI -> RC : POST /sessions/{id}/registrations
+RC -> RS : register(attendeeId, sessionId)
+RS -> BPS : validateRegistrationRequest(attendeeId, sessionId)
+BPS -> RR : existsByAttendeeAndSession(...)
+RR --> BPS : false
+BPS --> RS : valid
+
+RS -> ESR : findByIdForRegistration(sessionId)
+ESR --> RS : EventSession
+RS -> RS : kiểm tra status + registration window
+RS -> RR : create(PENDING)
+RR --> RS : Registration
+
+alt allocationPolicy = FCFS
+  RS -> AS : allocateImmediate(registrationId)
+  AS -> ESR : lockSession(sessionId)
+  ESR --> AS : locked EventSession
+  AS -> RR : countConfirmed(sessionId)
+  RR --> AS : confirmedCount
+  AS -> FCFS : allocate(session, [registration], confirmedCount)
+  FCFS --> AS : AllocationPlan
+
+  alt còn slot
+    AS -> RR : updateStatus(CONFIRMED)
+    AS -> TS : issueTicket(registrationId)
+    TS -> TR : create(VALID ticket)
+    TR --> TS : Ticket
+    TS --> AS : Ticket
+    AS --> RS : CONFIRMED + Ticket
+    RS --> RC : Registration(CONFIRMED)
+    RC --> UI : 201 + ticket
+    UI --> Attendee : Đăng ký thành công
+  else hết slot
+    AS -> RR : updateStatus(WAITLISTED)
+    AS -> WS : enqueue(registrationId)
+    WS --> AS : WaitlistEntry
+    AS --> RS : WAITLISTED
+    RS --> RC : Registration(WAITLISTED)
+    RC --> UI : 201 + waitlist position
+    UI --> Attendee : Đã vào danh sách chờ
+  end
+
+else allocationPolicy = LOTTERY
+  RS --> RC : Registration(PENDING)
+  RC --> UI : 201 + trạng thái PENDING
+  UI --> Attendee : Chờ đợt phân bổ sau khi đóng đăng ký
+end
+
+note over RS,AS
+Toàn bộ nhánh xác nhận/waitlist/phát vé phải bảo vệ invariant
+confirmed <= capacity và chạy trong transaction phù hợp.
+end note
+
+@enduml
