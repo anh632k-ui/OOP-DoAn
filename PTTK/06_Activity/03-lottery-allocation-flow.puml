@@ -1,42 +1,51 @@
 @startuml
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
 
-title MED-06 - ACTIVITY LOTTERY ALLOCATION (UC12)
+title MED-06 - ACTIVITY UC12: LOTTERY ALLOCATION
 
+|Organizer|
 start
-:Organizer yêu cầu chạy AllocationRun;
-:Kiểm tra ownership EventSession;
+:Yêu cầu chạy phân bổ;
 
-if (Policy = LOTTERY\nvà registration đã đóng?) then (Có)
+|Hệ thống|
+:Kiểm tra ownership, policy LOTTERY
+và registration đã đóng;
+
+if (Điều kiện hợp lệ?) then (Có)
 else (Không)
-  :Từ chối chạy allocation;
+  :Từ chối AllocationRun;
+  |Organizer|
+  :Nhận thông báo lỗi;
   stop
 endif
 
 :Khóa EventSession;
+:Kiểm tra AllocationRun đã commit;
 
-if (Đã có AllocationRun đã commit?) then (Có)
+if (Đã có run?) then (Có)
   :Từ chối chạy lặp;
+  |Organizer|
+  :Nhận thông báo đã phân bổ;
   stop
 else (Không)
 endif
 
 :Lấy Registration PENDING hợp lệ;
-:Đếm số Registration CONFIRMED hiện tại;
 :Tính số slot còn lại;
+
+|Allocation Strategy|
 :Tạo thứ tự ngẫu nhiên công bằng;
+:Chia confirmed / waitlisted;
 
-if (Còn slot?) then (Có)
-  :Chọn tối đa slot ứng viên đầu;
-  :Đổi sang CONFIRMED;
-  :Phát Ticket VALID cho từng người;
-else (Không)
-endif
-
-:Các ứng viên còn lại -> WAITLISTED;
-:Tạo WaitlistEntry theo draw position;
-:Ghi AllocationRun + executedBy + metadata audit;
+|Hệ thống|
+:CONFIRMED -> phát Ticket VALID;
+:WAITLISTED -> tạo WaitlistEntry theo draw position;
+:Ghi AllocationRun + metadata audit;
 :Commit transaction;
-:Trả kết quả cho Organizer;
+
+|Organizer|
+:Nhận kết quả phân bổ;
 stop
 @enduml
