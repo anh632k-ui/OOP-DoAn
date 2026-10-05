@@ -1,0 +1,327 @@
+@startuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam stereotypeCBackgroundColor White
+
+title MED-06 - CLASS DIAGRAM LÕI
+
+package "Domain Entities" {
+  class User <<entity>> {
+    - id: UUID
+    - fullName: string
+    - email: string
+    - passwordHash: string
+    - role: UserRole
+    - status: AccountStatus
+    - createdAt: DateTime
+    + isActive(): boolean
+  }
+
+  class Venue <<entity>> {
+    - id: UUID
+    - name: string
+    - address: string
+    - capacity: int
+    + canHost(capacity: int): boolean
+  }
+
+  class Event <<entity>> {
+    - id: UUID
+    - name: string
+    - description: string
+    - status: EventStatus
+    - startDate: DateTime
+    - endDate: DateTime
+    - imageUrl: string
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    + canPublish(): boolean
+    + publish(): void
+    + cancel(): void
+  }
+
+  class EventSession <<entity>> {
+    - id: UUID
+    - startTime: DateTime
+    - endTime: DateTime
+    - capacity: int
+    - registrationOpenAt: DateTime
+    - registrationCloseAt: DateTime
+    - allocationPolicy: AllocationPolicy
+    - status: SessionStatus
+    + isRegistrationOpen(now: DateTime): boolean
+    + availableSlots(confirmedCount: int): int
+    + openRegistration(): void
+    + closeRegistration(): void
+    + cancel(): void
+  }
+
+  class Registration <<entity>> {
+    - id: UUID
+    - registeredAt: DateTime
+    - status: RegistrationStatus
+    + confirm(): void
+    + markWaitlisted(): void
+    + cancel(): void
+  }
+
+  class WaitlistEntry <<entity>> {
+    - id: UUID
+    - position: int
+    - joinedAt: DateTime
+    - status: WaitlistStatus
+    + promote(): void
+    + cancel(): void
+  }
+
+  class Ticket <<entity>> {
+    - id: UUID
+    - ticketCode: string
+    - qrCode: string
+    - issuedAt: DateTime
+    - status: TicketStatus
+    + canCheckIn(): boolean
+    + markUsed(): void
+    + cancel(): void
+    + expire(): void
+  }
+
+  class CheckIn <<entity>> {
+    - id: UUID
+    - checkedInAt: DateTime
+    - method: CheckInMethod
+  }
+
+  class AccessibilityFeature <<entity>> {
+    - id: UUID
+    - name: string
+    - description: string
+  }
+
+  class AllocationRun <<entity>> {
+    - id: UUID
+    - policy: AllocationPolicy
+    - executedAt: DateTime
+    - candidateCount: int
+    - confirmedCount: int
+    - metadata: JSON
+  }
+}
+
+package "Application / Domain Services" {
+  class EventService <<service>> {
+    + createEvent(organizerId: UUID, data): Event
+    + updateEvent(eventId: UUID, organizerId: UUID, data): Event
+    + addSession(eventId: UUID, organizerId: UUID, data): EventSession
+    + publishEvent(eventId: UUID, organizerId: UUID): Event
+    + setAccessibility(eventId: UUID, organizerId: UUID, featureIds: UUID[]): void
+  }
+
+  class RegistrationService <<service>> {
+    + register(attendeeId: UUID, sessionId: UUID): Registration
+    + cancelRegistration(attendeeId: UUID, registrationId: UUID): void
+  }
+
+  class AllocationService <<service>> {
+    + allocateImmediate(registrationId: UUID): void
+    + runAllocation(sessionId: UUID, organizerId: UUID): AllocationRun
+    - ensureCapacityInvariant(sessionId: UUID): void
+  }
+
+  class WaitlistService <<service>> {
+    + enqueue(registrationId: UUID): WaitlistEntry
+    + promoteNext(sessionId: UUID): Registration
+    + cancelEntry(registrationId: UUID): void
+  }
+
+  class TicketService <<service>> {
+    + issueTicket(registrationId: UUID): Ticket
+    + cancelTicket(registrationId: UUID): void
+    + findByCode(ticketCode: string): Ticket
+  }
+
+  class CheckInService <<service>> {
+    + checkIn(staffId: UUID, sessionId: UUID, ticketCode: string): CheckIn
+  }
+
+  class BotProtectionService <<service>> {
+    + validateRegistrationRequest(attendeeId: UUID, sessionId: UUID): void
+    - checkAccountStatus(attendeeId: UUID): void
+    - checkRateLimit(attendeeId: UUID): void
+    - checkDuplicateRegistration(attendeeId: UUID, sessionId: UUID): void
+  }
+}
+
+package "Allocation Strategy" {
+  interface TicketAllocationStrategy <<strategy>> {
+    + allocate(session: EventSession, candidates: Registration[], confirmedCount: int): AllocationPlan
+  }
+
+  class FcfsAllocationStrategy <<strategy>> {
+    + allocate(session: EventSession, candidates: Registration[], confirmedCount: int): AllocationPlan
+  }
+
+  class LotteryAllocationStrategy <<strategy>> {
+    + allocate(session: EventSession, candidates: Registration[], confirmedCount: int): AllocationPlan
+  }
+
+  class AllocationPlan <<value object>> {
+    + confirmedRegistrationIds: UUID[]
+    + waitlistedRegistrationIds: UUID[]
+    + orderedCandidateIds: UUID[]
+  }
+}
+
+package "Enums" {
+  enum UserRole {
+    ATTENDEE
+    ORGANIZER
+    STAFF
+    ADMIN
+  }
+
+  enum AccountStatus {
+    ACTIVE
+    LOCKED
+  }
+
+  enum EventStatus {
+    DRAFT
+    PUBLISHED
+    COMPLETED
+    CANCELLED
+  }
+
+  enum SessionStatus {
+    DRAFT
+    REGISTRATION_OPEN
+    REGISTRATION_CLOSED
+    ONGOING
+    COMPLETED
+    CANCELLED
+  }
+
+  enum AllocationPolicy {
+    FCFS
+    LOTTERY
+  }
+
+  enum RegistrationStatus {
+    PENDING
+    CONFIRMED
+    WAITLISTED
+    CANCELLED
+  }
+
+  enum WaitlistStatus {
+    ACTIVE
+    PROMOTED
+    CANCELLED
+  }
+
+  enum TicketStatus {
+    VALID
+    USED
+    CANCELLED
+    EXPIRED
+  }
+
+  enum CheckInMethod {
+    QR
+    MANUAL_CODE
+  }
+}
+
+' ===== Domain relationships =====
+User "1" -- "0..*" Event : organizes >
+Venue "1" -- "0..*" Event : hosts >
+Event "1" *-- "1..*" EventSession : contains >
+Event "0..*" -- "0..*" AccessibilityFeature : supports >
+
+User "1" -- "0..*" Registration : submits >
+EventSession "1" -- "0..*" Registration : receives >
+Registration "1" *-- "0..1" WaitlistEntry : waitlist >
+Registration "1" *-- "0..1" Ticket : ticket >
+Ticket "1" *-- "0..1" CheckIn : check-in >
+User "1" -- "0..*" CheckIn : performs >
+EventSession "1" *-- "0..*" AllocationRun : allocation history >
+
+User --> UserRole
+User --> AccountStatus
+Event --> EventStatus
+EventSession --> SessionStatus
+EventSession --> AllocationPolicy
+Registration --> RegistrationStatus
+WaitlistEntry --> WaitlistStatus
+Ticket --> TicketStatus
+CheckIn --> CheckInMethod
+AllocationRun --> AllocationPolicy
+
+' ===== Strategy Pattern =====
+TicketAllocationStrategy <|.. FcfsAllocationStrategy
+TicketAllocationStrategy <|.. LotteryAllocationStrategy
+TicketAllocationStrategy ..> AllocationPlan : returns >
+TicketAllocationStrategy ..> EventSession
+TicketAllocationStrategy ..> Registration
+
+' ===== Service dependencies =====
+EventService ..> Event
+EventService ..> EventSession
+EventService ..> AccessibilityFeature
+
+RegistrationService ..> Registration
+RegistrationService --> BotProtectionService
+RegistrationService --> AllocationService
+RegistrationService --> WaitlistService
+RegistrationService --> TicketService
+
+AllocationService --> TicketAllocationStrategy : selects by policy
+AllocationService --> TicketService
+AllocationService --> WaitlistService
+AllocationService ..> AllocationRun
+AllocationService ..> EventSession
+AllocationService ..> Registration
+
+WaitlistService ..> WaitlistEntry
+WaitlistService ..> Registration
+TicketService ..> Ticket
+TicketService ..> Registration
+CheckInService --> TicketService
+CheckInService ..> CheckIn
+CheckInService ..> Ticket
+
+note right of RegistrationService
+UC05 + UC06 orchestration.
+Controller không được tự ý
+đổi trạng thái entity.
+end note
+
+note right of AllocationService
+Bảo vệ invariant:
+confirmed registrations <= capacity.
+Các bước confirm / waitlist / issue ticket
+phải nằm trong transaction phù hợp.
+end note
+
+note bottom of TicketAllocationStrategy
+Strategy Pattern:
+- FCFS: ưu tiên theo registeredAt + tie-breaker xác định.
+- LOTTERY: tạo thứ tự ngẫu nhiên công bằng sau khi đóng đăng ký.
+AllocationService phụ thuộc interface, không phụ thuộc implementation cụ thể.
+end note
+
+note bottom of Ticket
+Invariant:
+- Chỉ tạo cho Registration = CONFIRMED.
+- Một Registration có tối đa một Ticket.
+- Ticket USED không quay lại VALID theo luồng thường.
+end note
+
+note bottom of CheckIn
+Một Ticket chỉ có tối đa
+một CheckIn thành công.
+end note
+
+@enduml
