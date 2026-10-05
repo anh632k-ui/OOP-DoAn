@@ -42,7 +42,7 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - [x] Actor + Use Case tổng quan
 - [x] Đặc tả các Use Case lõi
 - [x] Domain Model
-- [ ] Class Diagram
+- [x] Class Diagram
 - [ ] ERD
 - [ ] Sequence Diagram
 - [ ] Activity Diagram
