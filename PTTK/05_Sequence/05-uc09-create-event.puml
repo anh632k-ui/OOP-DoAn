@@ -14,7 +14,7 @@ control "EventService" as ES
 control "SessionService" as SS
 control "AccessibilityService" as ACS
 database "PostgreSQL" as DB
-cloud "Object Storage" as OS
+participant "Object Storage" as OS
 
 autonumber
 Organizer -> UI : Nhập thông tin Event
