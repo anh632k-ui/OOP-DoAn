@@ -1,91 +1,68 @@
 @startuml
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+hide footbox
 
-title MED-06 - SEQUENCE UC05 ĐĂNG KÝ MỘT SUẤT
+title MED-06 - SEQUENCE UC05: ĐĂNG KÝ MỘT SUẤT
 
 actor Attendee
 boundary "Next.js UI" as UI
-control "RegistrationController" as RC
 control "RegistrationService" as RS
-control "BotProtectionService" as BPS
-entity "EventSessionRepository" as ESR
-entity "RegistrationRepository" as RR
+control "BotProtectionService" as BP
 control "AllocationService" as AS
-control "FcfsAllocationStrategy" as FCFS
 control "WaitlistService" as WS
 control "TicketService" as TS
-entity "TicketRepository" as TR
+database "PostgreSQL" as DB
 
 autonumber
-Attendee -> UI : Chọn EventSession và nhấn Đăng ký
-UI -> RC : POST /sessions/{id}/registrations
-RC -> RS : register(attendeeId, sessionId)
-RS -> BPS : validateRegistrationRequest(attendeeId, sessionId)
-BPS -> RR : existsByAttendeeAndSession(...)
-RR --> BPS : false
-BPS --> RS : valid
+Attendee -> UI : Chọn suất và nhấn Đăng ký
+UI -> RS : register(attendeeId, sessionId)
+RS -> BP : validateRegistrationRequest(...)
+BP -> DB : kiểm tra account + rate limit + duplicate
+DB --> BP : hợp lệ
+BP --> RS : valid
 
-RS -> ESR : findByIdForRegistration(sessionId)
-ESR --> RS : EventSession
-RS -> RS : kiểm tra status + registration window
+RS -> DB : đọc EventSession + registration window
+DB --> RS : session
 
-alt allocationPolicy = FCFS
-  group Transaction + lock session
-    RS -> ESR : lockSession(sessionId)
-    ESR --> RS : locked EventSession
-    RS -> RR : create(PENDING)
-    RR --> RS : Registration
-    RS -> AS : allocateImmediate(registrationId)
-    AS -> RR : countConfirmed(sessionId)
-    RR --> AS : confirmedCount
-    AS -> FCFS : allocate(session, [registration], confirmedCount)
-    FCFS --> AS : AllocationPlan
+alt FCFS
+  group Transaction + lock EventSession
+    RS -> AS : allocateImmediate(attendeeId, sessionId)
+    AS -> DB : lock session + tạo Registration PENDING
+    AS -> DB : đếm CONFIRMED
 
-    alt còn slot
-      AS -> RR : updateStatus(CONFIRMED)
+    alt còn chỗ
+      AS -> DB : Registration -> CONFIRMED
       AS -> TS : issueTicket(registrationId)
-      TS -> TR : create(VALID ticket)
-      TR --> TS : Ticket
+      TS -> DB : tạo Ticket VALID
       TS --> AS : Ticket
-      AS --> RS : CONFIRMED + Ticket
-    else hết slot
-      AS -> RR : updateStatus(WAITLISTED)
-      AS -> WS : enqueue(registrationId, nextPosition)
-      WS --> AS : WaitlistEntry
+      AS --> RS : CONFIRMED
+    else hết chỗ
+      AS -> DB : Registration -> WAITLISTED
+      AS -> WS : enqueue(registrationId)
+      WS -> DB : tạo WaitlistEntry ACTIVE
+      WS --> AS : waitlist position
       AS --> RS : WAITLISTED
     end
   end
 
-  alt Registration = CONFIRMED
-    RS --> RC : Registration(CONFIRMED)
-    RC --> UI : 201 + ticket
-    UI --> Attendee : Đăng ký thành công
-  else Registration = WAITLISTED
-    RS --> RC : Registration(WAITLISTED)
-    RC --> UI : 201 + waitlist position
-    UI --> Attendee : Đã vào danh sách chờ
-  end
-
-else allocationPolicy = LOTTERY
-  RS -> RR : create(PENDING)
-  RR --> RS : Registration
-  RS --> RC : Registration(PENDING)
-  RC --> UI : 201 + trạng thái PENDING
-  UI --> Attendee : Chờ đợt phân bổ sau khi đóng đăng ký
+else LOTTERY
+  RS -> DB : tạo Registration PENDING
+  DB --> RS : Registration
 end
 
-note over BPS,RR
-Kiểm tra duplicate ở service để trả lỗi sớm,
-nhưng UNIQUE(attendee_id, session_id) trong DB
-mới là lớp bảo vệ cuối khi có request đồng thời.
+RS --> UI : trạng thái Registration (+ Ticket/position nếu có)
+UI --> Attendee : Hiển thị kết quả
+
+note over BP,DB
+UNIQUE(attendee_id, session_id) là lớp bảo vệ cuối cho duplicate.
 end note
 
-note over RS,AS
-Nhánh FCFS tạo Registration + xác nhận/waitlist + phát vé
-trong cùng transaction với session row lock,
-bảo vệ invariant confirmed <= capacity.
+note over AS,DB
+FCFS phải khóa session trong transaction để không oversell.
 end note
 
 @enduml
