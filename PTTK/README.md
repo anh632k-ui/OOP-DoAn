@@ -35,12 +35,13 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 | Ticket | Vé điện tử được phát khi Registration được xác nhận. |
 | CheckIn | Bản ghi xác nhận Ticket đã được sử dụng để vào sự kiện. |
 | AccessibilityFeature | Một đặc tính hỗ trợ tiếp cận của sự kiện/địa điểm. |
+| AllocationRun | Bản ghi một lần thực hiện phân bổ vé, dùng cho audit/kiểm chứng. |
 
 ## 5. Trạng thái PTTK
 - [x] Yêu cầu nghiệp vụ
 - [x] Actor + Use Case tổng quan
 - [x] Đặc tả các Use Case lõi
-- [ ] Domain Model
+- [x] Domain Model
 - [ ] Class Diagram
 - [ ] ERD
 - [ ] Sequence Diagram
