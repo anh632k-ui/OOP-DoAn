@@ -1,0 +1,117 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 40
+
+title MED-06 - CLASS DIAGRAM: DOMAIN ENTITIES
+
+class User <<entity>> {
+  - id: UUID
+  - fullName: string
+  - email: string
+  - role: UserRole
+  - status: AccountStatus
+  + isActive(): boolean
+}
+
+class Venue <<entity>> {
+  - id: UUID
+  - name: string
+  - address: string
+  - capacity: int
+  + canHost(capacity: int): boolean
+}
+
+class Event <<entity>> {
+  - id: UUID
+  - name: string
+  - status: EventStatus
+  - imageUrl: string
+  + canPublish(validSessionCount: int): boolean
+  + publish(): void
+  + cancel(): void
+}
+
+class EventSession <<entity>> {
+  - id: UUID
+  - startTime: DateTime
+  - endTime: DateTime
+  - capacity: int
+  - allocationPolicy: AllocationPolicy
+  - status: SessionStatus
+  + isRegistrationOpen(now: DateTime): boolean
+  + availableSlots(confirmedCount: int): int
+}
+
+class Registration <<entity>> {
+  - id: UUID
+  - registeredAt: DateTime
+  - status: RegistrationStatus
+  + confirm(): void
+  + markWaitlisted(): void
+  + cancel(): void
+}
+
+class WaitlistEntry <<entity>> {
+  - id: UUID
+  - position: long
+  - status: WaitlistStatus
+  + promote(): void
+  + cancel(): void
+}
+
+class Ticket <<entity>> {
+  - id: UUID
+  - ticketCode: string
+  - status: TicketStatus
+  + canCheckIn(): boolean
+  + markUsed(): void
+  + cancel(): void
+}
+
+class CheckIn <<entity>> {
+  - id: UUID
+  - checkedInAt: DateTime
+  - method: CheckInMethod
+}
+
+class AccessibilityFeature <<entity>> {
+  - id: UUID
+  - name: string
+}
+
+class AllocationRun <<entity>> {
+  - id: UUID
+  - executedByUserId: UUID
+  - policy: AllocationPolicy
+  - executedAt: DateTime
+  - candidateCount: int
+  - confirmedCount: int
+}
+
+User "1" -- "0..*" Event : organizes >
+Venue "1" -- "0..*" Event : hosts >
+Event "1" *-- "0..*" EventSession : contains >
+Event "0..*" -- "0..*" AccessibilityFeature : supports >
+
+User "1" -- "0..*" Registration : submits >
+EventSession "1" -- "0..*" Registration : receives >
+Registration "1" *-- "0..1" WaitlistEntry
+Registration "1" *-- "0..1" Ticket
+Ticket "1" *-- "0..1" CheckIn
+EventSession "1" *-- "0..1" AllocationRun
+
+' Secondary audit links
+User "1" .. "0..*" CheckIn : performs >
+User "1" .. "0..*" AllocationRun : executes >
+
+' Layout helpers
+User -[hidden]-> Venue
+Event -[hidden]-> EventSession
+Registration -[hidden]-> Ticket
+WaitlistEntry -[hidden]-> CheckIn
+
+@enduml
