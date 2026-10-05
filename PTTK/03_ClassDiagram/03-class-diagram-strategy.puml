@@ -1,0 +1,65 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+title MED-06 - CLASS DIAGRAM: ALLOCATION STRATEGY
+
+class AllocationService <<service>> {
+  + allocateImmediate(registrationId): void
+  + runAllocation(sessionId, organizerId): AllocationRun
+}
+
+interface TicketAllocationStrategy <<strategy>> {
+  + allocate(session, candidates, confirmedCount): AllocationPlan
+}
+
+class FcfsAllocationStrategy <<strategy>> {
+  + allocate(session, candidates, confirmedCount): AllocationPlan
+}
+
+class LotteryAllocationStrategy <<strategy>> {
+  + allocate(session, candidates, confirmedCount): AllocationPlan
+}
+
+class AllocationPlan <<value object>> {
+  + confirmedRegistrationIds: UUID[]
+  + waitlistedRegistrationIds: UUID[]
+  + orderedCandidateIds: UUID[]
+}
+
+class EventSession <<entity>> {
+  + capacity: int
+  + allocationPolicy: AllocationPolicy
+}
+
+class Registration <<entity>> {
+  + registeredAt: DateTime
+  + status: RegistrationStatus
+}
+
+AllocationService --> TicketAllocationStrategy : depends on abstraction
+TicketAllocationStrategy <|.. FcfsAllocationStrategy
+TicketAllocationStrategy <|.. LotteryAllocationStrategy
+TicketAllocationStrategy ..> EventSession
+TicketAllocationStrategy ..> Registration
+TicketAllocationStrategy --> AllocationPlan : returns
+
+note bottom of FcfsAllocationStrategy
+FCFS: ưu tiên registeredAt,
+tie-breaker xác định.
+end note
+
+note bottom of LotteryAllocationStrategy
+LOTTERY: tạo thứ tự ngẫu nhiên
+sau khi đóng đăng ký.
+end note
+
+note right of AllocationService
+Service chọn strategy theo AllocationPolicy.
+Strategy chỉ tính AllocationPlan,
+không tự ghi DB.
+end note
+
+@enduml
