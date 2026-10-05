@@ -1,34 +1,25 @@
 @startuml
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam state {
+  BackgroundColor White
+  BorderColor Black
+}
 
-title MED-06 - STATE REGISTRATION
+title MED-06 - STATE: REGISTRATION
 
-[*] --> PENDING : create registration
+[*] --> PENDING : tạo Registration
 
-PENDING --> CONFIRMED : FCFS còn chỗ\nhoặc trúng LOTTERY
-PENDING --> WAITLISTED : FCFS hết chỗ\nhoặc không trúng LOTTERY
-PENDING --> CANCELLED : attendee hủy\nhoặc session bị hủy
+PENDING --> CONFIRMED : FCFS còn chỗ / trúng LOTTERY
+PENDING --> WAITLISTED : FCFS đầy / không trúng LOTTERY
+PENDING --> CANCELLED : hủy hoặc Session bị hủy
 
-WAITLISTED --> CONFIRMED : promote từ waitlist
-WAITLISTED --> CANCELLED : attendee hủy\nhoặc session bị hủy
+WAITLISTED --> CONFIRMED : promote
+WAITLISTED --> CANCELLED : hủy hoặc Session bị hủy
 
-CONFIRMED --> CANCELLED : attendee hủy trước session\nTicket chưa USED
-CONFIRMED --> CANCELLED : session bị hủy\nTicket VALID -> CANCELLED
-
-CONFIRMED --> [*] : session hoàn tất
+CONFIRMED --> CANCELLED : hủy trước Session / Session bị hủy
+CONFIRMED --> [*] : Session hoàn tất
 CANCELLED --> [*]
-
-note right of CONFIRMED
-Khi vào CONFIRMED:
-- phải bảo vệ capacity invariant
-- phát đúng một Ticket VALID
-end note
-
-note right of WAITLISTED
-WAITLISTED phải có WaitlistEntry ACTIVE.
-Khi promote: WaitlistEntry -> PROMOTED.
-position là thứ tự ưu tiên, không nhất thiết
-là thứ hạng hiển thị sau các lần hủy.
-end note
 
 @enduml
