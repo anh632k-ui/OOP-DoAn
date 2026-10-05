@@ -27,6 +27,15 @@ end note
 note right of REGISTRATION_CLOSED
 LOTTERY AllocationRun được phép chạy
 sau khi đăng ký đã đóng.
+Trong MVP chỉ một AllocationRun LOTTERY
+được commit cho mỗi Session.
+end note
+
+note right of CANCELLED
+Khi Session bị hủy:
+- PENDING/WAITLISTED/CONFIRMED -> CANCELLED
+- Ticket VALID liên quan -> CANCELLED
+- không promote waitlist.
 end note
 
 @enduml
