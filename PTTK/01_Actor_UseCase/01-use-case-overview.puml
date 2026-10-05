@@ -1,53 +1,45 @@
 @startuml
 left to right direction
-skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam actorStyle awesome
+skinparam packageStyle rectangle
 skinparam usecase {
   BorderColor Black
   ArrowColor Black
 }
 
-title MED-06 - USE CASE TỔNG QUAN
+title MED-06 - USE CASE OVERVIEW
 
 actor Guest
-actor "Authenticated User" as AuthUser
 actor Attendee
 actor Organizer
 actor "Check-in Staff" as Staff
 actor Administrator as Admin
 
-AuthUser <|-- Attendee
-AuthUser <|-- Organizer
-AuthUser <|-- Staff
-AuthUser <|-- Admin
-
-rectangle "Cổng quản lý sự kiện văn hóa và vé miễn phí" {
+rectangle "Public" {
   usecase "UC01\nĐăng ký tài khoản" as UC01
   usecase "UC02\nĐăng nhập" as UC02
   usecase "UC03\nTìm kiếm / lọc sự kiện" as UC03
   usecase "UC04\nXem chi tiết sự kiện\nvà các suất" as UC04
+}
 
+rectangle "Attendee" {
   usecase "UC05\nĐăng ký một suất" as UC05
-  usecase "Kiểm tra chống bot\ncơ bản" as INC_BOT
-  usecase "Kiểm tra cửa sổ\nđăng ký" as INC_WINDOW
-  usecase "Xác định chính sách\nphân bổ" as INC_POLICY
-
   usecase "UC06\nHủy đăng ký" as UC06
-  usecase "Promote người tiếp theo\ntừ waitlist" as INC_PROMOTE
-
   usecase "UC07\nXem đăng ký / waitlist" as UC07
   usecase "UC08\nXem vé điện tử" as UC08
+}
 
+rectangle "Organizer" {
   usecase "UC09\nTạo / cập nhật sự kiện" as UC09
   usecase "UC10\nQuản lý suất và\naccessibility" as UC10
   usecase "UC11\nCông bố sự kiện và\nmở / đóng đăng ký" as UC11
   usecase "UC12\nThực hiện phân bổ vé" as UC12
   usecase "UC13\nTheo dõi đăng ký,\nwaitlist và thống kê" as UC13
+}
 
+rectangle "Operations" {
   usecase "UC14\nCheck-in vé" as UC14
-  usecase "Xác minh vé hợp lệ\nvà chưa sử dụng" as INC_VALIDATE_TICKET
-
   usecase "UC15\nQuản trị người dùng\nvà giám sát sự kiện" as UC15
 }
 
@@ -55,9 +47,9 @@ Guest --> UC01
 Guest --> UC02
 Guest --> UC03
 Guest --> UC04
-AuthUser --> UC03
-AuthUser --> UC04
 
+Attendee --> UC03
+Attendee --> UC04
 Attendee --> UC05
 Attendee --> UC06
 Attendee --> UC07
@@ -71,30 +63,5 @@ Organizer --> UC13
 
 Staff --> UC14
 Admin --> UC15
-
-UC05 .> INC_BOT : <<include>>
-UC05 .> INC_WINDOW : <<include>>
-UC05 .> INC_POLICY : <<include>>
-INC_PROMOTE .> UC06 : <<extend>>\n[khi Registration CONFIRMED bị hủy\nvà waitlist còn người]
-UC12 .> INC_POLICY : <<include>>
-UC14 .> INC_VALIDATE_TICKET : <<include>>
-
-note right of AuthUser
-Actor khái quát cho tài khoản đã đăng nhập.
-Không phải role lưu trong CSDL.
-end note
-
-note right of UC12
-FCFS được áp dụng tại thời điểm đăng ký.
-LOTTERY được chạy sau khi đóng đăng ký.
-UC12 tập trung vào AllocationRun,
-đặc biệt cho LOTTERY/audit.
-end note
-
-note bottom of UC10
-AccessibilityFeature thuộc dữ liệu sự kiện
-và dùng để hiển thị/lọc trong MVP.
-Quản lý suất bao gồm tạo/cập nhật/mở/đóng/hủy suất.
-end note
 
 @enduml
