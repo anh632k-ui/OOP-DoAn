@@ -1,91 +1,77 @@
 @startuml
-left to right direction
+top to bottom direction
+skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
+skinparam defaultFontSize 13
 skinparam packageStyle rectangle
-skinparam nodesep 35
-skinparam ranksep 40
+skinparam nodesep 45
+skinparam ranksep 50
+hide circle
+hide stereotypes
 
 title MED-06 - CLASS DIAGRAM: APPLICATION SERVICES
 
 package "Event Management" {
-  class EventService <<service>> {
-    + createEvent(organizerId, data): Event
-    + updateEvent(eventId, organizerId, data): Event
-    + publishEvent(eventId, organizerId): Event
-    + cancelEvent(eventId, organizerId): void
+  class EventService {
+    + createEvent(...): Event
+    + updateEvent(...): Event
+    + publishEvent(...): Event
+    + cancelEvent(...): void
+  }
+  class SessionService {
+    + createSession(...): EventSession
+    + updateSession(...): EventSession
+    + openRegistration(...): void
+    + closeRegistration(...): void
+  }
+  class AccessibilityService {
+    + setEventFeatures(...): void
+    + findEventsByFeatures(...): Event[]
   }
 
-  class SessionService <<service>> {
-    + createSession(eventId, organizerId, data): EventSession
-    + updateSession(sessionId, organizerId, data): EventSession
-    + openRegistration(sessionId, organizerId): void
-    + closeRegistration(sessionId, organizerId): void
-    + cancelSession(sessionId, organizerId): void
-  }
-
-  class AccessibilityService <<service>> {
-    + setEventFeatures(eventId, organizerId, featureIds): void
-    + findEventsByFeatures(featureIds): Event[]
-  }
+  EventService --> SessionService
+  EventService --> AccessibilityService
 }
 
 package "Registration & Ticketing" {
-  class RegistrationService <<service>> {
-    + register(attendeeId, sessionId): Registration
-    + cancelRegistration(attendeeId, registrationId): void
-    + cancelBySession(sessionId): void
+  class RegistrationService {
+    + register(...): Registration
+    + cancelRegistration(...): void
+  }
+  class BotProtectionService {
+    + validateRegistrationRequest(...): void
+  }
+  class AllocationService {
+    + allocateImmediate(...): void
+    + runAllocation(...): AllocationRun
+  }
+  class WaitlistService {
+    + enqueue(...): WaitlistEntry
+    + promoteNext(...): Registration?
+  }
+  class TicketService {
+    + issueTicket(...): Ticket
+    + cancelTicket(...): void
+    + findByCode(...): Ticket
+  }
+  class CheckInService {
+    + checkIn(...): CheckIn
   }
 
-  class AllocationService <<service>> {
-    + allocateImmediate(registrationId): void
-    + runAllocation(sessionId, organizerId): AllocationRun
-  }
+  RegistrationService --> BotProtectionService
+  RegistrationService --> AllocationService
+  AllocationService --> WaitlistService
+  AllocationService --> TicketService
+  RegistrationService --> TicketService
+  CheckInService --> TicketService
 
-  class WaitlistService <<service>> {
-    + enqueue(registrationId, position?): WaitlistEntry
-    + promoteNext(sessionId): Registration?
-    + cancelEntry(registrationId): void
-  }
-
-  class TicketService <<service>> {
-    + issueTicket(registrationId): Ticket
-    + cancelTicket(registrationId): void
-    + findByCode(ticketCode): Ticket
-  }
-
-  class CheckInService <<service>> {
-    + checkIn(staffId, sessionId, ticketCode): CheckIn
-  }
-
-  class BotProtectionService <<service>> {
-    + validateRegistrationRequest(attendeeId, sessionId): void
-  }
+  RegistrationService -[hidden]right- AllocationService
+  AllocationService -[hidden]right- TicketService
+  BotProtectionService -[hidden]right- WaitlistService
+  WaitlistService -[hidden]right- CheckInService
 }
 
-EventService --> SessionService : lifecycle
-EventService --> AccessibilityService
 SessionService --> RegistrationService : cancel cascade
-
-RegistrationService --> BotProtectionService
-RegistrationService --> AllocationService
-RegistrationService --> WaitlistService
-RegistrationService --> TicketService
-
-AllocationService --> WaitlistService
-AllocationService --> TicketService
-CheckInService --> TicketService
-
-note right of RegistrationService
-UC05 + UC06 orchestration.
-Controller chỉ gọi service,
-không tự đổi trạng thái entity.
-end note
-
-note right of AllocationService
-Bảo vệ capacity invariant
-và transaction cho FCFS/LOTTERY.
-end note
 
 @enduml
