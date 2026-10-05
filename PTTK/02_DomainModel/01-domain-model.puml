@@ -157,7 +157,7 @@ Registration "1" -- "0..1" Ticket : may receive >
 Ticket "1" -- "0..1" CheckIn : may produce >
 User "1" -- "0..*" CheckIn : performs as staff >
 Event "0..*" -- "0..*" AccessibilityFeature : supports >
-EventSession "1" -- "0..*" AllocationRun : audited by >
+EventSession "1" -- "0..1" AllocationRun : audited by >
 User "1" -- "0..*" AllocationRun : executes >
 
 note right of Event
@@ -185,10 +185,10 @@ thành công tối đa một lần.
 end note
 
 note bottom of AllocationRun
-LOTTERY tạo một thứ tự ngẫu nhiên công bằng.
-Người đầu trong phạm vi slot -> CONFIRMED.
-Phần còn lại -> WAITLISTED theo thứ tự rút.
-MVP: tối đa một AllocationRun đã commit cho mỗi Session LOTTERY.
+Chỉ dùng batch run cho LOTTERY trong MVP.
+Tối đa một AllocationRun đã commit / EventSession.
+LOTTERY tạo thứ tự ngẫu nhiên công bằng:
+slot đầu -> CONFIRMED, còn lại -> WAITLISTED.
 end note
 
 @enduml
