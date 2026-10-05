@@ -1,41 +1,25 @@
 @startuml
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam state {
+  BackgroundColor White
+  BorderColor Black
+}
 
-title MED-06 - STATE EVENT SESSION
+title MED-06 - STATE: EVENT SESSION
 
-[*] --> DRAFT : tạo EventSession
+[*] --> DRAFT : tạo Session
 DRAFT --> REGISTRATION_OPEN : mở đăng ký
-DRAFT --> CANCELLED : hủy suất
-
-REGISTRATION_OPEN --> REGISTRATION_CLOSED : đến thời điểm đóng\nhoặc Organizer đóng
-REGISTRATION_OPEN --> CANCELLED : hủy suất
-
-REGISTRATION_CLOSED --> ONGOING : đến thời điểm bắt đầu
-REGISTRATION_CLOSED --> CANCELLED : hủy suất
-
+REGISTRATION_OPEN --> REGISTRATION_CLOSED : hết hạn / Organizer đóng
+REGISTRATION_CLOSED --> ONGOING : đến giờ bắt đầu
 ONGOING --> COMPLETED : kết thúc suất
-ONGOING --> CANCELLED : hủy bất thường
-
 COMPLETED --> [*]
+
+DRAFT --> CANCELLED : hủy
+REGISTRATION_OPEN --> CANCELLED : hủy
+REGISTRATION_CLOSED --> CANCELLED : hủy
+ONGOING --> CANCELLED : hủy bất thường
 CANCELLED --> [*]
-
-note right of REGISTRATION_OPEN
-Chỉ trạng thái này + đúng registration window
-mới nhận Registration mới.
-end note
-
-note right of REGISTRATION_CLOSED
-LOTTERY AllocationRun được phép chạy
-sau khi đăng ký đã đóng.
-Trong MVP chỉ một AllocationRun LOTTERY
-được commit cho mỗi Session.
-end note
-
-note right of CANCELLED
-Khi Session bị hủy:
-- PENDING/WAITLISTED/CONFIRMED -> CANCELLED
-- Ticket VALID liên quan -> CANCELLED
-- không promote waitlist.
-end note
 
 @enduml
