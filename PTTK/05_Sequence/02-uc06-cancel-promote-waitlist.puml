@@ -24,7 +24,11 @@ RS -> RR : findOwnedById(registrationId, attendeeId)
 RR --> RS : Registration
 RS -> ESR : findById(registration.sessionId)
 ESR --> RS : EventSession
-RS -> RS : kiểm tra session chưa bắt đầu\nvà ticket chưa USED
+RS -> TS : findByRegistrationId(registrationId)
+TS -> TR : findByRegistrationId(registrationId)
+TR --> TS : Ticket / none
+TS --> RS : Ticket / none
+RS -> RS : kiểm tra session chưa bắt đầu\nvà Ticket nếu có chưa USED
 
 alt Registration = PENDING
   RS -> RR : updateStatus(CANCELLED)
@@ -45,13 +49,11 @@ else Registration = CONFIRMED
     ESR --> RS : locked EventSession
     RS -> RR : updateStatus(CANCELLED)
     RS -> TS : cancelTicket(registrationId)
-    TS -> TR : findByRegistrationId(registrationId)
-    TR --> TS : Ticket VALID
-    TS -> TR : updateStatus(CANCELLED)
+    TS -> TR : updateStatusByRegistrationId(CANCELLED)
     TR --> TS : done
 
     RS -> WS : promoteNext(sessionId)
-    WS -> WR : findFirstActiveForUpdate(sessionId)
+    WS -> WR : findFirstActiveForUpdate(sessionId, orderByPosition)
     WR --> WS : next WaitlistEntry / none
 
     alt có người chờ
@@ -78,6 +80,7 @@ UI --> Attendee : Hiển thị trạng thái đã hủy
 note over RS,WS
 Không promote đối với Registration PENDING/WAITLISTED bị hủy
 vì chúng chưa chiếm capacity. Chỉ hủy CONFIRMED mới giải phóng slot.
+Promotion và hủy Ticket nằm cùng transaction để không oversell.
 end note
 
 @enduml
