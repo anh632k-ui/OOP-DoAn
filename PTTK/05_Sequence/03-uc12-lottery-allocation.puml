@@ -1,71 +1,61 @@
 @startuml
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+hide footbox
 
-title MED-06 - SEQUENCE UC12 PHÂN BỔ VÉ LOTTERY
+title MED-06 - SEQUENCE UC12: PHÂN BỔ VÉ LOTTERY
 
 actor Organizer
-boundary "Next.js Organizer UI" as UI
-control "AllocationController" as AC
+boundary "Organizer UI" as UI
 control "AllocationService" as AS
-entity "EventSessionRepository" as ESR
-entity "RegistrationRepository" as RR
-control "LotteryAllocationStrategy" as LAS
+control "LotteryAllocationStrategy" as LS
 control "TicketService" as TS
 control "WaitlistService" as WS
-entity "AllocationRunRepository" as ARR
+database "PostgreSQL" as DB
 
 autonumber
-Organizer -> UI : Chọn chạy phân bổ vé
-UI -> AC : POST /sessions/{id}/allocation
-AC -> AS : runAllocation(sessionId, organizerId)
+Organizer -> UI : Chọn Chạy phân bổ
+UI -> AS : runAllocation(sessionId, organizerId)
 
- group Transaction + lock session
-  AS -> ESR : findOwnedSessionForUpdate(sessionId, organizerId)
-  ESR --> AS : EventSession locked
-  AS -> AS : kiểm tra registration đã đóng\nvà policy = LOTTERY
-  AS -> ARR : existsBySessionId(sessionId)
-  ARR --> AS : false
-  AS -> RR : findPendingEligible(sessionId)
-  RR --> AS : candidates[]
-  AS -> RR : countConfirmed(sessionId)
-  RR --> AS : confirmedCount
-  AS -> LAS : allocate(session, candidates, confirmedCount)
-  LAS -> LAS : shuffle công bằng + xác định slot
-  LAS --> AS : AllocationPlan
+group Transaction + lock EventSession
+  AS -> DB : lock session + kiểm tra ownership/policy/window
+  DB --> AS : EventSession LOTTERY
+  AS -> DB : kiểm tra AllocationRun đã tồn tại
+  DB --> AS : chưa có
+  AS -> DB : lấy PENDING candidates + confirmedCount
+  DB --> AS : candidates[] + confirmedCount
 
-  loop mỗi registration được xác nhận
-    AS -> RR : updateStatus(id, CONFIRMED)
-    AS -> TS : issueTicket(id)
-    TS --> AS : Ticket VALID
+  AS -> LS : allocate(session, candidates, confirmedCount)
+  LS --> AS : AllocationPlan
+
+  loop registrations được chọn
+    AS -> DB : status -> CONFIRMED
+    AS -> TS : issueTicket(registrationId)
+    TS -> DB : tạo Ticket VALID
   end
 
-  loop mỗi registration còn lại theo draw order
-    AS -> RR : updateStatus(id, WAITLISTED)
-    AS -> WS : enqueue(id, drawPosition)
-    WS --> AS : WaitlistEntry
+  loop registrations còn lại theo draw order
+    AS -> DB : status -> WAITLISTED
+    AS -> WS : enqueue(registrationId, drawPosition)
+    WS -> DB : tạo WaitlistEntry ACTIVE
   end
 
-  AS -> ARR : create(sessionId, organizerId, policy, counts, metadata)
-  ARR --> AS : AllocationRun
- end
+  AS -> DB : tạo AllocationRun + metadata audit
+end
 
-AS --> AC : AllocationRun result
-AC --> UI : 200 + summary
-UI --> Organizer : Hiển thị số trúng / waitlist
+AS --> UI : summary(confirmed, waitlisted)
+UI --> Organizer : Hiển thị kết quả phân bổ
 
-note over AS,ARR
-Session row lock + UNIQUE(allocation_runs.session_id)
-ngăn hai AllocationRun LOTTERY cùng commit.
-Nếu lỗi giữa chừng, toàn bộ status/ticket/waitlist/run rollback.
+note over AS,DB
+Row lock + UNIQUE(allocation_runs.session_id) bảo đảm chỉ một Lottery run commit.
+Lỗi giữa chừng => rollback toàn bộ.
 end note
 
-note right of LAS
-Strategy chỉ tính AllocationPlan.
-Nó không tự ghi DB.
-Application service chịu trách nhiệm orchestration + transaction.
-metadata lưu thông tin đủ để audit kết quả rút.
+note over AS,LS
+Strategy chỉ tính AllocationPlan; không tự ghi DB.
 end note
 
 @enduml
