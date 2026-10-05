@@ -1,65 +1,49 @@
 @startuml
-left to right direction
+top to bottom direction
+skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
+skinparam defaultFontSize 14
+skinparam nodesep 55
+skinparam ranksep 55
+hide circle
+hide stereotypes
 
 title MED-06 - CLASS DIAGRAM: ALLOCATION STRATEGY
 
-class AllocationService <<service>> {
-  + allocateImmediate(registrationId): void
-  + runAllocation(sessionId, organizerId): AllocationRun
+class AllocationService {
+  + allocateImmediate(...): void
+  + runAllocation(...): AllocationRun
 }
 
-interface TicketAllocationStrategy <<strategy>> {
+interface TicketAllocationStrategy {
   + allocate(session, candidates, confirmedCount): AllocationPlan
 }
 
-class FcfsAllocationStrategy <<strategy>> {
-  + allocate(session, candidates, confirmedCount): AllocationPlan
+class FcfsAllocationStrategy {
+  + allocate(...): AllocationPlan
 }
 
-class LotteryAllocationStrategy <<strategy>> {
-  + allocate(session, candidates, confirmedCount): AllocationPlan
+class LotteryAllocationStrategy {
+  + allocate(...): AllocationPlan
 }
 
-class AllocationPlan <<value object>> {
-  + confirmedRegistrationIds: UUID[]
-  + waitlistedRegistrationIds: UUID[]
+class AllocationPlan {
+  + confirmedIds: UUID[]
+  + waitlistedIds: UUID[]
   + orderedCandidateIds: UUID[]
 }
 
-class EventSession <<entity>> {
-  + capacity: int
-  + allocationPolicy: AllocationPolicy
-}
-
-class Registration <<entity>> {
-  + registeredAt: DateTime
-  + status: RegistrationStatus
-}
-
-AllocationService --> TicketAllocationStrategy : depends on abstraction
+AllocationService --> TicketAllocationStrategy : uses
 TicketAllocationStrategy <|.. FcfsAllocationStrategy
 TicketAllocationStrategy <|.. LotteryAllocationStrategy
-TicketAllocationStrategy ..> EventSession
-TicketAllocationStrategy ..> Registration
 TicketAllocationStrategy --> AllocationPlan : returns
 
-note bottom of FcfsAllocationStrategy
-FCFS: ưu tiên registeredAt,
-tie-breaker xác định.
-end note
+FcfsAllocationStrategy -[hidden]right- LotteryAllocationStrategy
 
-note bottom of LotteryAllocationStrategy
-LOTTERY: tạo thứ tự ngẫu nhiên
-sau khi đóng đăng ký.
-end note
-
-note right of AllocationService
-Service chọn strategy theo AllocationPolicy.
-Strategy chỉ tính AllocationPlan,
-không tự ghi DB.
+note bottom of TicketAllocationStrategy
+Strategy chỉ tính kết quả phân bổ.
+AllocationService chịu trách nhiệm transaction và persistence.
 end note
 
 @enduml
