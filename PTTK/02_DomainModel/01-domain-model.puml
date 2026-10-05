@@ -1,43 +1,36 @@
 @startuml
+left to right direction
 hide methods
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
+skinparam nodesep 35
+skinparam ranksep 45
 
-title MED-06 - DOMAIN MODEL
+title MED-06 - DOMAIN MODEL CORE
 
 class User {
   id
   fullName
-  email
   role
-  status
 }
 
 class Venue {
   id
   name
-  address
   capacity
 }
 
 class Event {
   id
   name
-  description
   status
-  startDate
-  endDate
-  imageUrl
 }
 
 class EventSession {
   id
   startTime
-  endTime
   capacity
-  registrationOpenAt
-  registrationCloseAt
   allocationPolicy
   status
 }
@@ -51,144 +44,50 @@ class Registration {
 class WaitlistEntry {
   id
   position
-  joinedAt
   status
 }
 
 class Ticket {
   id
   ticketCode
-  qrCode
-  issuedAt
   status
 }
 
 class CheckIn {
   id
   checkedInAt
-  method
 }
 
 class AccessibilityFeature {
   id
   name
-  description
 }
 
 class AllocationRun {
   id
-  executedByUserId
   policy
   executedAt
-  candidateCount
-  confirmedCount
-  metadata
 }
-
-enum UserRole {
-  ATTENDEE
-  ORGANIZER
-  STAFF
-  ADMIN
-}
-
-enum AccountStatus {
-  ACTIVE
-  LOCKED
-}
-
-enum EventStatus {
-  DRAFT
-  PUBLISHED
-  COMPLETED
-  CANCELLED
-}
-
-enum SessionStatus {
-  DRAFT
-  REGISTRATION_OPEN
-  REGISTRATION_CLOSED
-  ONGOING
-  COMPLETED
-  CANCELLED
-}
-
-enum AllocationPolicy {
-  FCFS
-  LOTTERY
-}
-
-enum RegistrationStatus {
-  PENDING
-  CONFIRMED
-  WAITLISTED
-  CANCELLED
-}
-
-enum WaitlistStatus {
-  ACTIVE
-  PROMOTED
-  CANCELLED
-}
-
-enum TicketStatus {
-  VALID
-  USED
-  CANCELLED
-  EXPIRED
-}
-
-User --> UserRole
-User --> AccountStatus
-Event --> EventStatus
-EventSession --> SessionStatus
-EventSession --> AllocationPolicy
-Registration --> RegistrationStatus
-WaitlistEntry --> WaitlistStatus
-Ticket --> TicketStatus
 
 User "1" -- "0..*" Event : organizes >
 Venue "1" -- "0..*" Event : hosts >
 Event "1" *-- "0..*" EventSession : contains >
+Event "0..*" -- "0..*" AccessibilityFeature : supports >
+
 User "1" -- "0..*" Registration : submits >
 EventSession "1" -- "0..*" Registration : receives >
-Registration "1" -- "0..1" WaitlistEntry : may create >
-Registration "1" -- "0..1" Ticket : may receive >
-Ticket "1" -- "0..1" CheckIn : may produce >
-User "1" -- "0..*" CheckIn : performs as staff >
-Event "0..*" -- "0..*" AccessibilityFeature : supports >
-EventSession "1" -- "0..1" AllocationRun : audited by >
+Registration "1" -- "0..1" WaitlistEntry : waitlist >
+Registration "1" -- "0..1" Ticket : ticket >
+Ticket "1" -- "0..1" CheckIn : check-in >
+User "1" -- "0..*" CheckIn : performs >
+EventSession "1" -- "0..1" AllocationRun : lottery audit >
 User "1" -- "0..*" AllocationRun : executes >
 
-note right of Event
-Event DRAFT có thể chưa có Session.
-Điều kiện publish: phải có ít nhất
-một EventSession hợp lệ.
-end note
-
-note right of Registration
-Business invariant:
-- unique(attendee, session) toàn vòng đời MVP
-- CONFIRMED count <= session.capacity
-end note
-
-note right of WaitlistEntry
-position là thứ tự ưu tiên của queue.
-Thứ hạng ACTIVE hiển thị có thể tính động.
-end note
-
-note right of Ticket
-Chỉ được tạo khi
-Registration = CONFIRMED.
-Một Ticket chỉ check-in
-thành công tối đa một lần.
-end note
-
-note bottom of AllocationRun
-Chỉ dùng batch run cho LOTTERY trong MVP.
-Tối đa một AllocationRun đã commit / EventSession.
-LOTTERY tạo thứ tự ngẫu nhiên công bằng:
-slot đầu -> CONFIRMED, còn lại -> WAITLISTED.
-end note
+' Layout helpers
+User -[hidden]-> Venue
+Venue -[hidden]-> Event
+EventSession -[hidden]-> Registration
+Registration -[hidden]-> Ticket
+Ticket -[hidden]-> CheckIn
 
 @enduml
