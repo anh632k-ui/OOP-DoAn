@@ -1,86 +1,66 @@
 @startuml
+skinparam monochrome true
 skinparam shadowing false
+skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+hide footbox
 
-title MED-06 - SEQUENCE UC06 HỦY ĐĂNG KÝ + PROMOTE WAITLIST
+title MED-06 - SEQUENCE UC06: HỦY ĐĂNG KÝ + PROMOTE WAITLIST
 
 actor Attendee
 boundary "Next.js UI" as UI
-control "RegistrationController" as RC
 control "RegistrationService" as RS
-entity "RegistrationRepository" as RR
-entity "EventSessionRepository" as ESR
 control "TicketService" as TS
 control "WaitlistService" as WS
-entity "WaitlistRepository" as WR
-entity "TicketRepository" as TR
+database "PostgreSQL" as DB
 
 autonumber
-Attendee -> UI : Yêu cầu hủy đăng ký
-UI -> RC : DELETE /registrations/{id}
-RC -> RS : cancelRegistration(attendeeId, registrationId)
-RS -> RR : findOwnedById(registrationId, attendeeId)
-RR --> RS : Registration
-RS -> ESR : findById(registration.sessionId)
-ESR --> RS : EventSession
-RS -> TS : findByRegistrationId(registrationId)
-TS -> TR : findByRegistrationId(registrationId)
-TR --> TS : Ticket / none
-TS --> RS : Ticket / none
-RS -> RS : kiểm tra session chưa bắt đầu\nvà Ticket nếu có chưa USED
+Attendee -> UI : Chọn Hủy đăng ký
+UI -> RS : cancelRegistration(attendeeId, registrationId)
+RS -> DB : tải Registration + Session + Ticket
+DB --> RS : dữ liệu hiện tại
+RS -> RS : kiểm tra ownership + điều kiện hủy
 
 alt Registration = PENDING
-  RS -> RR : updateStatus(CANCELLED)
-  RS --> RC : cancelled
-  RC --> UI : 204
+  RS -> DB : Registration -> CANCELLED
 
 else Registration = WAITLISTED
-  RS -> RR : updateStatus(CANCELLED)
-  RS -> WS : cancelEntry(registrationId)
-  WS -> WR : markCancelled(registrationId)
-  WR --> WS : done
-  RS --> RC : cancelled
-  RC --> UI : 204
+  group Transaction
+    RS -> DB : Registration -> CANCELLED
+    RS -> WS : cancelEntry(registrationId)
+    WS -> DB : WaitlistEntry -> CANCELLED
+  end
 
 else Registration = CONFIRMED
-  group Transaction + lock session
-    RS -> ESR : lockSession(registration.sessionId)
-    ESR --> RS : locked EventSession
-    RS -> RR : updateStatus(CANCELLED)
+  group Transaction + lock EventSession
+    RS -> DB : lock session + Registration -> CANCELLED
     RS -> TS : cancelTicket(registrationId)
-    TS -> TR : updateStatusByRegistrationId(CANCELLED)
-    TR --> TS : done
+    TS -> DB : Ticket VALID -> CANCELLED
 
     RS -> WS : promoteNext(sessionId)
-    WS -> WR : findFirstActiveForUpdate(sessionId, orderByPosition)
-    WR --> WS : next WaitlistEntry / none
+    WS -> DB : lấy WaitlistEntry ACTIVE đầu tiên FOR UPDATE
 
     alt có người chờ
-      WS -> RR : findById(next.registrationId)
-      RR --> WS : Registration WAITLISTED
-      WS -> RR : updateStatus(CONFIRMED)
-      WS -> WR : markPromoted(next.id)
-      WS -> TS : issueTicket(next.registrationId)
-      TS -> TR : create(VALID ticket)
-      TR --> TS : Ticket
-      TS --> WS : Ticket
-      WS --> RS : promoted Registration
+      DB --> WS : next entry
+      WS -> DB : Registration chờ -> CONFIRMED
+      WS -> DB : WaitlistEntry -> PROMOTED
+      WS -> TS : issueTicket(nextRegistrationId)
+      TS -> DB : tạo Ticket VALID
+      WS --> RS : promoted
     else không còn người chờ
+      DB --> WS : none
       WS --> RS : none
     end
   end
-
-  RS --> RC : cancelled
-  RC --> UI : 204
 end
 
-UI --> Attendee : Hiển thị trạng thái đã hủy
+RS --> UI : 204 No Content
+UI --> Attendee : Đã hủy đăng ký
 
-note over RS,WS
-Không promote đối với Registration PENDING/WAITLISTED bị hủy
-vì chúng chưa chiếm capacity. Chỉ hủy CONFIRMED mới giải phóng slot.
-Promotion và hủy Ticket nằm cùng transaction để không oversell.
+note over RS,DB
+Chỉ hủy CONFIRMED mới giải phóng slot và kích hoạt promote.
+Hủy + hủy Ticket + promote phải commit atomically.
 end note
 
 @enduml
