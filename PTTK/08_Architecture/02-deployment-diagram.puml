@@ -36,8 +36,4 @@ API --> PG : SQL connection
 API --> MinIO : S3 API
 API ..> S3 : S3 API [production]
 
-FE -[hidden]down-> BE
-BE -[hidden]down-> DBNODE
-DBNODE -[hidden]down-> STORAGE
-
 @enduml
