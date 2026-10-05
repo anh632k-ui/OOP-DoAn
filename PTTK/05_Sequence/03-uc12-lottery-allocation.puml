@@ -20,47 +20,52 @@ autonumber
 Organizer -> UI : Chọn chạy phân bổ vé
 UI -> AC : POST /sessions/{id}/allocation
 AC -> AS : runAllocation(sessionId, organizerId)
-AS -> ESR : findOwnedSessionForUpdate(sessionId, organizerId)
-ESR --> AS : EventSession locked
-AS -> AS : kiểm tra registration đã đóng\nvà policy = LOTTERY
-AS -> ARR : existsCompletedRun(sessionId)
-ARR --> AS : false
-AS -> RR : findPendingEligible(sessionId)
-RR --> AS : candidates[]
-AS -> RR : countConfirmed(sessionId)
-RR --> AS : confirmedCount
-AS -> LAS : allocate(session, candidates, confirmedCount)
-LAS -> LAS : shuffle công bằng + xác định slot
-LAS --> AS : AllocationPlan
 
-loop mỗi registration được xác nhận
-  AS -> RR : updateStatus(id, CONFIRMED)
-  AS -> TS : issueTicket(id)
-  TS --> AS : Ticket VALID
-end
+ group Transaction + lock session
+  AS -> ESR : findOwnedSessionForUpdate(sessionId, organizerId)
+  ESR --> AS : EventSession locked
+  AS -> AS : kiểm tra registration đã đóng\nvà policy = LOTTERY
+  AS -> ARR : existsBySessionId(sessionId)
+  ARR --> AS : false
+  AS -> RR : findPendingEligible(sessionId)
+  RR --> AS : candidates[]
+  AS -> RR : countConfirmed(sessionId)
+  RR --> AS : confirmedCount
+  AS -> LAS : allocate(session, candidates, confirmedCount)
+  LAS -> LAS : shuffle công bằng + xác định slot
+  LAS --> AS : AllocationPlan
 
-loop mỗi registration còn lại
-  AS -> RR : updateStatus(id, WAITLISTED)
-  AS -> WS : enqueueInDrawOrder(id)
-  WS --> AS : WaitlistEntry
-end
+  loop mỗi registration được xác nhận
+    AS -> RR : updateStatus(id, CONFIRMED)
+    AS -> TS : issueTicket(id)
+    TS --> AS : Ticket VALID
+  end
 
-AS -> ARR : create(sessionId, policy, counts, metadata)
-ARR --> AS : AllocationRun
+  loop mỗi registration còn lại theo draw order
+    AS -> RR : updateStatus(id, WAITLISTED)
+    AS -> WS : enqueue(id, drawPosition)
+    WS --> AS : WaitlistEntry
+  end
+
+  AS -> ARR : create(sessionId, organizerId, policy, counts, metadata)
+  ARR --> AS : AllocationRun
+ end
+
 AS --> AC : AllocationRun result
 AC --> UI : 200 + summary
 UI --> Organizer : Hiển thị số trúng / waitlist
 
 note over AS,ARR
-Các bước update Registration, phát Ticket, tạo WaitlistEntry
-và ghi AllocationRun phải commit atomically.
-Nếu lỗi giữa chừng thì rollback toàn bộ run.
+Session row lock + UNIQUE(allocation_runs.session_id)
+ngăn hai AllocationRun LOTTERY cùng commit.
+Nếu lỗi giữa chừng, toàn bộ status/ticket/waitlist/run rollback.
 end note
 
 note right of LAS
 Strategy chỉ tính AllocationPlan.
 Nó không tự ghi DB.
 Application service chịu trách nhiệm orchestration + transaction.
+metadata lưu thông tin đủ để audit kết quả rút.
 end note
 
 @enduml
