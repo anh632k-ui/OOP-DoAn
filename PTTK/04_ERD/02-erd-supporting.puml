@@ -1,55 +1,29 @@
 @startuml
 left to right direction
-hide circle
+skinparam monochrome true
 skinparam shadowing false
-skinparam linetype ortho
-skinparam entity {
-  BackgroundColor White
-  BorderColor Black
-}
+skinparam defaultFontSize 14
+hide circle
 
-title MED-06 - ERD SUPPORTING / ACCESSIBILITY
+title MED-06 - ERD: ACCESSIBILITY
 
-entity "events" as events {
+entity events {
   * id : UUID <<PK>>
-  --
-  organizer_id : UUID <<FK>>
-  venue_id : UUID <<FK>>
-  image_url : TEXT
 }
 
-entity "accessibility_features" as features {
+entity event_accessibility {
+  * event_id : UUID <<PK, FK>>
+  * accessibility_feature_id : UUID <<PK, FK>>
+}
+
+entity accessibility_features {
   * id : UUID <<PK>>
   --
   name : VARCHAR(120) <<UQ>>
   description : TEXT
 }
 
-entity "event_accessibility" as event_accessibility {
-  * event_id : UUID <<PK, FK>>
-  * accessibility_feature_id : UUID <<PK, FK>>
-}
-
-events ||--o{ event_accessibility : event_id
-features ||--o{ event_accessibility : accessibility_feature_id
-
-note bottom of events
-image_url chỉ lưu URL/metadata.
-Ảnh thật nằm ở object storage.
-end note
-
-note bottom of event_accessibility
-Bảng nối many-to-many.
-Accessibility chỉ dùng mô tả/lọc trong MVP,
-không làm thay đổi quota hoặc allocation.
-end note
-
-legend right
-  Các constraint quan trọng nằm ở ERD core:
-  - UNIQUE(registrations.attendee_id, session_id)
-  - UNIQUE(tickets.registration_id)
-  - UNIQUE(check_ins.ticket_id)
-  - UNIQUE(allocation_runs.session_id) cho LOTTERY MVP
-endlegend
+events ||--o{ event_accessibility
+accessibility_features ||--o{ event_accessibility
 
 @enduml
