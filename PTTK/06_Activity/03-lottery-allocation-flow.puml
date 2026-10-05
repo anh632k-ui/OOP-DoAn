@@ -13,13 +13,14 @@ else (Không)
   stop
 endif
 
-if (Đã có AllocationRun hoàn tất?) then (Có)
+:Khóa EventSession;
+
+if (Đã có AllocationRun đã commit?) then (Có)
   :Từ chối chạy lặp;
   stop
 else (Không)
 endif
 
-:Khóa EventSession;
 :Lấy Registration PENDING hợp lệ;
 :Đếm số Registration CONFIRMED hiện tại;
 :Tính số slot còn lại;
@@ -33,8 +34,8 @@ else (Không)
 endif
 
 :Các ứng viên còn lại -> WAITLISTED;
-:Tạo WaitlistEntry theo thứ tự rút;
-:Ghi AllocationRun + metadata audit;
+:Tạo WaitlistEntry theo draw position;
+:Ghi AllocationRun + executedBy + metadata audit;
 :Commit transaction;
 :Trả kết quả cho Organizer;
 stop
