@@ -1,0 +1,47 @@
+@startuml
+top to bottom direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BorderColor Black
+  ArrowColor Black
+}
+
+title MED-06 - USE CASE RELATIONS
+
+rectangle "Đăng ký suất" {
+  usecase "UC05\nĐăng ký một suất" as UC05
+  usecase "Kiểm tra chống bot" as BOT
+  usecase "Kiểm tra cửa sổ đăng ký" as WINDOW
+  usecase "Xác định chính sách phân bổ" as POLICY
+}
+
+rectangle "Hủy và waitlist" {
+  usecase "UC06\nHủy đăng ký" as UC06
+  usecase "Promote người tiếp theo\ntừ waitlist" as PROMOTE
+}
+
+rectangle "Phân bổ và check-in" {
+  usecase "UC12\nThực hiện phân bổ vé" as UC12
+  usecase "UC14\nCheck-in vé" as UC14
+  usecase "Xác minh vé hợp lệ\nvà chưa sử dụng" as VALIDATE
+}
+
+UC05 .> BOT : <<include>>
+UC05 .> WINDOW : <<include>>
+UC05 .> POLICY : <<include>>
+PROMOTE .> UC06 : <<extend>>\n[khi CONFIRMED bị hủy\nvà waitlist còn người]
+UC12 .> POLICY : <<include>>
+UC14 .> VALIDATE : <<include>>
+
+note right of UC05
+FCFS xử lý ngay khi đăng ký.
+LOTTERY giữ Registration = PENDING.
+end note
+
+note right of UC12
+LOTTERY chạy sau khi đóng đăng ký
+và tạo AllocationRun để audit.
+end note
+
+@enduml
