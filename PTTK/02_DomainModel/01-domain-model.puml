@@ -1,0 +1,180 @@
+@startuml
+hide methods
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+title MED-06 - DOMAIN MODEL
+
+class User {
+  id
+  fullName
+  email
+  role
+  status
+}
+
+class Venue {
+  id
+  name
+  address
+  capacity
+}
+
+class Event {
+  id
+  name
+  description
+  status
+  startDate
+  endDate
+  imageUrl
+}
+
+class EventSession {
+  id
+  startTime
+  endTime
+  capacity
+  registrationOpenAt
+  registrationCloseAt
+  allocationPolicy
+  status
+}
+
+class Registration {
+  id
+  registeredAt
+  status
+}
+
+class WaitlistEntry {
+  id
+  position
+  joinedAt
+  status
+}
+
+class Ticket {
+  id
+  ticketCode
+  qrCode
+  issuedAt
+  status
+}
+
+class CheckIn {
+  id
+  checkedInAt
+  method
+}
+
+class AccessibilityFeature {
+  id
+  name
+  description
+}
+
+class AllocationRun {
+  id
+  policy
+  executedAt
+  candidateCount
+  confirmedCount
+  metadata
+}
+
+enum UserRole {
+  ATTENDEE
+  ORGANIZER
+  STAFF
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  LOCKED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum AllocationPolicy {
+  FCFS
+  LOTTERY
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+}
+
+enum WaitlistStatus {
+  ACTIVE
+  PROMOTED
+  CANCELLED
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
+  EXPIRED
+}
+
+User --> UserRole
+User --> AccountStatus
+Event --> EventStatus
+EventSession --> SessionStatus
+EventSession --> AllocationPolicy
+Registration --> RegistrationStatus
+WaitlistEntry --> WaitlistStatus
+Ticket --> TicketStatus
+
+User "1" -- "0..*" Event : organizes >
+Venue "1" -- "0..*" Event : hosts >
+Event "1" *-- "1..*" EventSession : contains >
+User "1" -- "0..*" Registration : submits >
+EventSession "1" -- "0..*" Registration : receives >
+Registration "1" -- "0..1" WaitlistEntry : may create >
+Registration "1" -- "0..1" Ticket : may receive >
+Ticket "1" -- "0..1" CheckIn : may produce >
+User "1" -- "0..*" CheckIn : performs as staff >
+Event "0..*" -- "0..*" AccessibilityFeature : supports >
+EventSession "1" -- "0..*" AllocationRun : audited by >
+
+note right of Registration
+Business invariant:
+- unique(attendee, session)
+- CONFIRMED count <= session.capacity
+end note
+
+note right of Ticket
+Chỉ được tạo khi
+Registration = CONFIRMED.
+Một Ticket chỉ check-in
+thành công tối đa một lần.
+end note
+
+note bottom of AllocationRun
+LOTTERY tạo một thứ tự ngẫu nhiên công bằng.
+Người đầu trong phạm vi slot -> CONFIRMED.
+Phần còn lại -> WAITLISTED theo thứ tự rút.
+end note
+
+@enduml
