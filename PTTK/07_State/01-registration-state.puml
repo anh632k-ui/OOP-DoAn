@@ -1,0 +1,31 @@
+@startuml
+skinparam shadowing false
+
+title MED-06 - STATE REGISTRATION
+
+[*] --> PENDING : create registration
+
+PENDING --> CONFIRMED : FCFS còn chỗ\nhoặc trúng LOTTERY
+PENDING --> WAITLISTED : FCFS hết chỗ\nhoặc không trúng LOTTERY
+PENDING --> CANCELLED : attendee hủy
+
+WAITLISTED --> CONFIRMED : promote từ waitlist
+WAITLISTED --> CANCELLED : attendee hủy
+
+CONFIRMED --> CANCELLED : attendee hủy trước session\nTicket chưa USED
+
+CONFIRMED --> [*] : session hoàn tất
+CANCELLED --> [*]
+
+note right of CONFIRMED
+Khi vào CONFIRMED:
+- phải bảo vệ capacity invariant
+- phát đúng một Ticket VALID
+end note
+
+note right of WAITLISTED
+WAITLISTED phải có WaitlistEntry ACTIVE.
+Khi promote: WaitlistEntry -> PROMOTED.
+end note
+
+@enduml
