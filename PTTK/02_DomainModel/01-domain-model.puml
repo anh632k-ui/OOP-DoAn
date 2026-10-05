@@ -77,6 +77,7 @@ class AccessibilityFeature {
 
 class AllocationRun {
   id
+  executedByUserId
   policy
   executedAt
   candidateCount
@@ -148,7 +149,7 @@ Ticket --> TicketStatus
 
 User "1" -- "0..*" Event : organizes >
 Venue "1" -- "0..*" Event : hosts >
-Event "1" *-- "1..*" EventSession : contains >
+Event "1" *-- "0..*" EventSession : contains >
 User "1" -- "0..*" Registration : submits >
 EventSession "1" -- "0..*" Registration : receives >
 Registration "1" -- "0..1" WaitlistEntry : may create >
@@ -157,11 +158,23 @@ Ticket "1" -- "0..1" CheckIn : may produce >
 User "1" -- "0..*" CheckIn : performs as staff >
 Event "0..*" -- "0..*" AccessibilityFeature : supports >
 EventSession "1" -- "0..*" AllocationRun : audited by >
+User "1" -- "0..*" AllocationRun : executes >
+
+note right of Event
+Event DRAFT có thể chưa có Session.
+Điều kiện publish: phải có ít nhất
+một EventSession hợp lệ.
+end note
 
 note right of Registration
 Business invariant:
-- unique(attendee, session)
+- unique(attendee, session) toàn vòng đời MVP
 - CONFIRMED count <= session.capacity
+end note
+
+note right of WaitlistEntry
+position là thứ tự ưu tiên của queue.
+Thứ hạng ACTIVE hiển thị có thể tính động.
 end note
 
 note right of Ticket
@@ -175,6 +188,7 @@ note bottom of AllocationRun
 LOTTERY tạo một thứ tự ngẫu nhiên công bằng.
 Người đầu trong phạm vi slot -> CONFIRMED.
 Phần còn lại -> WAITLISTED theo thứ tự rút.
+MVP: tối đa một AllocationRun đã commit cho mỗi Session LOTTERY.
 end note
 
 @enduml
