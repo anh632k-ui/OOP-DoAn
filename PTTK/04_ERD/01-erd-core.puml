@@ -9,7 +9,7 @@ hide circle
 
 title MED-06 - ERD CORE
 
-entity users {
+entity "users" as users {
   * id : UUID <<PK>>
   --
   email : VARCHAR <<UQ>>
@@ -17,14 +17,14 @@ entity users {
   status : account_status
 }
 
-entity venues {
+entity "venues" as venues {
   * id : UUID <<PK>>
   --
   name : VARCHAR
   capacity : INTEGER
 }
 
-entity events {
+entity "events" as events {
   * id : UUID <<PK>>
   --
   organizer_id : UUID <<FK>>
@@ -33,7 +33,7 @@ entity events {
   status : event_status
 }
 
-entity event_sessions as sessions {
+entity "event_sessions" as sessions {
   * id : UUID <<PK>>
   --
   event_id : UUID <<FK>>
@@ -42,7 +42,7 @@ entity event_sessions as sessions {
   status : session_status
 }
 
-entity registrations {
+entity "registrations" as registrations {
   * id : UUID <<PK>>
   --
   attendee_id : UUID <<FK>>
@@ -52,7 +52,7 @@ entity registrations {
   UQ(attendee_id, session_id)
 }
 
-entity waitlist_entries as waitlist {
+entity "waitlist_entries" as waitlist {
   * id : UUID <<PK>>
   --
   registration_id : UUID <<FK, UQ>>
@@ -60,7 +60,7 @@ entity waitlist_entries as waitlist {
   status : waitlist_status
 }
 
-entity tickets {
+entity "tickets" as tickets {
   * id : UUID <<PK>>
   --
   registration_id : UUID <<FK, UQ>>
@@ -68,14 +68,14 @@ entity tickets {
   status : ticket_status
 }
 
-entity check_ins as checkins {
+entity "check_ins" as checkins {
   * id : UUID <<PK>>
   --
   ticket_id : UUID <<FK, UQ>>
   staff_id : UUID <<FK>>
 }
 
-entity allocation_runs as runs {
+entity "allocation_runs" as runs {
   * id : UUID <<PK>>
   --
   session_id : UUID <<FK, UQ>>
@@ -95,10 +95,10 @@ sessions ||--o| runs : lottery run
 users ||--o{ checkins : staff
 users ||--o{ runs : executes
 
-' Force a compact tree/grid instead of one long horizontal chain.
-users -[hidden]right- venues
-sessions -[hidden]right- runs
-waitlist -[hidden]right- tickets
-tickets -[hidden]right- checkins
+' Layout helpers - valid hidden arrows.
+users -[hidden]-> venues
+sessions -[hidden]-> runs
+waitlist -[hidden]-> tickets
+tickets -[hidden]-> checkins
 
 @enduml
