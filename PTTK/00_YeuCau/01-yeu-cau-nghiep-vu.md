@@ -38,17 +38,17 @@ Xây dựng cổng quản lý sự kiện văn hóa và vé miễn phí cho phé
 | CheckInStaff | Nhân viên tại sự kiện; xác minh QR và thực hiện check-in. |
 | Administrator | Quản trị hệ thống; quản lý người dùng và giám sát dữ liệu/nghiệp vụ hệ thống. |
 
-> `Guest` không phải role lưu trong CSDL. Các role tài khoản dự kiến: `ATTENDEE`, `ORGANIZER`, `STAFF`, `ADMIN`.
+> `Guest` không phải role lưu trong CSDL. `Authenticated User` trong Use Case Diagram chỉ là actor khái quát để gom hành vi chung của tài khoản đã đăng nhập, cũng không phải role lưu trong CSDL. Các role tài khoản: `ATTENDEE`, `ORGANIZER`, `STAFF`, `ADMIN`.
 
 ## 4. Yêu cầu chức năng
 | ID | Yêu cầu |
 |---|---|
 | FR-01 | Guest có thể đăng ký tài khoản và đăng nhập. |
 | FR-02 | Hệ thống phân quyền chức năng theo role. |
-| FR-03 | Guest/Attendee có thể xem danh sách, tìm kiếm và lọc Event. |
+| FR-03 | Guest/người dùng đã đăng nhập có thể xem danh sách, tìm kiếm và lọc Event. |
 | FR-04 | Người dùng có thể xem chi tiết Event, các EventSession và AccessibilityFeature. |
 | FR-05 | Organizer có thể tạo, cập nhật và công bố Event. |
-| FR-06 | Organizer có thể tạo/cập nhật EventSession với thời gian, sức chứa và thời gian đăng ký. |
+| FR-06 | Organizer có thể tạo/cập nhật/mở/đóng/hủy EventSession với thời gian, sức chứa và thời gian đăng ký. |
 | FR-07 | Organizer có thể chọn `FCFS` hoặc `LOTTERY` cho từng EventSession. |
 | FR-08 | Attendee có thể gửi Registration cho một EventSession khi cửa sổ đăng ký đang mở. |
 | FR-09 | Hệ thống phải ngăn một Attendee tạo nhiều Registration cho cùng một EventSession. |
@@ -71,14 +71,14 @@ Xây dựng cổng quản lý sự kiện văn hóa và vé miễn phí cho phé
 ## 5. Business Rules
 | ID | Quy tắc |
 |---|---|
-| BR-01 | Một Event có một hoặc nhiều EventSession; Ticket/Registration luôn gắn với EventSession, không gắn trực tiếp với Event. |
+| BR-01 | Event ở trạng thái `DRAFT` có thể chưa có EventSession. Muốn `PUBLISHED`, Event phải có ít nhất một EventSession hợp lệ. Ticket/Registration luôn gắn với EventSession, không gắn trực tiếp với Event. |
 | BR-02 | `capacity` của EventSession phải lớn hơn 0 và không vượt quá sức chứa địa điểm theo mô hình MVP. |
-| BR-03 | Attendee chỉ được đăng ký khi `registrationOpenAt <= currentTime < registrationCloseAt` và EventSession cho phép đăng ký. |
-| BR-04 | Cặp `(attendeeId, sessionId)` là duy nhất đối với Registration đang tồn tại trong hệ thống; không cho spam đăng ký lặp. |
+| BR-03 | Attendee chỉ được đăng ký khi `registrationOpenAt <= currentTime < registrationCloseAt` và EventSession ở trạng thái cho phép đăng ký. |
+| BR-04 | MVP dùng một Registration duy nhất cho mỗi cặp `(attendeeId, sessionId)` trong toàn bộ vòng đời. Registration đã `CANCELLED` không tạo bản ghi thứ hai cho cùng cặp; constraint DB `UNIQUE(attendee_id, session_id)` là lớp bảo vệ cuối. |
 | BR-05 | `FCFS`: thứ tự ưu tiên dựa trên thời điểm Registration được hệ thống chấp nhận; khi bằng thời gian dùng ID/sequence làm tie-breaker xác định. |
 | BR-06 | `FCFS`: nếu số Registration xác nhận nhỏ hơn capacity thì Registration mới chuyển `CONFIRMED`; ngược lại chuyển `WAITLISTED`. |
 | BR-07 | `LOTTERY`: Registration hợp lệ ban đầu ở `PENDING`; sau khi đóng đăng ký mới được đưa vào AllocationRun. |
-| BR-08 | `LOTTERY`: hệ thống tạo một thứ tự ngẫu nhiên công bằng từ tập Registration hợp lệ; tối đa `capacity` phần tử đầu được `CONFIRMED`, phần còn lại thành waitlist theo chính thứ tự rút. |
+| BR-08 | `LOTTERY`: hệ thống tạo một thứ tự ngẫu nhiên công bằng từ tập Registration hợp lệ; tối đa số slot khả dụng phần tử đầu được `CONFIRMED`, phần còn lại thành waitlist theo chính thứ tự rút. |
 | BR-09 | Mỗi Registration `CONFIRMED` có tối đa một Ticket; Ticket không được tạo cho Registration chưa xác nhận. |
 | BR-10 | Hủy Registration `CONFIRMED` phải hủy Ticket chưa dùng tương ứng. Nếu waitlist có người, hệ thống promote người đầu danh sách và phát Ticket mới. |
 | BR-11 | Registration/Ticket đã check-in (`USED`) không được hủy theo luồng thông thường. |
@@ -86,9 +86,11 @@ Xây dựng cổng quản lý sự kiện văn hóa và vé miễn phí cho phé
 | BR-13 | Check-in thành công làm Ticket chuyển sang `USED` và tạo đúng một CheckIn record. |
 | BR-14 | Chống bot tối thiểu gồm: authenticated account, rate limit cấu hình được, unique registration constraint và kiểm tra trạng thái tài khoản. |
 | BR-15 | AccessibilityFeature mang tính mô tả/lọc trong MVP; không tự động tạo quota ưu tiên hoặc thay đổi thuật toán allocation. |
-| BR-16 | AllocationRun phải lưu tối thiểu: session, policy, thời điểm chạy, số ứng viên hợp lệ, số vé cấp và dữ liệu cần thiết để audit kết quả. |
+| BR-16 | AllocationRun phải lưu tối thiểu: session, người kích hoạt, policy, thời điểm chạy, số ứng viên hợp lệ, số vé cấp và dữ liệu cần thiết để audit kết quả. Trong MVP, một EventSession `LOTTERY` chỉ có một AllocationRun đã commit. |
 | BR-17 | Organizer chỉ được quản lý Event do mình sở hữu; Admin có quyền quản trị toàn hệ thống. |
 | BR-18 | Không được oversell: việc xác nhận Registration, phát Ticket và promote waitlist phải dùng transaction/locking phù hợp khi có request đồng thời. |
+| BR-19 | Khi EventSession bị hủy, các Registration chưa kết thúc của suất được chuyển `CANCELLED` và Ticket `VALID` tương ứng phải bị hủy. Event bị hủy phải dẫn tới hủy các EventSession chưa hoàn tất. |
+| BR-20 | `WaitlistEntry.position` là khóa thứ tự ưu tiên của hàng chờ, không bắt buộc luôn bằng thứ hạng hiển thị hiện tại; thứ hạng hiển thị có thể tính lại từ các entry `ACTIVE`. |
 
 ## 6. Trạng thái nghiệp vụ dự kiến
 ### 6.1. Event
@@ -105,7 +107,7 @@ Có thể chuyển sang `CANCELLED` trước khi hoàn tất.
 - FCFS còn chỗ: `PENDING -> CONFIRMED`.
 - FCFS hết chỗ: `PENDING -> WAITLISTED -> CONFIRMED` khi được promote.
 - Lottery: `PENDING -> CONFIRMED` hoặc `PENDING -> WAITLISTED` sau AllocationRun.
-- `PENDING/WAITLISTED/CONFIRMED -> CANCELLED` khi thỏa điều kiện hủy.
+- `PENDING/WAITLISTED/CONFIRMED -> CANCELLED` khi thỏa điều kiện hủy hoặc EventSession bị hủy.
 
 ### 6.4. Ticket
 `VALID -> USED`
@@ -130,11 +132,13 @@ Nhánh khác: `VALID -> CANCELLED` hoặc `VALID -> EXPIRED`.
 ## 8. Các bất biến quan trọng cần bảo vệ khi code
 1. `confirmed registrations <= session.capacity`.
 2. Một Attendee không có hai Registration cho cùng một EventSession.
-3. Một Registration chỉ có tối đa một Ticket đang gắn với nó.
+3. Một Registration chỉ có tối đa một Ticket gắn với nó.
 4. Một Ticket chỉ có tối đa một CheckIn thành công.
 5. `USED` Ticket không quay lại `VALID` bằng luồng nghiệp vụ thông thường.
 6. Waitlist promotion không được tạo vượt capacity.
-7. Các thay đổi trạng thái phải đi qua application/domain service, không cập nhật tùy tiện từ controller.
+7. Event chỉ được publish khi có ít nhất một EventSession hợp lệ.
+8. Một EventSession LOTTERY chỉ có một AllocationRun đã commit trong MVP.
+9. Các thay đổi trạng thái phải đi qua application/domain service, không cập nhật tùy tiện từ controller.
 
 ## 9. Baseline hiện tại
-Tài liệu này là nguồn chuẩn cho các sơ đồ tiếp theo trên nhánh `dev`. Nếu thay đổi một business rule, phải kiểm tra và cập nhật tối thiểu: Use Case, Domain Model, Class Diagram, ERD và Sequence liên quan.
+Tài liệu này là nguồn chuẩn cho các sơ đồ tiếp theo trên nhánh `dev`. Nếu thay đổi một business rule, phải kiểm tra và cập nhật tối thiểu: Use Case, Domain Model, Class Diagram, ERD và Sequence/Activity/State liên quan.
