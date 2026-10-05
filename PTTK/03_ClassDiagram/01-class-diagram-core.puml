@@ -37,7 +37,7 @@ package "Domain Entities" {
     - imageUrl: string
     - createdAt: DateTime
     - updatedAt: DateTime
-    + canPublish(): boolean
+    + canPublish(validSessionCount: int): boolean
     + publish(): void
     + cancel(): void
   }
@@ -69,7 +69,7 @@ package "Domain Entities" {
 
   class WaitlistEntry <<entity>> {
     - id: UUID
-    - position: int
+    - position: long
     - joinedAt: DateTime
     - status: WaitlistStatus
     + promote(): void
@@ -102,6 +102,7 @@ package "Domain Entities" {
 
   class AllocationRun <<entity>> {
     - id: UUID
+    - executedByUserId: UUID
     - policy: AllocationPolicy
     - executedAt: DateTime
     - candidateCount: int
@@ -114,14 +115,27 @@ package "Application / Domain Services" {
   class EventService <<service>> {
     + createEvent(organizerId: UUID, data): Event
     + updateEvent(eventId: UUID, organizerId: UUID, data): Event
-    + addSession(eventId: UUID, organizerId: UUID, data): EventSession
     + publishEvent(eventId: UUID, organizerId: UUID): Event
-    + setAccessibility(eventId: UUID, organizerId: UUID, featureIds: UUID[]): void
+    + cancelEvent(eventId: UUID, organizerId: UUID): void
+  }
+
+  class SessionService <<service>> {
+    + createSession(eventId: UUID, organizerId: UUID, data): EventSession
+    + updateSession(sessionId: UUID, organizerId: UUID, data): EventSession
+    + openRegistration(sessionId: UUID, organizerId: UUID): void
+    + closeRegistration(sessionId: UUID, organizerId: UUID): void
+    + cancelSession(sessionId: UUID, organizerId: UUID): void
+  }
+
+  class AccessibilityService <<service>> {
+    + setEventFeatures(eventId: UUID, organizerId: UUID, featureIds: UUID[]): void
+    + findEventsByFeatures(featureIds: UUID[]): Event[]
   }
 
   class RegistrationService <<service>> {
     + register(attendeeId: UUID, sessionId: UUID): Registration
     + cancelRegistration(attendeeId: UUID, registrationId: UUID): void
+    + cancelBySession(sessionId: UUID): void
   }
 
   class AllocationService <<service>> {
@@ -131,14 +145,15 @@ package "Application / Domain Services" {
   }
 
   class WaitlistService <<service>> {
-    + enqueue(registrationId: UUID): WaitlistEntry
-    + promoteNext(sessionId: UUID): Registration
+    + enqueue(registrationId: UUID, position: long?): WaitlistEntry
+    + promoteNext(sessionId: UUID): Registration?
     + cancelEntry(registrationId: UUID): void
   }
 
   class TicketService <<service>> {
     + issueTicket(registrationId: UUID): Ticket
     + cancelTicket(registrationId: UUID): void
+    + findByRegistrationId(registrationId: UUID): Ticket?
     + findByCode(ticketCode: string): Ticket
   }
 
@@ -237,7 +252,7 @@ package "Enums" {
 ' ===== Domain relationships =====
 User "1" -- "0..*" Event : organizes >
 Venue "1" -- "0..*" Event : hosts >
-Event "1" *-- "1..*" EventSession : contains >
+Event "1" *-- "0..*" EventSession : contains >
 Event "0..*" -- "0..*" AccessibilityFeature : supports >
 
 User "1" -- "0..*" Registration : submits >
@@ -247,6 +262,7 @@ Registration "1" *-- "0..1" Ticket : ticket >
 Ticket "1" *-- "0..1" CheckIn : check-in >
 User "1" -- "0..*" CheckIn : performs >
 EventSession "1" *-- "0..*" AllocationRun : allocation history >
+User "1" -- "0..*" AllocationRun : executes >
 
 User --> UserRole
 User --> AccountStatus
@@ -268,8 +284,11 @@ TicketAllocationStrategy ..> Registration
 
 ' ===== Service dependencies =====
 EventService ..> Event
-EventService ..> EventSession
-EventService ..> AccessibilityFeature
+EventService --> SessionService : validate/cascade lifecycle
+SessionService ..> EventSession
+SessionService --> RegistrationService : cancel cascade
+AccessibilityService ..> AccessibilityFeature
+AccessibilityService ..> Event
 
 RegistrationService ..> Registration
 RegistrationService --> BotProtectionService
@@ -283,6 +302,7 @@ AllocationService --> WaitlistService
 AllocationService ..> AllocationRun
 AllocationService ..> EventSession
 AllocationService ..> Registration
+AllocationService ..> User : executedBy
 
 WaitlistService ..> WaitlistEntry
 WaitlistService ..> Registration
@@ -291,6 +311,11 @@ TicketService ..> Registration
 CheckInService --> TicketService
 CheckInService ..> CheckIn
 CheckInService ..> Ticket
+
+note right of EventService
+Event DRAFT có thể chưa có Session.
+Publish chỉ khi có >= 1 EventSession hợp lệ.
+end note
 
 note right of RegistrationService
 UC05 + UC06 orchestration.
@@ -301,6 +326,7 @@ end note
 note right of AllocationService
 Bảo vệ invariant:
 confirmed registrations <= capacity.
+LOTTERY chỉ có một AllocationRun đã commit/session trong MVP.
 Các bước confirm / waitlist / issue ticket
 phải nằm trong transaction phù hợp.
 end note
