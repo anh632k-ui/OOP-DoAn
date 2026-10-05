@@ -1,67 +1,84 @@
 @startuml
 left to right direction
+skinparam monochrome true
 skinparam shadowing false
-skinparam actorStyle awesome
+skinparam actorStyle stick
+skinparam defaultFontSize 14
 skinparam packageStyle rectangle
 skinparam usecase {
+  BackgroundColor White
   BorderColor Black
-  ArrowColor Black
+  FontColor Black
 }
 
 title MED-06 - USE CASE OVERVIEW
 
-actor Guest
-actor Attendee
-actor Organizer
-actor "Check-in Staff" as Staff
-actor Administrator as Admin
+actor Guest as Guest
+actor Attendee as Attendee
 
-rectangle "Public" {
+rectangle "Cổng quản lý sự kiện văn hóa và vé miễn phí" as SYS {
   usecase "UC01\nĐăng ký tài khoản" as UC01
   usecase "UC02\nĐăng nhập" as UC02
   usecase "UC03\nTìm kiếm / lọc sự kiện" as UC03
   usecase "UC04\nXem chi tiết sự kiện\nvà các suất" as UC04
-}
 
-rectangle "Attendee" {
   usecase "UC05\nĐăng ký một suất" as UC05
   usecase "UC06\nHủy đăng ký" as UC06
   usecase "UC07\nXem đăng ký / waitlist" as UC07
   usecase "UC08\nXem vé điện tử" as UC08
-}
 
-rectangle "Organizer" {
   usecase "UC09\nTạo / cập nhật sự kiện" as UC09
   usecase "UC10\nQuản lý suất và\naccessibility" as UC10
   usecase "UC11\nCông bố sự kiện và\nmở / đóng đăng ký" as UC11
   usecase "UC12\nThực hiện phân bổ vé" as UC12
   usecase "UC13\nTheo dõi đăng ký,\nwaitlist và thống kê" as UC13
-}
 
-rectangle "Operations" {
   usecase "UC14\nCheck-in vé" as UC14
   usecase "UC15\nQuản trị người dùng\nvà giám sát sự kiện" as UC15
+
+  ' Ép layout thành 4 cột gọn, không dùng các box con theo actor.
+  UC01 -[hidden]down- UC02
+  UC02 -[hidden]down- UC03
+  UC03 -[hidden]down- UC04
+
+  UC05 -[hidden]down- UC06
+  UC06 -[hidden]down- UC07
+  UC07 -[hidden]down- UC08
+
+  UC09 -[hidden]down- UC10
+  UC10 -[hidden]down- UC11
+  UC11 -[hidden]down- UC12
+  UC12 -[hidden]down- UC13
+
+  UC14 -[hidden]down- UC15
+
+  UC01 -[hidden]right- UC05
+  UC05 -[hidden]right- UC09
+  UC09 -[hidden]right- UC14
 }
 
-Guest --> UC01
-Guest --> UC02
-Guest --> UC03
-Guest --> UC04
+actor Organizer as Organizer
+actor "Check-in Staff" as Staff
+actor Administrator as Admin
 
-Attendee --> UC03
-Attendee --> UC04
-Attendee --> UC05
-Attendee --> UC06
-Attendee --> UC07
-Attendee --> UC08
+' Association actor-use case dùng đường thường, không dùng arrowhead.
+Guest -- UC01
+Guest -- UC02
+Guest -- UC03
+Guest -- UC04
 
-Organizer --> UC09
-Organizer --> UC10
-Organizer --> UC11
-Organizer --> UC12
-Organizer --> UC13
+Attendee -- UC05
+Attendee -- UC06
+Attendee -- UC07
+Attendee -- UC08
 
-Staff --> UC14
-Admin --> UC15
+UC09 -- Organizer
+UC10 -- Organizer
+UC11 -- Organizer
+UC12 -- Organizer
+UC13 -- Organizer
+
+UC14 -- Staff
+UC15 -- Admin
 
 @enduml
