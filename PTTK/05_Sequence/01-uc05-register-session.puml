@@ -30,47 +30,62 @@ BPS --> RS : valid
 RS -> ESR : findByIdForRegistration(sessionId)
 ESR --> RS : EventSession
 RS -> RS : kiểm tra status + registration window
-RS -> RR : create(PENDING)
-RR --> RS : Registration
 
 alt allocationPolicy = FCFS
-  RS -> AS : allocateImmediate(registrationId)
-  AS -> ESR : lockSession(sessionId)
-  ESR --> AS : locked EventSession
-  AS -> RR : countConfirmed(sessionId)
-  RR --> AS : confirmedCount
-  AS -> FCFS : allocate(session, [registration], confirmedCount)
-  FCFS --> AS : AllocationPlan
+  group Transaction + lock session
+    RS -> ESR : lockSession(sessionId)
+    ESR --> RS : locked EventSession
+    RS -> RR : create(PENDING)
+    RR --> RS : Registration
+    RS -> AS : allocateImmediate(registrationId)
+    AS -> RR : countConfirmed(sessionId)
+    RR --> AS : confirmedCount
+    AS -> FCFS : allocate(session, [registration], confirmedCount)
+    FCFS --> AS : AllocationPlan
 
-  alt còn slot
-    AS -> RR : updateStatus(CONFIRMED)
-    AS -> TS : issueTicket(registrationId)
-    TS -> TR : create(VALID ticket)
-    TR --> TS : Ticket
-    TS --> AS : Ticket
-    AS --> RS : CONFIRMED + Ticket
+    alt còn slot
+      AS -> RR : updateStatus(CONFIRMED)
+      AS -> TS : issueTicket(registrationId)
+      TS -> TR : create(VALID ticket)
+      TR --> TS : Ticket
+      TS --> AS : Ticket
+      AS --> RS : CONFIRMED + Ticket
+    else hết slot
+      AS -> RR : updateStatus(WAITLISTED)
+      AS -> WS : enqueue(registrationId, nextPosition)
+      WS --> AS : WaitlistEntry
+      AS --> RS : WAITLISTED
+    end
+  end
+
+  alt Registration = CONFIRMED
     RS --> RC : Registration(CONFIRMED)
     RC --> UI : 201 + ticket
     UI --> Attendee : Đăng ký thành công
-  else hết slot
-    AS -> RR : updateStatus(WAITLISTED)
-    AS -> WS : enqueue(registrationId)
-    WS --> AS : WaitlistEntry
-    AS --> RS : WAITLISTED
+  else Registration = WAITLISTED
     RS --> RC : Registration(WAITLISTED)
     RC --> UI : 201 + waitlist position
     UI --> Attendee : Đã vào danh sách chờ
   end
 
 else allocationPolicy = LOTTERY
+  RS -> RR : create(PENDING)
+  RR --> RS : Registration
   RS --> RC : Registration(PENDING)
   RC --> UI : 201 + trạng thái PENDING
   UI --> Attendee : Chờ đợt phân bổ sau khi đóng đăng ký
 end
 
+note over BPS,RR
+Kiểm tra duplicate ở service để trả lỗi sớm,
+nhưng UNIQUE(attendee_id, session_id) trong DB
+mới là lớp bảo vệ cuối khi có request đồng thời.
+end note
+
 note over RS,AS
-Toàn bộ nhánh xác nhận/waitlist/phát vé phải bảo vệ invariant
-confirmed <= capacity và chạy trong transaction phù hợp.
+Nhánh FCFS tạo Registration + xác nhận/waitlist + phát vé
+trong cùng transaction với session row lock,
+bảo vệ invariant confirmed <= capacity.
 end note
 
 @enduml
