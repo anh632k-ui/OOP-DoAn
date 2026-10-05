@@ -1,0 +1,111 @@
+@startuml
+left to right direction
+hide circle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam entity {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam nodesep 35
+skinparam ranksep 45
+
+title MED-06 - ERD CORE
+
+entity "users" as users {
+  * id : UUID <<PK>>
+  --
+  email : VARCHAR <<UQ>>
+  role : user_role
+  status : account_status
+}
+
+entity "venues" as venues {
+  * id : UUID <<PK>>
+  --
+  name : VARCHAR
+  capacity : INTEGER
+}
+
+entity "events" as events {
+  * id : UUID <<PK>>
+  --
+  organizer_id : UUID <<FK>>
+  venue_id : UUID <<FK>>
+  name : VARCHAR
+  status : event_status
+}
+
+entity "event_sessions" as sessions {
+  * id : UUID <<PK>>
+  --
+  event_id : UUID <<FK>>
+  capacity : INTEGER
+  allocation_policy : allocation_policy
+  status : session_status
+}
+
+entity "registrations" as registrations {
+  * id : UUID <<PK>>
+  --
+  attendee_id : UUID <<FK>>
+  session_id : UUID <<FK>>
+  status : registration_status
+  registered_at : TIMESTAMPTZ
+  --
+  UQ(attendee_id, session_id)
+}
+
+entity "waitlist_entries" as waitlist {
+  * id : UUID <<PK>>
+  --
+  registration_id : UUID <<FK, UQ>>
+  position : BIGINT
+  status : waitlist_status
+}
+
+entity "tickets" as tickets {
+  * id : UUID <<PK>>
+  --
+  registration_id : UUID <<FK, UQ>>
+  ticket_code : VARCHAR <<UQ>>
+  status : ticket_status
+}
+
+entity "check_ins" as checkins {
+  * id : UUID <<PK>>
+  --
+  ticket_id : UUID <<FK, UQ>>
+  staff_id : UUID <<FK>>
+  checked_in_at : TIMESTAMPTZ
+}
+
+entity "allocation_runs" as runs {
+  * id : UUID <<PK>>
+  --
+  session_id : UUID <<FK, UQ>>
+  executed_by_user_id : UUID <<FK>>
+  policy : allocation_policy
+  executed_at : TIMESTAMPTZ
+}
+
+users ||--o{ events : organizer_id
+venues ||--o{ events : venue_id
+events ||--o{ sessions : event_id
+users ||--o{ registrations : attendee_id
+sessions ||--o{ registrations : session_id
+registrations ||--o| waitlist : registration_id
+registrations ||--o| tickets : registration_id
+tickets ||--o| checkins : ticket_id
+users ||--o{ checkins : staff_id
+sessions ||--o| runs : session_id
+users ||--o{ runs : executed_by_user_id
+
+' Layout helpers
+users -[hidden]-> venues
+venues -[hidden]-> events
+sessions -[hidden]-> registrations
+registrations -[hidden]-> tickets
+tickets -[hidden]-> checkins
+
+@enduml
