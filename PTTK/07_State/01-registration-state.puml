@@ -2,24 +2,21 @@
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
-skinparam state {
-  BackgroundColor White
-  BorderColor Black
-}
+skinparam state { BackgroundColor White BorderColor Black }
+title MED-06 - TRẠNG THÁI: ĐĂNG KÝ
 
-title MED-06 - STATE: REGISTRATION
+state "CHỜ XỬ LÝ" as ChoXuLy
+state "ĐÃ XÁC NHẬN" as DaXacNhan
+state "DANH SÁCH CHỜ" as DanhSachCho
+state "ĐÃ HỦY" as DaHuy
 
-[*] --> PENDING : tạo Registration
-
-PENDING --> CONFIRMED : FCFS còn chỗ / trúng LOTTERY
-PENDING --> WAITLISTED : FCFS đầy / không trúng LOTTERY
-PENDING --> CANCELLED : hủy hoặc Session bị hủy
-
-WAITLISTED --> CONFIRMED : promote
-WAITLISTED --> CANCELLED : hủy hoặc Session bị hủy
-
-CONFIRMED --> CANCELLED : hủy trước Session / Session bị hủy
-CONFIRMED --> [*] : Session hoàn tất
-CANCELLED --> [*]
-
+[*] --> ChoXuLy : tạo đăng ký
+ChoXuLy --> DaXacNhan : FCFS còn chỗ / trúng LOTTERY
+ChoXuLy --> DanhSachCho : FCFS đầy / không trúng LOTTERY
+ChoXuLy --> DaHuy : hủy hoặc suất bị hủy
+DanhSachCho --> DaXacNhan : được chọn lên
+DanhSachCho --> DaHuy : hủy hoặc suất bị hủy
+DaXacNhan --> DaHuy : hủy trước suất / suất bị hủy
+DaXacNhan --> [*] : suất hoàn tất
+DaHuy --> [*]
 @enduml
