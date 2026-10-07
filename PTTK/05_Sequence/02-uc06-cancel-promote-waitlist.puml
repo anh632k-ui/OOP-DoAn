@@ -5,23 +5,19 @@ skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
-
-title MED-06 - BIỂU ĐỒ TUẦN TỰ UC06: HỦY ĐĂNG KÝ + CHỌN NGƯỜI TRONG DANH SÁCH CHỜ
-
+title MED-06 - BIỂU ĐỒ TUẦN TỰ UC06: HỦY ĐĂNG KÝ + CHỌN NGƯỜI CHỜ
 actor "Người tham dự" as NTD
 boundary "Giao diện Next.js" as UI
 control "Dịch vụ đăng ký" as DK
 control "Dịch vụ vé" as VE
 control "Dịch vụ danh sách chờ" as DSC
 database "PostgreSQL" as CSDL
-
 autonumber
 NTD -> UI : Chọn Hủy đăng ký
 UI -> DK : hủyĐăngKý(mãNgườiThamDự, mãĐăngKý)
 DK -> CSDL : tải Đăng ký + Suất + Vé
 CSDL --> DK : dữ liệu hiện tại
 DK -> DK : kiểm tra quyền sở hữu + điều kiện hủy
-
 alt Đăng ký = CHỜ_XỬ_LÝ
   DK -> CSDL : Đăng ký -> ĐÃ_HỦY
 else Đăng ký = DANH_SÁCH_CHỜ
@@ -35,10 +31,8 @@ else Đăng ký = ĐÃ_XÁC_NHẬN
     DK -> CSDL : khóa suất + Đăng ký -> ĐÃ_HỦY
     DK -> VE : hủyVé(mãĐăngKý)
     VE -> CSDL : Vé HỢP_LỆ -> ĐÃ_HỦY
-
     DK -> DSC : chọnNgườiTiếpTheo(mãSuất)
     DSC -> CSDL : lấy mục ĐANG_CHỜ đầu tiên FOR UPDATE
-
     alt có người chờ
       CSDL --> DSC : mục tiếp theo
       DSC -> CSDL : Đăng ký chờ -> ĐÃ_XÁC_NHẬN
@@ -52,10 +46,8 @@ else Đăng ký = ĐÃ_XÁC_NHẬN
     end
   end
 end
-
 DK --> UI : 204 Không có nội dung
 UI --> NTD : Đã hủy đăng ký
-
 note over DK,CSDL
 Chỉ hủy đăng ký ĐÃ_XÁC_NHẬN mới giải phóng chỗ.
 Hủy đăng ký + hủy vé + chọn người chờ phải cùng một giao dịch.
