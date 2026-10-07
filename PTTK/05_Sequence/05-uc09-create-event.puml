@@ -6,52 +6,51 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
 
-title MED-06 - SEQUENCE UC09: TẠO SỰ KIỆN VÀ THIẾT LẬP BAN ĐẦU
+title MED-06 - BIỂU ĐỒ TUẦN TỰ UC09: TẠO SỰ KIỆN VÀ THIẾT LẬP BAN ĐẦU
 
-actor Organizer
-boundary "Organizer UI" as UI
-control "EventService" as ES
-control "SessionService" as SS
-control "AccessibilityService" as ACS
-database "PostgreSQL" as DB
-participant "Object Storage" as OS
+actor "Ban tổ chức" as BTC
+boundary "Giao diện Ban tổ chức" as UI
+control "Dịch vụ sự kiện" as SK
+control "Dịch vụ suất" as SUAT
+control "Dịch vụ hỗ trợ tiếp cận" as HT
+database "PostgreSQL" as CSDL
+participant "Kho lưu trữ đối tượng" as KHO
 
 autonumber
-Organizer -> UI : Nhập thông tin Event
+BTC -> UI : Nhập thông tin sự kiện
 
 opt Có ảnh sự kiện
-  UI -> OS : upload image
-  OS --> UI : imageUrl
+  UI -> KHO : tải ảnh lên
+  KHO --> UI : đường dẫn ảnh
 end
 
-UI -> ES : createEvent(organizerId, eventData, imageUrl)
-ES -> ES : validate venue/date/basic data
-ES -> DB : tạo Event DRAFT
-DB --> ES : Event
-ES --> UI : Event DRAFT
+UI -> SK : tạoSựKiện(mãNgườiTổChức, dữLiệuSựKiện, đườngDẫnẢnh)
+SK -> SK : kiểm tra địa điểm/thời gian/dữ liệu cơ bản
+SK -> CSDL : tạo Sự kiện NHÁP
+CSDL --> SK : Sự kiện
+SK --> UI : Sự kiện NHÁP
 
-Organizer -> UI : Thêm EventSession
-UI -> SS : createSession(eventId, organizerId, sessionData)
-SS -> DB : kiểm tra ownership Event
-DB --> SS : Event DRAFT
-SS -> SS : validate time/capacity/window/policy
-SS -> DB : tạo EventSession DRAFT
-DB --> SS : EventSession
-SS --> UI : EventSession
+BTC -> UI : Thêm Suất sự kiện
+UI -> SUAT : tạoSuất(mãSựKiện, mãNgườiTổChức, dữLiệuSuất)
+SUAT -> CSDL : kiểm tra quyền sở hữu sự kiện
+CSDL --> SUAT : Sự kiện NHÁP
+SUAT -> SUAT : kiểm tra thời gian/sức chứa/cửa sổ/chính sách
+SUAT -> CSDL : tạo Suất sự kiện NHÁP
+CSDL --> SUAT : Suất sự kiện
+SUAT --> UI : Suất sự kiện
 
-opt Khai báo accessibility
-  Organizer -> UI : Chọn AccessibilityFeature
-  UI -> ACS : setEventFeatures(eventId, organizerId, featureIds)
-  ACS -> DB : kiểm tra ownership + thay danh sách feature
-  DB --> ACS : success
-  ACS --> UI : success
+opt Khai báo hỗ trợ tiếp cận
+  BTC -> UI : Chọn đặc tính hỗ trợ tiếp cận
+  UI -> HT : gánĐặcTính(mãSựKiện, mãNgườiTổChức, danhSáchĐặcTính)
+  HT -> CSDL : kiểm tra quyền sở hữu + thay danh sách đặc tính
+  CSDL --> HT : thành công
+  HT --> UI : thành công
 end
 
-UI --> Organizer : Hiển thị Event DRAFT đã thiết lập
+UI --> BTC : Hiển thị sự kiện NHÁP đã thiết lập
 
-note over ES,SS
-Event DRAFT có thể chưa có Session.
-UC11 chỉ publish khi có ít nhất một EventSession hợp lệ.
+note over SK,SUAT
+Sự kiện NHÁP có thể chưa có suất.
+UC11 chỉ công bố khi có ít nhất một suất hợp lệ.
 end note
-
 @enduml
