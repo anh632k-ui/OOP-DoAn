@@ -1,73 +1,73 @@
-# REST API mốc chuẩn - MED-06
+# REST API - Mốc thiết kế MED-06 (bản tiếng Việt)
 
-Tài liệu này khóa naming sơ bộ giữa PTTK và backend NestJS. Đây chưa phải OpenAPI chi tiết; mục tiêu là tránh lúc code tự phát sinh đường dẫn không nhất quán với Ca sử dụng/Tuần tự.
+Tài liệu khóa tên đường dẫn sơ bộ giữa PTTK và phía máy chủ NestJS. Đường dẫn dùng tiếng Việt không dấu để đồng bộ với nhánh TV.
 
-## 1. Auth / Người dùngs
-| Method | Đường dẫn | Tác nhân | Mục đích |
+## 1. Xác thực / Người dùng
+| Phương thức | Đường dẫn | Tác nhân | Mục đích |
 |---|---|---|---|
-| POST | `/auth/register` | Khách | Tạo tài khoản Người tham dự |
-| POST | `/auth/login` | Khách | Đăng nhập |
-| GET | `/me` | Người dùng đã đăng nhập | Xem thông tin tài khoản hiện tại |
-| PATCH | `/admin/users/{userId}/trạng thái` | Admin | Khóa/mở khóa tài khoản |
+| POST | `/xac-thuc/dang-ky` | Khách | Tạo tài khoản người tham dự |
+| POST | `/xac-thuc/dang-nhap` | Khách | Đăng nhập |
+| GET | `/toi` | Người dùng đã đăng nhập | Xem thông tin tài khoản hiện tại |
+| PATCH | `/quan-tri/nguoi-dung/{maNguoiDung}/trang-thai` | Quản trị viên | Khóa/mở khóa tài khoản |
 
-## 2. Sự kiệns / Tìm kiếm / Accessibility
-| Method | Đường dẫn | Tác nhân | Ca sử dụng |
+## 2. Sự kiện / Tìm kiếm / Hỗ trợ tiếp cận
+| Phương thức | Đường dẫn | Tác nhân | Ca sử dụng |
 |---|---|---|---|
-| GET | `/events` | Public | UC03 - danh sách/tìm kiếm/lọc; query hỗ trợ `q`, thời gian, hỗ trợ tiếp cận |
-| GET | `/events/{eventId}` | Public | UC04 - chi tiết Sự kiện + sessions + hỗ trợ tiếp cận |
-| POST | `/events` | Ban tổ chức | UC09 - tạo Sự kiện NHÁP |
-| PATCH | `/events/{eventId}` | Ban tổ chức owner | UC09 - cập nhật Sự kiện |
-| POST | `/events/{eventId}/công bố` | Ban tổ chức owner | UC11 - công bố Sự kiện |
-| POST | `/events/{eventId}/hủy` | Ban tổ chức owner | UC11 - hủy Sự kiện và cascade các Session chưa hoàn tất |
-| PUT | `/events/{eventId}/hỗ trợ tiếp cận` | Ban tổ chức owner | UC10 - gán Đặc tính hỗ trợ tiếp cận |
+| GET | `/su-kien` | Công khai | UC03 - danh sách/tìm kiếm/lọc |
+| GET | `/su-kien/{maSuKien}` | Công khai | UC04 - chi tiết sự kiện + suất + hỗ trợ tiếp cận |
+| POST | `/su-kien` | Ban tổ chức | UC09 - tạo sự kiện NHÁP |
+| PATCH | `/su-kien/{maSuKien}` | Ban tổ chức sở hữu | UC09 - cập nhật sự kiện |
+| POST | `/su-kien/{maSuKien}/cong-bo` | Ban tổ chức sở hữu | UC11 - công bố sự kiện |
+| POST | `/su-kien/{maSuKien}/huy` | Ban tổ chức sở hữu | UC11 - hủy sự kiện |
+| PUT | `/su-kien/{maSuKien}/ho-tro-tiep-can` | Ban tổ chức sở hữu | UC10 - gán đặc tính hỗ trợ tiếp cận |
 
 ## 3. Suất sự kiện
-| Method | Đường dẫn | Tác nhân | Ca sử dụng |
+| Phương thức | Đường dẫn | Tác nhân | Ca sử dụng |
 |---|---|---|---|
-| POST | `/events/{eventId}/sessions` | Ban tổ chức owner | UC10 - tạo suất |
-| PATCH | `/sessions/{sessionId}` | Ban tổ chức owner | UC10 - cập nhật suất |
-| POST | `/sessions/{sessionId}/registration/open` | Ban tổ chức owner | UC11 - mở đăng ký |
-| POST | `/sessions/{sessionId}/registration/close` | Ban tổ chức owner | UC11 - đóng đăng ký |
-| POST | `/sessions/{sessionId}/hủy` | Ban tổ chức owner | UC10 - hủy suất/cascade Đăng ký + Vé |
+| POST | `/su-kien/{maSuKien}/suat` | Ban tổ chức sở hữu | UC10 - tạo suất |
+| PATCH | `/suat/{maSuat}` | Ban tổ chức sở hữu | UC10 - cập nhật suất |
+| POST | `/suat/{maSuat}/dang-ky/mo` | Ban tổ chức sở hữu | UC11 - mở đăng ký |
+| POST | `/suat/{maSuat}/dang-ky/dong` | Ban tổ chức sở hữu | UC11 - đóng đăng ký |
+| POST | `/suat/{maSuat}/huy` | Ban tổ chức sở hữu | UC10 - hủy suất và cập nhật dây chuyền |
 
 ## 4. Đăng ký / Danh sách chờ / Vé
-| Method | Đường dẫn | Tác nhân | Ca sử dụng |
+| Phương thức | Đường dẫn | Tác nhân | Ca sử dụng |
 |---|---|---|---|
-| POST | `/sessions/{sessionId}/registrations` | Người tham dự | UC05 - đăng ký suất |
-| DELETE | `/registrations/{registrationId}` | Người tham dự owner | UC06 - hủy đăng ký |
-| GET | `/me/registrations` | Người tham dự | UC07 - xem Đăng ký + trạng thái danh sách chờ |
-| GET | `/me/tickets` | Người tham dự | UC08 - xem vé điện tử |
-| GET | `/me/tickets/{ticketId}` | Người tham dự owner | UC08 - chi tiết/QR vé |
+| POST | `/suat/{maSuat}/dang-ky` | Người tham dự | UC05 - đăng ký suất |
+| DELETE | `/dang-ky/{maDangKy}` | Người tham dự sở hữu | UC06 - hủy đăng ký |
+| GET | `/toi/dang-ky` | Người tham dự | UC07 - xem đăng ký + danh sách chờ |
+| GET | `/toi/ve` | Người tham dự | UC08 - xem vé điện tử |
+| GET | `/toi/ve/{maVe}` | Người tham dự sở hữu | UC08 - chi tiết/QR vé |
 
-## 5. Phân bổ / Ban tổ chức statistics
-| Method | Đường dẫn | Tác nhân | Ca sử dụng |
+## 5. Phân bổ / Thống kê
+| Phương thức | Đường dẫn | Tác nhân | Ca sử dụng |
 |---|---|---|---|
-| POST | `/sessions/{sessionId}/phân bổ` | Ban tổ chức owner | UC12 - chạy Lottery Lần phân bổ |
-| GET | `/sessions/{sessionId}/phân bổ` | Ban tổ chức owner | UC12/13 - xem kết quả Lần phân bổ |
-| GET | `/sessions/{sessionId}/statistics` | Ban tổ chức owner | UC13 - registration/ticket/danh sách chờ/check-in counts |
+| POST | `/suat/{maSuat}/phan-bo` | Ban tổ chức sở hữu | UC12 - chạy phân bổ LOTTERY |
+| GET | `/suat/{maSuat}/phan-bo` | Ban tổ chức sở hữu | UC12/13 - xem kết quả phân bổ |
+| GET | `/suat/{maSuat}/thong-ke` | Ban tổ chức sở hữu | UC13 - số đăng ký/vé/danh sách chờ/check-in |
 
-> FCFS không có batch phân bổ endpoint riêng. FCFS được thực hiện atomically khi gọi `POST /sessions/{sessionId}/registrations`.
+> FCFS không có đường dẫn phân bổ theo lô riêng; được xử lý ngay khi gọi đăng ký suất.
 
 ## 6. Check-in
-| Method | Đường dẫn | Tác nhân | Ca sử dụng |
+| Phương thức | Đường dẫn | Tác nhân | Ca sử dụng |
 |---|---|---|---|
-| POST | `/check-ins` | Nhân viên check-in | UC14 - body gồm `sessionId`, `mãVé`, `method` |
-| GET | `/sessions/{sessionId}/check-ins` | Ban tổ chức owner/Admin | UC13/15 - xem lịch sử check-in |
+| POST | `/check-in` | Nhân viên check-in | UC14 - dữ liệu gồm mã suất, mã vé, phương thức |
+| GET | `/suat/{maSuat}/check-in` | Ban tổ chức sở hữu / Quản trị viên | UC13/15 - xem lịch sử check-in |
 
-## 7. HTTP behavior mốc chuẩn
-- `200 OK`: đọc/cập nhật thành công có nội dung phản hồi.
-- `201 Created`: tạo Sự kiện/Session/Đăng ký/Vé-related result/Lượt check-in thành công.
-- `204 No Content`: thao tác command thành công nhưng không cần body, ví dụ hủy/update association.
-- `400 Bad Yêu cầu`: dữ liệu sai/business precondition đơn giản không đạt.
-- `401 Unauthorized`: chưa đăng nhập/token không hợp lệ.
-- `403 Forbidden`: sai vai trò hoặc không sở hữu Sự kiện/Đăng ký.
+## 7. Quy ước mã HTTP
+- `200 OK`: đọc/cập nhật thành công.
+- `201 Created`: tạo tài nguyên thành công.
+- `204 No Content`: lệnh thành công nhưng không cần nội dung phản hồi.
+- `400 Bad Request`: dữ liệu gửi lên không hợp lệ.
+- `401 Unauthorized`: chưa đăng nhập hoặc thông tin xác thực không hợp lệ.
+- `403 Forbidden`: sai vai trò hoặc không có quyền sở hữu.
 - `404 Not Found`: tài nguyên không tồn tại.
-- `409 Conflict`: trùng lặp registration, Lần phân bổ đã tồn tại, race/concurrency conflict hoặc state transition xung đột.
-- `429 Too Many Yêu cầus`: rate limit/anti-bot.
+- `409 Conflict`: đăng ký trùng, lần phân bổ đã tồn tại hoặc xung đột trạng thái.
+- `429 Too Many Requests`: vượt giới hạn tần suất.
 
-## 8. Quy ước implementation
-1. Bộ điều khiển chỉ validate transport/auth và gọi dịch vụ; không tự cập nhật entity trạng thái.
-2. Ownership check đặt trong application dịch vụ/repository query phù hợp, không tin `organizerId` từ body.
-3. Giao dịch phải nằm ở dịch vụ/use-case boundary cho UC05 FCFS, UC06 chọn lên, UC12 Lottery và UC14 Lượt check-in.
-4. Đường dẫn naming trong Tuần tự Diagram phải bám tài liệu này khi code backend.
-5. DTO/API có thể phát triển chi tiết hơn nhưng không đổi business semantics đã khóa trong PTTK.
+## 8. Quy ước hiện thực
+1. Bộ điều khiển chỉ xử lý dữ liệu truyền vào/xác thực và gọi dịch vụ.
+2. Kiểm tra quyền sở hữu nằm trong lớp dịch vụ hoặc truy vấn kho dữ liệu phù hợp.
+3. UC05 FCFS, UC06 chọn người chờ, UC12 LOTTERY và UC14 check-in phải có biên giao dịch rõ.
+4. Đường dẫn khi code phải bám tài liệu này hoặc cập nhật lại PTTK nếu thay đổi.
+5. DTO/API có thể chi tiết hơn nhưng không làm thay đổi ý nghĩa nghiệp vụ đã khóa.
