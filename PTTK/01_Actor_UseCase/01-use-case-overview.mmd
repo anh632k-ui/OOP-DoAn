@@ -1,33 +1,18 @@
 %%{init: {
   "theme": "base",
-  "flowchart": {
-    "curve": "linear",
-    "nodeSpacing": 34,
-    "rankSpacing": 42,
-    "htmlLabels": true
-  },
+  "flowchart": {"curve":"linear","nodeSpacing":34,"rankSpacing":42,"htmlLabels":true},
   "themeVariables": {
-    "background": "#ffffff",
-    "primaryColor": "#ffffff",
-    "primaryTextColor": "#111111",
-    "primaryBorderColor": "#222222",
-    "lineColor": "#333333",
-    "fontFamily": "Arial",
-    "fontSize": "14px",
-    "clusterBkg": "#ffffff",
-    "clusterBorder": "#222222"
+    "background":"#ffffff","primaryColor":"#ffffff","primaryTextColor":"#111111",
+    "primaryBorderColor":"#222222","lineColor":"#333333","fontFamily":"Arial",
+    "fontSize":"14px","clusterBkg":"#ffffff","clusterBorder":"#222222"
   }
 }}%%
-
 flowchart LR
-
-  G["👤<br/>Guest"]:::actor
-  A["👤<br/>Attendee"]:::actor
-
-  subgraph SYS["Cổng quản lý sự kiện văn hóa và vé miễn phí"]
+  K["👤<br/>Khách"]:::actor
+  NTD["👤<br/>Người tham dự"]:::actor
+  subgraph HT["Cổng quản lý sự kiện văn hóa và vé miễn phí"]
     direction LR
-
-    subgraph LEFT[" "]
+    subgraph TRAI[" "]
       direction TB
       UC01(["UC01<br/>Đăng ký tài khoản"]):::usecase
       UC02(["UC02<br/>Đăng nhập"]):::usecase
@@ -35,48 +20,40 @@ flowchart LR
       UC04(["UC04<br/>Xem chi tiết sự kiện<br/>và các suất"]):::usecase
       UC05(["UC05<br/>Đăng ký một suất"]):::usecase
       UC06(["UC06<br/>Hủy đăng ký"]):::usecase
-      UC07(["UC07<br/>Xem đăng ký / waitlist"]):::usecase
+      UC07(["UC07<br/>Xem đăng ký / danh sách chờ"]):::usecase
       UC08(["UC08<br/>Xem vé điện tử"]):::usecase
     end
-
-    subgraph RIGHT[" "]
+    subgraph PHAI[" "]
       direction TB
       UC09(["UC09<br/>Tạo / cập nhật sự kiện"]):::usecase
-      UC10(["UC10<br/>Quản lý suất và<br/>accessibility"]):::usecase
+      UC10(["UC10<br/>Quản lý suất và<br/>hỗ trợ tiếp cận"]):::usecase
       UC11(["UC11<br/>Công bố sự kiện và<br/>mở / đóng đăng ký"]):::usecase
       UC12(["UC12<br/>Thực hiện phân bổ vé"]):::usecase
-      UC13(["UC13<br/>Theo dõi đăng ký,<br/>waitlist và thống kê"]):::usecase
+      UC13(["UC13<br/>Theo dõi đăng ký,<br/>danh sách chờ và thống kê"]):::usecase
       UC14(["UC14<br/>Check-in vé"]):::usecase
       UC15(["UC15<br/>Quản trị người dùng<br/>và giám sát sự kiện"]):::usecase
     end
   end
-
-  O["👤<br/>Organizer"]:::actor
-  S["👤<br/>Check-in Staff"]:::actor
-  AD["👤<br/>Administrator"]:::actor
-
-  G --- UC01
-  G --- UC02
-  G --- UC03
-  G --- UC04
-
-  A --- UC05
-  A --- UC06
-  A --- UC07
-  A --- UC08
-
-  UC09 --- O
-  UC10 --- O
-  UC11 --- O
-  UC12 --- O
-  UC13 --- O
-
-  UC14 --- S
-  UC15 --- AD
-
+  BTC["👤<br/>Ban tổ chức"]:::actor
+  NV["👤<br/>Nhân viên check-in"]:::actor
+  QTV["👤<br/>Quản trị viên"]:::actor
+  K --- UC01
+  K --- UC02
+  K --- UC03
+  K --- UC04
+  NTD --- UC05
+  NTD --- UC06
+  NTD --- UC07
+  NTD --- UC08
+  UC09 --- BTC
+  UC10 --- BTC
+  UC11 --- BTC
+  UC12 --- BTC
+  UC13 --- BTC
+  UC14 --- NV
+  UC15 --- QTV
   classDef actor fill:transparent,stroke:transparent,color:#111111,font-weight:600;
   classDef usecase fill:#ffffff,stroke:#222222,stroke-width:1.2px,color:#111111;
-
-  style SYS fill:#ffffff,stroke:#222222,stroke-width:1.5px
-  style LEFT fill:transparent,stroke:transparent
-  style RIGHT fill:transparent,stroke:transparent
+  style HT fill:#ffffff,stroke:#222222,stroke-width:1.5px
+  style TRAI fill:transparent,stroke:transparent
+  style PHAI fill:transparent,stroke:transparent
