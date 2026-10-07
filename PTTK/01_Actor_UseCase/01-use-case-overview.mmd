@@ -1,0 +1,82 @@
+%%{init: {
+  "theme": "base",
+  "flowchart": {
+    "curve": "linear",
+    "nodeSpacing": 34,
+    "rankSpacing": 42,
+    "htmlLabels": true
+  },
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryColor": "#ffffff",
+    "primaryTextColor": "#111111",
+    "primaryBorderColor": "#222222",
+    "lineColor": "#333333",
+    "fontFamily": "Arial",
+    "fontSize": "14px",
+    "clusterBkg": "#ffffff",
+    "clusterBorder": "#222222"
+  }
+}}%%
+
+flowchart LR
+
+  G["👤<br/>Guest"]:::actor
+  A["👤<br/>Attendee"]:::actor
+
+  subgraph SYS["Cổng quản lý sự kiện văn hóa và vé miễn phí"]
+    direction LR
+
+    subgraph LEFT[" "]
+      direction TB
+      UC01(["UC01<br/>Đăng ký tài khoản"]):::usecase
+      UC02(["UC02<br/>Đăng nhập"]):::usecase
+      UC03(["UC03<br/>Tìm kiếm / lọc sự kiện"]):::usecase
+      UC04(["UC04<br/>Xem chi tiết sự kiện<br/>và các suất"]):::usecase
+      UC05(["UC05<br/>Đăng ký một suất"]):::usecase
+      UC06(["UC06<br/>Hủy đăng ký"]):::usecase
+      UC07(["UC07<br/>Xem đăng ký / waitlist"]):::usecase
+      UC08(["UC08<br/>Xem vé điện tử"]):::usecase
+    end
+
+    subgraph RIGHT[" "]
+      direction TB
+      UC09(["UC09<br/>Tạo / cập nhật sự kiện"]):::usecase
+      UC10(["UC10<br/>Quản lý suất và<br/>accessibility"]):::usecase
+      UC11(["UC11<br/>Công bố sự kiện và<br/>mở / đóng đăng ký"]):::usecase
+      UC12(["UC12<br/>Thực hiện phân bổ vé"]):::usecase
+      UC13(["UC13<br/>Theo dõi đăng ký,<br/>waitlist và thống kê"]):::usecase
+      UC14(["UC14<br/>Check-in vé"]):::usecase
+      UC15(["UC15<br/>Quản trị người dùng<br/>và giám sát sự kiện"]):::usecase
+    end
+  end
+
+  O["👤<br/>Organizer"]:::actor
+  S["👤<br/>Check-in Staff"]:::actor
+  AD["👤<br/>Administrator"]:::actor
+
+  G --- UC01
+  G --- UC02
+  G --- UC03
+  G --- UC04
+
+  A --- UC05
+  A --- UC06
+  A --- UC07
+  A --- UC08
+
+  UC09 --- O
+  UC10 --- O
+  UC11 --- O
+  UC12 --- O
+  UC13 --- O
+
+  UC14 --- S
+  UC15 --- AD
+
+  classDef actor fill:transparent,stroke:transparent,color:#111111,font-weight:600;
+  classDef usecase fill:#ffffff,stroke:#222222,stroke-width:1.2px,color:#111111;
+
+  style SYS fill:#ffffff,stroke:#222222,stroke-width:1.5px
+  style LEFT fill:transparent,stroke:transparent
+  style RIGHT fill:transparent,stroke:transparent
