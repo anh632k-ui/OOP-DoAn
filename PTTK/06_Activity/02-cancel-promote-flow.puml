@@ -2,52 +2,42 @@
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
-
-title MED-06 - ACTIVITY UC06: HỦY ĐĂNG KÝ + PROMOTE WAITLIST
-
-|Attendee|
+title MED-06 - BIỂU ĐỒ HOẠT ĐỘNG UC06: HỦY ĐĂNG KÝ + CHỌN NGƯỜI CHỜ
+|Người tham dự|
 start
-:Yêu cầu hủy Registration;
-
+:Yêu cầu hủy đăng ký;
 |Hệ thống|
-:Kiểm tra ownership,
-trạng thái Session và Ticket;
-
+:Kiểm tra quyền sở hữu,
+trạng thái suất và vé;
 if (Được phép hủy?) then (Có)
 else (Không)
   :Từ chối yêu cầu;
-  |Attendee|
+  |Người tham dự|
   :Nhận thông báo lỗi;
   stop
 endif
-
-if (Registration = PENDING?) then (Có)
-  :Registration -> CANCELLED;
-
+if (Đăng ký = CHỜ_XỬ_LÝ?) then (Có)
+  :Đăng ký -> ĐÃ_HỦY;
 else (Không)
-  if (Registration = WAITLISTED?) then (Có)
-    :Registration -> CANCELLED;
-    :WaitlistEntry -> CANCELLED;
-
-  else (CONFIRMED)
-    :Khóa EventSession trong transaction;
-    :Registration -> CANCELLED;
-    :Ticket VALID -> CANCELLED;
-
-    if (Waitlist còn ACTIVE entry?) then (Có)
-      :Lấy entry đầu tiên;
-      :Registration chờ -> CONFIRMED;
-      :WaitlistEntry -> PROMOTED;
-      :Phát Ticket VALID mới;
+  if (Đăng ký = DANH_SÁCH_CHỜ?) then (Có)
+    :Đăng ký -> ĐÃ_HỦY;
+    :Mục danh sách chờ -> ĐÃ_HỦY;
+  else (ĐÃ_XÁC_NHẬN)
+    :Khóa suất trong giao dịch;
+    :Đăng ký -> ĐÃ_HỦY;
+    :Vé HỢP_LỆ -> ĐÃ_HỦY;
+    if (Danh sách chờ còn người?) then (Có)
+      :Lấy mục đầu tiên;
+      :Đăng ký chờ -> ĐÃ_XÁC_NHẬN;
+      :Mục chờ -> ĐÃ_ĐƯỢC_CHỌN;
+      :Phát vé HỢP_LỆ mới;
     else (Không)
-      :Giữ slot trống;
+      :Giữ chỗ trống;
     endif
-
-    :Commit transaction;
+    :Ghi nhận giao dịch;
   endif
 endif
-
-|Attendee|
+|Người tham dự|
 :Nhận xác nhận đã hủy;
 stop
 @enduml
