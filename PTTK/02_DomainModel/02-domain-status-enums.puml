@@ -7,70 +7,69 @@ skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 hide circle
 
-title MED-06 - DOMAIN ENUM CATALOG
+title MED-06 - DANH MỤC TRẠNG THÁI / KIỂU LIỆT KÊ
 
-package "Identity" {
-  enum UserRole {
-    ATTENDEE
-    ORGANIZER
-    STAFF
-    ADMIN
+package "Người dùng" {
+  enum "Vai trò người dùng" as VaiTroNguoiDung {
+    NGƯỜI_THAM_DỰ
+    BAN_TỔ_CHỨC
+    NHÂN_VIÊN
+    QUẢN_TRỊ_VIÊN
   }
-  enum AccountStatus {
-    ACTIVE
-    LOCKED
+  enum "Trạng thái tài khoản" as TrangThaiTaiKhoan {
+    HOẠT_ĐỘNG
+    BỊ_KHÓA
   }
-  UserRole -[hidden]down- AccountStatus
+  VaiTroNguoiDung -[hidden]down- TrangThaiTaiKhoan
 }
 
-package "Event & Allocation" {
-  enum EventStatus {
-    DRAFT
-    PUBLISHED
-    COMPLETED
-    CANCELLED
+package "Sự kiện và phân bổ" {
+  enum "Trạng thái sự kiện" as TrangThaiSuKien {
+    NHÁP
+    ĐÃ_CÔNG_BỐ
+    HOÀN_THÀNH
+    ĐÃ_HỦY
   }
-  enum SessionStatus {
-    DRAFT
-    REGISTRATION_OPEN
-    REGISTRATION_CLOSED
-    ONGOING
-    COMPLETED
-    CANCELLED
+  enum "Trạng thái suất" as TrangThaiSuat {
+    NHÁP
+    ĐANG_MỞ_ĐĂNG_KÝ
+    ĐÃ_ĐÓNG_ĐĂNG_KÝ
+    ĐANG_DIỄN_RA
+    HOÀN_THÀNH
+    ĐÃ_HỦY
   }
-  enum AllocationPolicy {
+  enum "Chính sách phân bổ" as ChinhSachPhanBo {
     FCFS
     LOTTERY
   }
-  EventStatus -[hidden]down- SessionStatus
-  SessionStatus -[hidden]down- AllocationPolicy
+  TrangThaiSuKien -[hidden]down- TrangThaiSuat
+  TrangThaiSuat -[hidden]down- ChinhSachPhanBo
 }
 
-package "Participation" {
-  enum RegistrationStatus {
-    PENDING
-    CONFIRMED
-    WAITLISTED
-    CANCELLED
+package "Tham dự và vé" {
+  enum "Trạng thái đăng ký" as TrangThaiDangKy {
+    CHỜ_XỬ_LÝ
+    ĐÃ_XÁC_NHẬN
+    DANH_SÁCH_CHỜ
+    ĐÃ_HỦY
   }
-  enum WaitlistStatus {
-    ACTIVE
-    PROMOTED
-    CANCELLED
+  enum "Trạng thái danh sách chờ" as TrangThaiDanhSachCho {
+    ĐANG_CHỜ
+    ĐÃ_ĐƯỢC_CHỌN
+    ĐÃ_HỦY
   }
-  enum TicketStatus {
-    VALID
-    USED
-    CANCELLED
-    EXPIRED
+  enum "Trạng thái vé" as TrangThaiVe {
+    HỢP_LỆ
+    ĐÃ_SỬ_DỤNG
+    ĐÃ_HỦY
+    HẾT_HẠN
   }
-  enum CheckInMethod {
+  enum "Phương thức check-in" as PhuongThucCheckIn {
     QR
-    MANUAL_CODE
+    MÃ_THỦ_CÔNG
   }
-  RegistrationStatus -[hidden]down- WaitlistStatus
-  WaitlistStatus -[hidden]down- TicketStatus
-  TicketStatus -[hidden]down- CheckInMethod
+  TrangThaiDangKy -[hidden]down- TrangThaiDanhSachCho
+  TrangThaiDanhSachCho -[hidden]down- TrangThaiVe
+  TrangThaiVe -[hidden]down- PhuongThucCheckIn
 }
-
 @enduml
