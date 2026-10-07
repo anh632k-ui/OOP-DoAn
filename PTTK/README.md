@@ -1,129 +1,123 @@
-# PTTK - MED-06
+# PTTK - MED-06 - Bản tiếng Việt
 
 ## 1. Đề tài
 **MED-06 - Cổng quản lý sự kiện văn hóa và vé miễn phí**
 
-Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất diễn, đăng ký vé miễn phí, phân bổ vé công bằng, danh sách chờ, phát vé QR và check-in. Hai điểm nhấn bổ sung là chống bot cơ bản và thông tin accessibility của sự kiện.
+Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất, đăng ký vé miễn phí, phân bổ vé công bằng, danh sách chờ, phát vé QR và check-in. Hai điểm nhấn là chống bot cơ bản và hỗ trợ tiếp cận cho người tham dự.
 
 ## 2. Nguyên tắc thiết kế
-- Kiến trúc định hướng: **Modular Monolith**.
-- Backend: **TypeScript + NestJS**.
-- Frontend: **Next.js**.
-- CSDL: **PostgreSQL**.
-- UML lưu dạng **PlantUML (`.puml`)** để chỉnh sửa/preview trực tiếp trong VS Code.
-- `dev` là nhánh phát triển; chỉ đưa sang `main` sau khi review.
-- Mọi sơ đồ dùng chung thuật ngữ, cardinality và business rule.
-- Sơ đồ dùng trong báo cáo ưu tiên **một mục tiêu / một hình**, tránh nhồi toàn bộ chi tiết vào một canvas.
+- Kiến trúc: **khối nguyên khối mô-đun (Modular Monolith)**.
+- Phía máy chủ: **TypeScript + NestJS**.
+- Giao diện: **Next.js**.
+- Cơ sở dữ liệu: **PostgreSQL**.
+- Sơ đồ lưu bằng **PlantUML (.puml)**; một số sơ đồ có thêm bản Mermaid để chỉnh trong draw.io.
+- Nhánh TV là bản Việt hóa phục vụ PTTK/báo cáo; được đồng bộ từ dev.
+- Tên miền nghiệp vụ, lớp, thuộc tính, trạng thái và bảng trong nhánh này ưu tiên tiếng Việt.
+- Các tên công nghệ như NestJS, PostgreSQL, REST, HTTP, UUID, JSONB, QR, FCFS, LOTTERY được giữ nguyên vì là thuật ngữ kỹ thuật.
 
-## 3. Thứ tự PTTK đã thực hiện
-1. Yêu cầu và business rules.
-2. Actor + Use Case.
-3. Domain Model.
-4. Class Diagram.
-5. Thiết kế CSDL: ERD + Data Dictionary + PostgreSQL physical schema + indexes/constraints.
-6. Sequence Diagram.
-7. Activity Diagram và State Diagram.
-8. Component/Deployment Architecture.
-9. Consistency Review + REST API baseline + Verification Matrix.
+## 3. Chuỗi PTTK
+1. Yêu cầu và quy tắc nghiệp vụ.
+2. Tác nhân và ca sử dụng.
+3. Mô hình miền.
+4. Biểu đồ lớp.
+5. Thiết kế CSDL: ERD + từ điển dữ liệu + lược đồ PostgreSQL.
+6. Biểu đồ tuần tự.
+7. Biểu đồ hoạt động và trạng thái.
+8. Biểu đồ thành phần và triển khai.
+9. Rà soát nhất quán + REST API + ma trận kiểm chứng.
 
-## 4. Thuật ngữ chuẩn
+## 4. Thuật ngữ chuẩn bản tiếng Việt
 | Thuật ngữ | Ý nghĩa |
 |---|---|
-| Event | Sự kiện văn hóa tổng thể. |
-| EventSession | Một suất cụ thể của Event, có thời gian và sức chứa riêng. |
-| Registration | Yêu cầu đăng ký của Attendee cho một EventSession. |
-| AllocationPolicy | Chính sách phân bổ vé: `FCFS` hoặc `LOTTERY`. |
-| WaitlistEntry | Entry xác định thứ tự ưu tiên trong danh sách chờ của EventSession. |
-| Ticket | Vé điện tử được phát khi Registration được xác nhận. |
-| CheckIn | Bản ghi xác nhận Ticket đã được sử dụng để vào sự kiện. |
-| AccessibilityFeature | Một đặc tính hỗ trợ tiếp cận của sự kiện/địa điểm. |
-| AllocationRun | Bản ghi một lần chạy LOTTERY đã commit, dùng cho audit/kiểm chứng. |
+| Người dùng | Tài khoản trong hệ thống. |
+| Địa điểm | Nơi tổ chức sự kiện. |
+| Sự kiện | Chương trình văn hóa tổng thể. |
+| Suất sự kiện | Một suất cụ thể của sự kiện, có thời gian và sức chứa riêng. |
+| Đăng ký | Yêu cầu tham dự của người dùng cho một suất. |
+| Chính sách phân bổ | Cách phân vé: FCFS hoặc LOTTERY. |
+| Mục danh sách chờ | Bản ghi xác định thứ tự ưu tiên khi suất đã đủ chỗ. |
+| Vé | Vé điện tử được phát khi đăng ký được xác nhận. |
+| Lượt check-in | Bản ghi xác nhận vé đã được sử dụng để vào sự kiện. |
+| Đặc tính hỗ trợ tiếp cận | Thông tin hỗ trợ người tham dự có nhu cầu tiếp cận đặc biệt. |
+| Lần phân bổ | Bản ghi một lần phân bổ LOTTERY đã hoàn tất để phục vụ kiểm chứng. |
 
 ## 5. Trạng thái PTTK
 - [x] Yêu cầu nghiệp vụ
-- [x] Actor + Use Case
-- [x] Domain Model
-- [x] Class Diagram
+- [x] Tác nhân + Ca sử dụng
+- [x] Mô hình miền
+- [x] Biểu đồ lớp
 - [x] ERD
 - [x] Từ điển dữ liệu
-- [x] PostgreSQL physical schema (DDL)
-- [x] Constraints / indexes / transaction rules của CSDL
-- [x] Sequence Diagram
-- [x] Activity Diagram
-- [x] State Diagram
-- [x] Component/Deployment Diagram
-- [x] Consistency Review / Traceability
-- [x] REST API baseline
-- [x] Verification/Test Design baseline
-- [x] Refactor layout nhóm sơ đồ 1-4 cho dễ đọc
-- [ ] Preview trực quan toàn bộ `.puml` trong VS Code và chỉnh layout cuối nếu cần
+- [x] Lược đồ vật lý PostgreSQL
+- [x] Ràng buộc / chỉ mục / quy tắc giao dịch
+- [x] Biểu đồ tuần tự
+- [x] Biểu đồ hoạt động
+- [x] Biểu đồ trạng thái
+- [x] Biểu đồ thành phần / triển khai
+- [x] Rà soát nhất quán / truy vết
+- [x] REST API
+- [x] Ma trận kiểm chứng / thiết kế kiểm thử
+- [x] Việt hóa thuật ngữ PTTK trên nhánh TV
+- [ ] Xem lại trực quan toàn bộ sơ đồ sau khi kéo nhánh TV về máy
 
-## 6. Bộ tài liệu hiện có
-### 01 - Actor / Use Case
-- `01_Actor_UseCase/01-use-case-overview.puml` - bản tổng quan gọn để đưa vào báo cáo.
-- `01_Actor_UseCase/03-use-case-relations.puml` - include/extend và business relation quan trọng.
-- `01_Actor_UseCase/02-use-case-specifications.md` - đặc tả Use Case lõi.
+## 6. Bộ tài liệu
+### 01 - Tác nhân / Ca sử dụng
+- 01_Actor_UseCase/01-use-case-overview.puml
+- 01_Actor_UseCase/01-use-case-overview.mmd
+- 01_Actor_UseCase/02-use-case-specifications.md
+- 01_Actor_UseCase/03-use-case-relations.puml
 
-### 02 - Domain Model
-- `02_DomainModel/01-domain-model.puml` - entity nghiệp vụ và quan hệ cốt lõi.
-- `02_DomainModel/02-domain-status-enums.puml` - enum/status tách riêng.
+### 02 - Mô hình miền
+- 02_DomainModel/01-domain-model.puml
+- 02_DomainModel/02-domain-status-enums.puml
 
-### 03 - Class Diagram
-- `03_ClassDiagram/01-class-diagram-entities.puml` - domain entities.
-- `03_ClassDiagram/02-class-diagram-services.puml` - application/domain services.
-- `03_ClassDiagram/03-class-diagram-strategy.puml` - Strategy Pattern cho FCFS/LOTTERY.
+### 03 - Biểu đồ lớp
+- 03_ClassDiagram/01-class-diagram-entities.puml
+- 03_ClassDiagram/02-class-diagram-services.puml
+- 03_ClassDiagram/03-class-diagram-strategy.puml
 
 ### 04 - Thiết kế CSDL / ERD
-- `04_ERD/01-erd-core.puml` - các bảng nghiệp vụ cốt lõi và cardinality.
-- `04_ERD/02-erd-supporting.puml` - accessibility và bảng nối.
-- `04_ERD/03-data-dictionary.md` - từ điển dữ liệu chi tiết cho 11 bảng.
-- `04_ERD/04-postgresql-schema.sql` - PostgreSQL DDL: enum, table, PK/FK/UQ/CHECK và indexes.
-- `04_ERD/05-database-design-notes.md` - quyết định thiết kế, transaction boundary và rule phân chia DB/service.
+- 04_ERD/01-erd-core.puml
+- 04_ERD/02-erd-supporting.puml
+- 04_ERD/03-data-dictionary.md
+- 04_ERD/04-postgresql-schema.sql
+- 04_ERD/05-database-design-notes.md
 
-### 05 - Sequence
-- `05_Sequence/01-uc05-register-session.puml`
-- `05_Sequence/02-uc06-cancel-promote-waitlist.puml`
-- `05_Sequence/03-uc12-lottery-allocation.puml`
-- `05_Sequence/04-uc14-check-in.puml`
-- `05_Sequence/05-uc09-create-event.puml`
+### 05 - Biểu đồ tuần tự
+- UC05 đăng ký suất
+- UC06 hủy đăng ký + chọn người trong danh sách chờ
+- UC12 phân bổ LOTTERY
+- UC14 check-in vé
+- UC09 tạo sự kiện
 
-### 06 - Activity
-- `06_Activity/01-registration-flow.puml`
-- `06_Activity/02-cancel-promote-flow.puml`
-- `06_Activity/03-lottery-allocation-flow.puml`
+### 06 - Biểu đồ hoạt động
+- Đăng ký suất
+- Hủy đăng ký + danh sách chờ
+- Phân bổ LOTTERY
 
-### 07 - State
-- `07_State/01-registration-state.puml`
-- `07_State/02-ticket-state.puml`
-- `07_State/03-event-session-state.puml`
-- `07_State/04-event-state.puml`
+### 07 - Biểu đồ trạng thái
+- Đăng ký
+- Vé
+- Suất sự kiện
+- Sự kiện
 
-### 08 - Architecture
-- `08_Architecture/01-component-diagram.puml`
-- `08_Architecture/02-deployment-diagram.puml`
+### 08 - Kiến trúc
+- Biểu đồ thành phần
+- Biểu đồ triển khai
 
-### 09 - Review / khóa thiết kế
-- `09_Review/01-consistency-review.md`
-- `09_Review/02-rest-api-baseline.md`
-- `09_Review/03-verification-matrix.md`
+### 09 - Rà soát
+- Rà soát nhất quán
+- REST API
+- Ma trận kiểm chứng
 
-## 7. Baseline giữa kỳ v1
-Bộ PTTK đã phủ và đồng bộ các luồng cốt lõi: tạo/công bố sự kiện, quản lý suất, đăng ký FCFS/LOTTERY, waitlist, phát vé, hủy và promote, check-in, accessibility, chống bot cơ bản, audit allocation, search/object storage và kiến trúc triển khai.
+## 7. Các quyết định đã khóa
+- Sự kiện nháp có thể có 0..* suất; chỉ được công bố khi có ít nhất một suất hợp lệ.
+- Một người tham dự chỉ có một đăng ký cho một suất trong MVP.
+- FCFS phân bổ ngay tại UC05; LOTTERY dùng tối đa một lần phân bổ đã ghi nhận cho mỗi suất.
+- Số đăng ký đã xác nhận không được vượt sức chứa.
+- Một đăng ký có tối đa một vé; một vé có tối đa một lượt check-in.
+- Hủy đăng ký đã xác nhận + chọn người chờ, phân bổ LOTTERY và check-in là các biên giao dịch bắt buộc.
+- Khi hủy sự kiện/suất phải cập nhật dây chuyền các đăng ký và vé liên quan.
 
-Thiết kế dữ liệu đã được hiện thực hóa từ ERD xuống PostgreSQL DDL. DB bảo vệ integrity cơ bản bằng PK/FK/UNIQUE/CHECK/index; các invariant liên quan concurrency và nhiều bảng được giao cho service + transaction/locking.
-
-Các quyết định đã khóa sau review:
-- Event DRAFT có thể có `0..*` EventSession; publish cần ít nhất 1 session hợp lệ.
-- Một Attendee chỉ có một Registration cho một EventSession trong MVP.
-- FCFS allocation chạy tại UC05; Lottery dùng tối đa một AllocationRun đã commit / EventSession.
-- `confirmed registrations <= capacity` luôn phải được bảo vệ bằng transaction/locking.
-- Một Registration có tối đa một Ticket; một Ticket có tối đa một CheckIn.
-- Hủy CONFIRMED + promote waitlist, Lottery allocation và check-in là các transaction boundary bắt buộc.
-- Event/Session cancellation phải cascade theo business rules đã định nghĩa.
-
-## 8. Gate trước khi merge sang main
-Về **logic PTTK + thiết kế CSDL**, baseline v1 đã review xong và có thể dùng làm nguồn chuẩn để code. Các sơ đồ tổng hợp quá lớn đã được tách thành nhiều hình nhỏ để phục vụ báo cáo và trình chiếu.
-
-Trước khi merge `dev -> main`, mở/preview các file `.puml` trên VS Code để kiểm tra lỗi render, chữ chồng hoặc layout chưa cân đối; đồng thời chạy thử `04_ERD/04-postgresql-schema.sql` trên PostgreSQL/pgAdmin để xác nhận DDL tạo schema thành công. Nếu chỉ chỉnh bố cục/cú pháp thì không thay đổi business logic.
-
-> Nếu thay đổi business rule, phải cập nhật đồng bộ Requirement -> Use Case -> Domain/Class -> Database/ERD -> Dynamic Diagram -> API/Test liên quan theo `09_Review/01-consistency-review.md`.
+## 8. Ghi chú về bản tiếng Việt
+Nhánh TV ưu tiên ngôn ngữ báo cáo. Tên bảng/cột PostgreSQL cũng đã có bản tiếng Việt không dấu để đồng bộ với ERD và từ điển dữ liệu. Nhánh dev vẫn giữ bản gốc để đối chiếu khi cần.
