@@ -5,24 +5,19 @@ skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
-
 title MED-06 - BIỂU ĐỒ TUẦN TỰ UC14: CHECK-IN VÉ
-
 actor "Nhân viên check-in" as NV
 boundary "Giao diện check-in" as UI
 control "Dịch vụ check-in" as CI
 database "PostgreSQL" as CSDL
-
 autonumber
 NV -> UI : Quét QR / nhập mã vé
 UI -> CI : checkIn(mãNhânViên, mãSuất, mãVé)
-
 CI -> CSDL : khóa Vé theo mã vé
 CSDL --> CI : Vé
 CI -> CSDL : tải Suất sự kiện + kiểm tra lượt check-in hiện có
 CSDL --> CI : suất + trạng thái check-in
 CI -> CI : xác minh đúng suất + Vé = HỢP_LỆ
-
 alt hợp lệ và chưa dùng
   group Giao dịch
     CI -> CSDL : tạo Lượt check-in
@@ -34,7 +29,6 @@ else không hợp lệ / đã dùng / sai suất
   CI --> UI : lỗi nghiệp vụ
   UI --> NV : Từ chối check-in
 end
-
 note over CI,CSDL
 Khóa dòng + UNIQUE(check_in.ma_ve) bảo đảm một vé chỉ check-in một lần.
 end note
