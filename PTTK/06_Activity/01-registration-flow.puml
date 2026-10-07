@@ -2,48 +2,44 @@
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
+title MED-06 - BIỂU ĐỒ HOẠT ĐỘNG UC05: ĐĂNG KÝ MỘT SUẤT
 
-title MED-06 - ACTIVITY UC05: ĐĂNG KÝ MỘT SUẤT
-
-|Attendee|
+|Người tham dự|
 start
-:Chọn EventSession;
+:Chọn suất sự kiện;
 :Gửi yêu cầu đăng ký;
 
 |Hệ thống|
-:Kiểm tra tài khoản, anti-bot,
-duplicate và registration window;
+:Kiểm tra tài khoản, chống bot,
+trùng lặp và cửa sổ đăng ký;
 
 if (Yêu cầu hợp lệ?) then (Có)
 else (Không)
   :Từ chối đăng ký;
-  |Attendee|
+  |Người tham dự|
   :Nhận thông báo lỗi;
   stop
 endif
 
-if (AllocationPolicy = FCFS?) then (Có)
-  :Khóa EventSession trong transaction;
-  :Tạo Registration PENDING;
+if (Chính sách = FCFS?) then (Có)
+  :Khóa suất trong giao dịch;
+  :Tạo đăng ký CHỜ_XỬ_LÝ;
   :Kiểm tra số chỗ còn lại;
-
   if (Còn chỗ?) then (Có)
-    :Registration -> CONFIRMED;
-    :Phát Ticket VALID;
-    |Attendee|
+    :Đăng ký -> ĐÃ_XÁC_NHẬN;
+    :Phát vé HỢP_LỆ;
+    |Người tham dự|
     :Nhận vé điện tử;
   else (Không)
-    :Registration -> WAITLISTED;
-    :Tạo WaitlistEntry ACTIVE;
-    |Attendee|
-    :Nhận vị trí waitlist;
+    :Đăng ký -> DANH_SÁCH_CHỜ;
+    :Tạo mục danh sách chờ ĐANG_CHỜ;
+    |Người tham dự|
+    :Nhận thứ tự trong danh sách chờ;
   endif
-
 else (LOTTERY)
-  :Tạo Registration PENDING;
-  |Attendee|
-  :Chờ AllocationRun sau khi đóng đăng ký;
+  :Tạo đăng ký CHỜ_XỬ_LÝ;
+  |Người tham dự|
+  :Chờ lần phân bổ sau khi đóng đăng ký;
 endif
-
 stop
 @enduml
