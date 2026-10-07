@@ -1,145 +1,132 @@
-# MED-06 - Từ điển dữ liệu PostgreSQL
+# MED-06 - Từ điển dữ liệu PostgreSQL (bản tiếng Việt)
 
-Tài liệu này mô tả thiết kế dữ liệu vật lý dùng cho baseline giữa kỳ. ERD chỉ thể hiện cấu trúc và quan hệ trực quan; file này mô tả chi tiết ý nghĩa cột, khóa, ràng buộc và trách nhiệm kiểm tra business rule.
+Tài liệu mô tả thiết kế dữ liệu vật lý của hệ thống bằng tên bảng và tên cột tiếng Việt không dấu để dễ đọc nhưng vẫn tương thích tốt với PostgreSQL.
 
-## 1. users
+## 1. nguoi_dung
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | id | UUID | PK | Định danh người dùng |
-| full_name | VARCHAR(120) | NOT NULL | Họ tên |
+| ho_ten | VARCHAR(120) | NOT NULL | Họ tên |
 | email | VARCHAR(255) | NOT NULL, UNIQUE | Email đăng nhập |
-| password_hash | VARCHAR(255) | NOT NULL | Mật khẩu đã băm |
-| role | user_role | NOT NULL | ATTENDEE / ORGANIZER / STAFF / ADMIN |
-| status | account_status | NOT NULL | ACTIVE / LOCKED |
-| created_at | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| updated_at | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| mat_khau_bam | VARCHAR(255) | NOT NULL | Mật khẩu đã băm |
+| vai_tro | vai_tro_nguoi_dung | NOT NULL | NGUOI_THAM_DU / BAN_TO_CHUC / NHAN_VIEN / QUAN_TRI_VIEN |
+| trang_thai | trang_thai_tai_khoan | NOT NULL | HOAT_DONG / BI_KHOA |
+| tao_luc | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| cap_nhat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-## 2. venues
+## 2. dia_diem
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | id | UUID | PK | Định danh địa điểm |
-| name | VARCHAR(200) | NOT NULL | Tên địa điểm |
-| address | TEXT | NOT NULL | Địa chỉ |
-| capacity | INTEGER | NOT NULL, CHECK > 0 | Sức chứa tối đa |
-| created_at | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| updated_at | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| ten | VARCHAR(200) | NOT NULL | Tên địa điểm |
+| dia_chi | TEXT | NOT NULL | Địa chỉ |
+| suc_chua | INTEGER | NOT NULL, CHECK > 0 | Sức chứa tối đa |
+| tao_luc | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| cap_nhat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-## 3. events
+## 3. su_kien
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
-| id | UUID | PK | Định danh Event |
-| organizer_id | UUID | FK -> users.id | Organizer sở hữu Event |
-| venue_id | UUID | FK -> venues.id | Địa điểm tổ chức |
-| name | VARCHAR(200) | NOT NULL | Tên sự kiện |
-| description | TEXT | NULL | Mô tả |
-| status | event_status | NOT NULL | DRAFT / PUBLISHED / COMPLETED / CANCELLED |
-| start_date | TIMESTAMPTZ | NOT NULL | Ngày bắt đầu |
-| end_date | TIMESTAMPTZ | NOT NULL | Ngày kết thúc |
-| image_url | TEXT | NULL | URL ảnh trên object storage |
-| created_at | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| updated_at | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| id | UUID | PK | Định danh sự kiện |
+| ma_nguoi_to_chuc | UUID | FK -> nguoi_dung.id | Người tổ chức sở hữu sự kiện |
+| ma_dia_diem | UUID | FK -> dia_diem.id | Địa điểm tổ chức |
+| ten | VARCHAR(200) | NOT NULL | Tên sự kiện |
+| mo_ta | TEXT | NULL | Mô tả |
+| trang_thai | trang_thai_su_kien | NOT NULL | NHAP / DA_CONG_BO / HOAN_THANH / DA_HUY |
+| bat_dau_luc | TIMESTAMPTZ | NOT NULL | Thời điểm bắt đầu |
+| ket_thuc_luc | TIMESTAMPTZ | NOT NULL | Thời điểm kết thúc |
+| url_anh | TEXT | NULL | Đường dẫn ảnh trên kho lưu trữ đối tượng |
+| tao_luc | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| cap_nhat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-Ràng buộc logic: `start_date < end_date`. Event DRAFT được phép chưa có EventSession; khi publish, service phải kiểm tra có ít nhất một EventSession hợp lệ.
+Sự kiện nháp được phép chưa có suất. Khi công bố, dịch vụ phải kiểm tra có ít nhất một suất hợp lệ.
 
-## 4. event_sessions
+## 4. suat_su_kien
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | id | UUID | PK | Định danh suất |
-| event_id | UUID | FK -> events.id | Event cha |
-| start_time | TIMESTAMPTZ | NOT NULL | Bắt đầu suất |
-| end_time | TIMESTAMPTZ | NOT NULL | Kết thúc suất |
-| capacity | INTEGER | NOT NULL, CHECK > 0 | Sức chứa suất |
-| registration_open_at | TIMESTAMPTZ | NOT NULL | Mở đăng ký |
-| registration_close_at | TIMESTAMPTZ | NOT NULL | Đóng đăng ký |
-| allocation_policy | allocation_policy | NOT NULL | FCFS / LOTTERY |
-| status | session_status | NOT NULL | Vòng đời EventSession |
-| created_at | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| updated_at | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| ma_su_kien | UUID | FK -> su_kien.id | Sự kiện cha |
+| bat_dau_luc | TIMESTAMPTZ | NOT NULL | Bắt đầu suất |
+| ket_thuc_luc | TIMESTAMPTZ | NOT NULL | Kết thúc suất |
+| suc_chua | INTEGER | NOT NULL, CHECK > 0 | Sức chứa suất |
+| mo_dang_ky_luc | TIMESTAMPTZ | NOT NULL | Mở đăng ký |
+| dong_dang_ky_luc | TIMESTAMPTZ | NOT NULL | Đóng đăng ký |
+| chinh_sach_phan_bo | chinh_sach_phan_bo | NOT NULL | FCFS / LOTTERY |
+| trang_thai | trang_thai_suat | NOT NULL | Vòng đời của suất |
+| tao_luc | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| cap_nhat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-Ràng buộc logic: `start_time < end_time`, `registration_open_at < registration_close_at`. Rule `event_sessions.capacity <= venues.capacity` là rule liên bảng, kiểm tra ở service/domain thay vì CHECK constraint đơn giản.
-
-## 5. registrations
+## 5. dang_ky
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | id | UUID | PK | Định danh đăng ký |
-| attendee_id | UUID | FK -> users.id | Người đăng ký |
-| session_id | UUID | FK -> event_sessions.id | Suất đăng ký |
-| status | registration_status | NOT NULL | PENDING / CONFIRMED / WAITLISTED / CANCELLED |
-| registered_at | TIMESTAMPTZ | NOT NULL | Thời điểm đăng ký |
-| updated_at | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| ma_nguoi_tham_du | UUID | FK -> nguoi_dung.id | Người đăng ký |
+| ma_suat | UUID | FK -> suat_su_kien.id | Suất đăng ký |
+| trang_thai | trang_thai_dang_ky | NOT NULL | CHO_XU_LY / DA_XAC_NHAN / DANH_SACH_CHO / DA_HUY |
+| dang_ky_luc | TIMESTAMPTZ | NOT NULL | Thời điểm đăng ký |
+| cap_nhat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-Constraint quan trọng: `UNIQUE(attendee_id, session_id)` để một Attendee chỉ có một Registration cho một Session trong MVP.
+Ràng buộc quan trọng: `UNIQUE(ma_nguoi_tham_du, ma_suat)`.
 
-## 6. waitlist_entries
+## 6. danh_sach_cho
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
-| id | UUID | PK | Định danh phần tử waitlist |
-| registration_id | UUID | FK, UNIQUE | Registration tương ứng |
-| position | BIGINT | NOT NULL, CHECK > 0 | Thứ tự ưu tiên |
-| joined_at | TIMESTAMPTZ | NOT NULL | Thời điểm vào waitlist |
-| status | waitlist_status | NOT NULL | ACTIVE / PROMOTED / CANCELLED |
-| updated_at | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| id | UUID | PK | Định danh mục chờ |
+| ma_dang_ky | UUID | FK, UNIQUE | Đăng ký tương ứng |
+| thu_tu | BIGINT | NOT NULL, CHECK > 0 | Thứ tự ưu tiên |
+| vao_danh_sach_luc | TIMESTAMPTZ | NOT NULL | Thời điểm vào danh sách chờ |
+| trang_thai | trang_thai_danh_sach_cho | NOT NULL | DANG_CHO / DA_DUOC_CHON / DA_HUY |
+| cap_nhat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-`position` là thứ tự ưu tiên ổn định; thứ hạng hiển thị của các entry ACTIVE có thể được tính động, không cần renumber toàn bộ sau mỗi lần hủy/promote.
-
-## 7. tickets
+## 7. ve
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
-| id | UUID | PK | Định danh Ticket |
-| registration_id | UUID | FK, UNIQUE | Registration được cấp vé |
-| ticket_code | VARCHAR(100) | NOT NULL, UNIQUE | Mã vé |
-| qr_code | TEXT | NOT NULL | Payload/URL QR |
-| status | ticket_status | NOT NULL | VALID / USED / CANCELLED / EXPIRED |
-| issued_at | TIMESTAMPTZ | NOT NULL | Thời điểm phát vé |
-| updated_at | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| id | UUID | PK | Định danh vé |
+| ma_dang_ky | UUID | FK, UNIQUE | Đăng ký được cấp vé |
+| ma_ve | VARCHAR(100) | NOT NULL, UNIQUE | Mã vé |
+| ma_qr | TEXT | NOT NULL | Nội dung/mã QR |
+| trang_thai | trang_thai_ve | NOT NULL | HOP_LE / DA_SU_DUNG / DA_HUY / HET_HAN |
+| phat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm phát vé |
+| cap_nhat_luc | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-Ticket chỉ được tạo khi Registration = CONFIRMED. Quy tắc này được service/transaction bảo vệ.
-
-## 8. check_ins
+## 8. check_in
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
-| id | UUID | PK | Định danh CheckIn |
-| ticket_id | UUID | FK, UNIQUE | Vé được check-in |
-| staff_id | UUID | FK -> users.id | Nhân viên thực hiện |
-| checked_in_at | TIMESTAMPTZ | NOT NULL | Thời điểm check-in |
-| method | check_in_method | NOT NULL | QR / MANUAL_CODE |
+| id | UUID | PK | Định danh lượt check-in |
+| ma_ve | UUID | FK, UNIQUE | Vé được check-in |
+| ma_nhan_vien | UUID | FK -> nguoi_dung.id | Nhân viên thực hiện |
+| check_in_luc | TIMESTAMPTZ | NOT NULL | Thời điểm check-in |
+| phuong_thuc | phuong_thuc_check_in | NOT NULL | QR / MA_THU_CONG |
 
-`UNIQUE(ticket_id)` là lớp bảo vệ DB để một Ticket chỉ tạo tối đa một CheckIn record.
-
-## 9. accessibility_features
+## 9. dac_tinh_tiep_can
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
-| id | UUID | PK | Định danh feature |
-| name | VARCHAR(120) | NOT NULL, UNIQUE | Tên feature |
-| description | TEXT | NULL | Mô tả |
+| id | UUID | PK | Định danh đặc tính |
+| ten | VARCHAR(120) | NOT NULL, UNIQUE | Tên đặc tính |
+| mo_ta | TEXT | NULL | Mô tả |
 
-## 10. event_accessibility
+## 10. su_kien_tiep_can
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
-| event_id | UUID | PK, FK -> events.id | Event |
-| accessibility_feature_id | UUID | PK, FK -> accessibility_features.id | Feature |
+| ma_su_kien | UUID | PK, FK -> su_kien.id | Sự kiện |
+| ma_dac_tinh | UUID | PK, FK -> dac_tinh_tiep_can.id | Đặc tính hỗ trợ tiếp cận |
 
-Khóa chính ghép ngăn gán trùng một AccessibilityFeature cho cùng Event.
-
-## 11. allocation_runs
+## 11. lan_phan_bo
 | Cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | id | UUID | PK | Định danh lần phân bổ |
-| session_id | UUID | FK, UNIQUE | Session được phân bổ |
-| executed_by_user_id | UUID | FK -> users.id | Organizer kích hoạt |
-| policy | allocation_policy | NOT NULL | Chính sách phân bổ |
-| executed_at | TIMESTAMPTZ | NOT NULL | Thời điểm chạy |
-| candidate_count | INTEGER | NOT NULL, CHECK >= 0 | Số ứng viên |
-| confirmed_count | INTEGER | NOT NULL, CHECK >= 0 | Số người được xác nhận |
-| metadata | JSONB | NOT NULL | Audit: algorithm version, draw order/seed/hash... |
+| ma_suat | UUID | FK, UNIQUE | Suất được phân bổ |
+| ma_nguoi_thuc_hien | UUID | FK -> nguoi_dung.id | Người tổ chức kích hoạt |
+| chinh_sach | chinh_sach_phan_bo | NOT NULL | Chính sách phân bổ |
+| thuc_hien_luc | TIMESTAMPTZ | NOT NULL | Thời điểm chạy |
+| so_ung_vien | INTEGER | NOT NULL, CHECK >= 0 | Số ứng viên |
+| so_xac_nhan | INTEGER | NOT NULL, CHECK >= 0 | Số người được xác nhận |
+| du_lieu_kiem_chung | JSONB | NOT NULL | Dữ liệu kiểm chứng kết quả |
 
-Trong MVP, AllocationRun chỉ dùng cho LOTTERY và `UNIQUE(session_id)` đảm bảo tối đa một run đã commit cho mỗi EventSession.
-
-## 12. Invariant không thể chỉ giao cho DB
-Các rule sau phải được bảo vệ ở application/domain service bằng transaction/locking:
-- `COUNT(Registration CONFIRMED) <= EventSession.capacity`.
-- Hai request FCFS tranh slot cuối chỉ một request được CONFIRMED.
-- Hủy Registration CONFIRMED + hủy Ticket + promote Waitlist phải atomic.
-- LOTTERY allocation phải atomic và chỉ một AllocationRun được commit.
-- Check-in phải khóa/kiểm tra Ticket để hai request đồng thời không cùng thành công.
-- Publish Event phải có ít nhất một EventSession hợp lệ.
+## 12. Bất biến phải được bảo vệ bằng dịch vụ/giao dịch
+- Số đăng ký `DA_XAC_NHAN` không vượt sức chứa suất.
+- Hai yêu cầu FCFS tranh chỗ cuối chỉ một yêu cầu được xác nhận.
+- Hủy đăng ký đã xác nhận + hủy vé + chọn người trong danh sách chờ phải nguyên tử.
+- Phân bổ LOTTERY phải nguyên tử và chỉ có một lần phân bổ được ghi nhận.
+- Check-in phải khóa/xác minh vé để hai yêu cầu đồng thời không cùng thành công.
+- Chỉ công bố sự kiện khi có ít nhất một suất hợp lệ.
