@@ -4,12 +4,10 @@ skinparam shadowing false
 skinparam defaultFontSize 13
 skinparam state { BackgroundColor White BorderColor Black }
 title MED-06 - TRẠNG THÁI: ĐĂNG KÝ
-
 state "CHỜ XỬ LÝ" as ChoXuLy
 state "ĐÃ XÁC NHẬN" as DaXacNhan
 state "DANH SÁCH CHỜ" as DanhSachCho
 state "ĐÃ HỦY" as DaHuy
-
 [*] --> ChoXuLy : tạo đăng ký
 ChoXuLy --> DaXacNhan : FCFS còn chỗ / trúng LOTTERY
 ChoXuLy --> DanhSachCho : FCFS đầy / không trúng LOTTERY
