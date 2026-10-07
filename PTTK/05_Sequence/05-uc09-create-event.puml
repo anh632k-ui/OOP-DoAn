@@ -5,9 +5,7 @@ skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
-
 title MED-06 - BIỂU ĐỒ TUẦN TỰ UC09: TẠO SỰ KIỆN VÀ THIẾT LẬP BAN ĐẦU
-
 actor "Ban tổ chức" as BTC
 boundary "Giao diện Ban tổ chức" as UI
 control "Dịch vụ sự kiện" as SK
@@ -15,21 +13,17 @@ control "Dịch vụ suất" as SUAT
 control "Dịch vụ hỗ trợ tiếp cận" as HT
 database "PostgreSQL" as CSDL
 participant "Kho lưu trữ đối tượng" as KHO
-
 autonumber
 BTC -> UI : Nhập thông tin sự kiện
-
 opt Có ảnh sự kiện
   UI -> KHO : tải ảnh lên
   KHO --> UI : đường dẫn ảnh
 end
-
 UI -> SK : tạoSựKiện(mãNgườiTổChức, dữLiệuSựKiện, đườngDẫnẢnh)
 SK -> SK : kiểm tra địa điểm/thời gian/dữ liệu cơ bản
 SK -> CSDL : tạo Sự kiện NHÁP
 CSDL --> SK : Sự kiện
 SK --> UI : Sự kiện NHÁP
-
 BTC -> UI : Thêm Suất sự kiện
 UI -> SUAT : tạoSuất(mãSựKiện, mãNgườiTổChức, dữLiệuSuất)
 SUAT -> CSDL : kiểm tra quyền sở hữu sự kiện
@@ -38,7 +32,6 @@ SUAT -> SUAT : kiểm tra thời gian/sức chứa/cửa sổ/chính sách
 SUAT -> CSDL : tạo Suất sự kiện NHÁP
 CSDL --> SUAT : Suất sự kiện
 SUAT --> UI : Suất sự kiện
-
 opt Khai báo hỗ trợ tiếp cận
   BTC -> UI : Chọn đặc tính hỗ trợ tiếp cận
   UI -> HT : gánĐặcTính(mãSựKiện, mãNgườiTổChức, danhSáchĐặcTính)
@@ -46,9 +39,7 @@ opt Khai báo hỗ trợ tiếp cận
   CSDL --> HT : thành công
   HT --> UI : thành công
 end
-
 UI --> BTC : Hiển thị sự kiện NHÁP đã thiết lập
-
 note over SK,SUAT
 Sự kiện NHÁP có thể chưa có suất.
 UC11 chỉ công bố khi có ít nhất một suất hợp lệ.
