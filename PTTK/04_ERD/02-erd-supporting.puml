@@ -5,25 +5,24 @@ skinparam shadowing false
 skinparam defaultFontSize 14
 hide circle
 
-title MED-06 - ERD: ACCESSIBILITY
+title MED-06 - ERD: HỖ TRỢ TIẾP CẬN
 
-entity events {
+entity "su_kien" as su_kien {
   * id : UUID <<PK>>
 }
 
-entity event_accessibility {
-  * event_id : UUID <<PK, FK>>
-  * accessibility_feature_id : UUID <<PK, FK>>
+entity "su_kien_tiep_can" as su_kien_tiep_can {
+  * ma_su_kien : UUID <<PK, FK>>
+  * ma_dac_tinh : UUID <<PK, FK>>
 }
 
-entity accessibility_features {
+entity "dac_tinh_tiep_can" as dac_tinh_tiep_can {
   * id : UUID <<PK>>
   --
-  name : VARCHAR(120) <<UQ>>
-  description : TEXT
+  ten : VARCHAR(120) <<UQ>>
+  mo_ta : TEXT
 }
 
-events ||--o{ event_accessibility
-accessibility_features ||--o{ event_accessibility
-
+su_kien ||--o{ su_kien_tiep_can
+dac_tinh_tiep_can ||--o{ su_kien_tiep_can
 @enduml
