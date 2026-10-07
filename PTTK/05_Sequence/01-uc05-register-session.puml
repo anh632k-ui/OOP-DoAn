@@ -5,9 +5,7 @@ skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
-
 title MED-06 - BIỂU ĐỒ TUẦN TỰ UC05: ĐĂNG KÝ MỘT SUẤT
-
 actor "Người tham dự" as NTD
 boundary "Giao diện Next.js" as UI
 control "Dịch vụ đăng ký" as DK
@@ -16,7 +14,6 @@ control "Dịch vụ phân bổ" as PB
 control "Dịch vụ danh sách chờ" as DSC
 control "Dịch vụ vé" as VE
 database "PostgreSQL" as CSDL
-
 autonumber
 NTD -> UI : Chọn suất và nhấn Đăng ký
 UI -> DK : đăngKý(mãNgườiThamDự, mãSuất)
@@ -24,10 +21,8 @@ DK -> CB : kiểmTraYêuCầuĐăngKý(...)
 CB -> CSDL : kiểm tra tài khoản + giới hạn tần suất + trùng lặp
 CSDL --> CB : hợp lệ
 CB --> DK : hợp lệ
-
 DK -> CSDL : đọc Suất sự kiện + cửa sổ đăng ký
 CSDL --> DK : dữ liệu suất
-
 alt FCFS
   group Giao dịch + khóa Suất sự kiện
     DK -> PB : phânBổNgay(mãNgườiThamDự, mãSuất)
@@ -51,14 +46,11 @@ else LOTTERY
   DK -> CSDL : tạo Đăng ký CHỜ_XỬ_LÝ
   CSDL --> DK : Đăng ký
 end
-
 DK --> UI : trạng thái đăng ký (+ vé/thứ tự nếu có)
 UI --> NTD : Hiển thị kết quả
-
 note over CB,CSDL
 UNIQUE(ma_nguoi_tham_du, ma_suat) là lớp bảo vệ cuối chống đăng ký trùng.
 end note
-
 note over PB,CSDL
 FCFS phải khóa suất trong giao dịch để không cấp vượt sức chứa.
 end note
