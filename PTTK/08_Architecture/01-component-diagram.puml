@@ -6,58 +6,58 @@ skinparam defaultFontSize 13
 skinparam componentStyle rectangle
 skinparam packageStyle rectangle
 
-title MED-06 - COMPONENT DIAGRAM
+title MED-06 - BIỂU ĐỒ THÀNH PHẦN
 
-actor "Web User" as User
-component "Next.js Web App" as FE
+actor "Người dùng web" as NguoiDung
+component "Ứng dụng web Next.js" as GiaoDien
 
-rectangle "NestJS Modular Monolith" as BE {
-  [HTTP API / Controllers] as API
+rectangle "Khối nguyên khối mô-đun NestJS" as MayChu {
+  [API HTTP / Bộ điều khiển] as API
 
-  [Auth & Users] as IAM
-  [Events & Sessions] as EVT
-  [Accessibility & Search] as QUERY
-  [Registrations] as REG
-  [Allocation & Waitlist] as ALLOC
-  [Tickets & Check-in] as TIX
+  [Xác thực & Người dùng] as NguoiDungModule
+  [Sự kiện & Suất] as SuKienModule
+  [Hỗ trợ tiếp cận & Tìm kiếm] as TimKiemModule
+  [Đăng ký] as DangKyModule
+  [Phân bổ & Danh sách chờ] as PhanBoModule
+  [Vé & Check-in] as VeModule
 
-  [Repositories / Persistence] as DATA
+  [Kho dữ liệu / Lớp lưu trữ] as DuLieu
 
-  API --> IAM
-  API --> EVT
-  API --> QUERY
-  API --> REG
-  API --> ALLOC
-  API --> TIX
+  API --> NguoiDungModule
+  API --> SuKienModule
+  API --> TimKiemModule
+  API --> DangKyModule
+  API --> PhanBoModule
+  API --> VeModule
 
-  REG --> ALLOC : FCFS / LOTTERY
-  ALLOC --> TIX : issue ticket
-  EVT --> QUERY : event metadata
+  DangKyModule --> PhanBoModule : FCFS / LOTTERY
+  PhanBoModule --> VeModule : phát vé
+  SuKienModule --> TimKiemModule : dữ liệu sự kiện
 
-  IAM ..> DATA
-  EVT ..> DATA
-  QUERY ..> DATA
-  REG ..> DATA
-  ALLOC ..> DATA
-  TIX ..> DATA
+  NguoiDungModule ..> DuLieu
+  SuKienModule ..> DuLieu
+  TimKiemModule ..> DuLieu
+  DangKyModule ..> DuLieu
+  PhanBoModule ..> DuLieu
+  VeModule ..> DuLieu
 }
 
-database "PostgreSQL" as DB
-cloud "Object Storage\nS3 / MinIO" as OS
+database "PostgreSQL" as CSDL
+cloud "Kho lưu trữ đối tượng
+S3 / MinIO" as KhoAnh
 
-User --> FE
-FE --> API : HTTPS REST/JSON
-DATA --> DB
-EVT --> OS : event images
+NguoiDung --> GiaoDien
+GiaoDien --> API : HTTPS REST/JSON
+DuLieu --> CSDL
+SuKienModule --> KhoAnh : ảnh sự kiện
 
-note bottom of ALLOC
-TicketAllocationStrategy
+note bottom of PhanBoModule
+Chiến lược phân bổ vé:
 FCFS + LOTTERY
 end note
 
-note bottom of BE
-Một backend deployable duy nhất;
-module hóa theo domain, không dùng microservices trong MVP.
+note bottom of MayChu
+Một phía máy chủ triển khai duy nhất;
+chia mô-đun theo miền nghiệp vụ, không dùng vi dịch vụ trong MVP.
 end note
-
 @enduml
