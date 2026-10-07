@@ -15,7 +15,7 @@ Tài liệu này khóa naming sơ bộ giữa PTTK và backend NestJS. Đây ch�
 |---|---|---|---|
 | GET | `/events` | Public | UC03 - danh sách/tìm kiếm/lọc; query hỗ trợ `q`, thời gian, hỗ trợ tiếp cận |
 | GET | `/events/{eventId}` | Public | UC04 - chi tiết Sự kiện + sessions + hỗ trợ tiếp cận |
-| POST | `/events` | Ban tổ chức | UC09 - tạo Sự kiện DRAFT |
+| POST | `/events` | Ban tổ chức | UC09 - tạo Sự kiện NHÁP |
 | PATCH | `/events/{eventId}` | Ban tổ chức owner | UC09 - cập nhật Sự kiện |
 | POST | `/events/{eventId}/công bố` | Ban tổ chức owner | UC11 - công bố Sự kiện |
 | POST | `/events/{eventId}/hủy` | Ban tổ chức owner | UC11 - hủy Sự kiện và cascade các Session chưa hoàn tất |
@@ -51,7 +51,7 @@ Tài liệu này khóa naming sơ bộ giữa PTTK và backend NestJS. Đây ch�
 ## 6. Check-in
 | Method | Đường dẫn | Tác nhân | Ca sử dụng |
 |---|---|---|---|
-| POST | `/check-ins` | Nhân viên check-in | UC14 - body gồm `sessionId`, `ticketCode`, `method` |
+| POST | `/check-ins` | Nhân viên check-in | UC14 - body gồm `sessionId`, `mãVé`, `method` |
 | GET | `/sessions/{sessionId}/check-ins` | Ban tổ chức owner/Admin | UC13/15 - xem lịch sử check-in |
 
 ## 7. HTTP behavior mốc chuẩn
