@@ -22,22 +22,22 @@ Người tham dự.
 2. Hệ thống xác thực người dùng và quyền truy cập.
 3. Hệ thống kiểm tra giới hạn tần suất/anti-bot quy tắc.
 4. Hệ thống kiểm tra cửa sổ đăng ký và trùng lặp registration.
-5. Trong giao dịch có khóa Suất sự kiện, hệ thống tạo Đăng ký `PENDING`.
+5. Trong giao dịch có khóa Suất sự kiện, hệ thống tạo Đăng ký `CHỜ_XỬ_LÝ`.
 6. Hệ thống kiểm tra số chỗ còn lại.
-7. Đăng ký chuyển sang `CONFIRMED`.
-8. Hệ thống tạo một Vé `VALID`.
+7. Đăng ký chuyển sang `ĐÃ_XÁC_NHẬN`.
+8. Hệ thống tạo một Vé `HỢP_LỆ`.
 9. Giao dịch commit và hệ thống trả kết quả đăng ký thành công.
 
 ### Luồng thay thế A - FCFS hết chỗ
 Tại bước 6, nếu sức chứa đã đủ:
-1. Đăng ký chuyển sang `WAITLISTED`.
+1. Đăng ký chuyển sang `DANH_SÁCH_CHỜ`.
 2. Hệ thống tạo `Mục danh sách chờ` ở thứ tự tiếp theo theo FCFS.
 3. Không phát Vé.
 4. Giao dịch commit và trả trạng thái danh sách chờ cho Người tham dự.
 
 ### Luồng thay thế B - LOTTERY
 Sau khi kiểm tra hợp lệ:
-1. Hệ thống tạo Đăng ký `PENDING`.
+1. Hệ thống tạo Đăng ký `CHỜ_XỬ_LÝ`.
 2. Không phát Vé ngay.
 3. Sau khi cửa sổ đăng ký đóng, UC12 thực hiện Lần phân bổ.
 
@@ -49,8 +49,8 @@ Sau khi kiểm tra hợp lệ:
 - Vi phạm unique constraint do yêu cầu đồng thời: rollback và trả lỗi trùng lặp.
 
 ### Hậu điều kiện
-- FCFS: Đăng ký là `CONFIRMED` hoặc `WAITLISTED`.
-- LOTTERY: Đăng ký là `PENDING` cho đến Lần phân bổ.
+- FCFS: Đăng ký là `ĐÃ_XÁC_NHẬN` hoặc `DANH_SÁCH_CHỜ`.
+- LOTTERY: Đăng ký là `CHỜ_XỬ_LÝ` cho đến Lần phân bổ.
 - Không bao giờ vượt sức chứa.
 
 ---
@@ -64,25 +64,25 @@ Người tham dự.
 
 ### Tiền điều kiện
 - Đăng ký thuộc Người tham dự hiện tại.
-- Đăng ký chưa `CANCELLED`.
+- Đăng ký chưa `ĐÃ_HỦY`.
 - Suất sự kiện chưa bắt đầu.
-- Vé, nếu có, chưa `USED`.
+- Vé, nếu có, chưa `ĐÃ_SỬ_DỤNG`.
 
 ### Luồng chính - hủy Đăng ký đã xác nhận
 1. Người tham dự yêu cầu hủy Đăng ký.
 2. Hệ thống kiểm tra quyền sở hữu, trạng thái Session và Vé hiện tại.
 3. Hệ thống khóa Suất sự kiện trong giao dịch.
-4. Đăng ký chuyển `CANCELLED`.
-5. Vé `VALID` tương ứng chuyển `CANCELLED`.
+4. Đăng ký chuyển `ĐÃ_HỦY`.
+5. Vé `HỢP_LỆ` tương ứng chuyển `ĐÃ_HỦY`.
 6. Hệ thống kiểm tra danh sách chờ của Suất sự kiện theo `position` tăng dần.
-7. Nếu có người chờ, lấy entry `ACTIVE` đầu tiên.
-8. Đăng ký của người đó chuyển `CONFIRMED`.
+7. Nếu có người chờ, lấy mục `ĐANG_CHỜ` đầu tiên.
+8. Đăng ký của người đó chuyển `ĐÃ_XÁC_NHẬN`.
 9. Mục danh sách chờ chuyển `PROMOTED`.
-10. Hệ thống phát Vé `VALID` mới cho người được promote và commit giao dịch.
+10. Hệ thống phát Vé `HỢP_LỆ` mới cho người được chọn người tiếp theo và commit giao dịch.
 
 ### Luồng thay thế
-- Đăng ký đang `PENDING`: chuyển thẳng `CANCELLED`, không promote vì chưa chiếm sức chứa.
-- Đăng ký đang `WAITLISTED`: chuyển `CANCELLED`, Mục danh sách chờ chuyển `CANCELLED`, không promote vì chưa chiếm sức chứa.
+- Đăng ký đang `CHỜ_XỬ_LÝ`: chuyển thẳng `ĐÃ_HỦY`, không chọn người tiếp theo vì chưa chiếm sức chứa.
+- Đăng ký đang `DANH_SÁCH_CHỜ`: chuyển `ĐÃ_HỦY`, Mục danh sách chờ chuyển `ĐÃ_HỦY`, không chọn người tiếp theo vì chưa chiếm sức chứa.
 - Không có người trong danh sách chờ: kết thúc sau khi giải phóng chỗ.
 
 ### Hậu điều kiện
@@ -103,8 +103,8 @@ Ban tổ chức đã đăng nhập và có vai trò phù hợp.
 ### Luồng chính
 1. Ban tổ chức nhập tên, mô tả, địa điểm, thời gian tổng quan, ảnh và thông tin liên quan.
 2. Hệ thống validate dữ liệu.
-3. Hệ thống tạo Sự kiện ở trạng thái `DRAFT` và gán quyền sở hữu cho Ban tổ chức.
-4. Sự kiện `DRAFT` có thể tạm thời chưa có Suất sự kiện.
+3. Hệ thống tạo Sự kiện ở trạng thái `NHÁP` và gán quyền sở hữu cho Ban tổ chức.
+4. Sự kiện `NHÁP` có thể tạm thời chưa có Suất sự kiện.
 5. Ban tổ chức bổ sung Suất sự kiện và Đặc tính hỗ trợ tiếp cận.
 6. Sau khi có ít nhất một Suất sự kiện hợp lệ và đủ dữ liệu, Ban tổ chức có thể dùng UC11 để công bố/mở đăng ký.
 
@@ -132,12 +132,12 @@ Ban tổ chức.
 1. Ban tổ chức yêu cầu chạy phân bổ cho Suất sự kiện.
 2. Hệ thống khóa Suất sự kiện để ngăn hai run cạnh tranh.
 3. Hệ thống kiểm tra chưa có Lần phân bổ cho session.
-4. Hệ thống lấy tập Đăng ký `PENDING` hợp lệ.
+4. Hệ thống lấy tập Đăng ký `CHỜ_XỬ_LÝ` hợp lệ.
 5. Hệ thống tính số slot khả dụng theo sức chứa và số chỗ đã được xác nhận hợp lệ.
 6. `Chiến lược phân bổ ngẫu nhiên` tạo thứ tự ngẫu nhiên công bằng cho tập ứng viên.
-7. Tối đa số slot đầu tiên được chuyển `CONFIRMED`.
-8. Mỗi Đăng ký được xác nhận được phát đúng một Vé `VALID`.
-9. Các Đăng ký còn lại chuyển `WAITLISTED` theo chính thứ tự rút và tạo Mục danh sách chờ theo draw position.
+7. Tối đa số slot đầu tiên được chuyển `ĐÃ_XÁC_NHẬN`.
+8. Mỗi Đăng ký được xác nhận được phát đúng một Vé `HỢP_LỆ`.
+9. Các Đăng ký còn lại chuyển `DANH_SÁCH_CHỜ` theo chính thứ tự rút và tạo Mục danh sách chờ theo draw position.
 10. Hệ thống ghi `Lần phân bổ` gồm người kích hoạt, counts và siêu dữ liệu phục vụ kiểm chứng.
 11. Hệ thống commit toàn bộ kết quả trong một giao dịch.
 
@@ -145,7 +145,7 @@ Ban tổ chức.
 FCFS được áp dụng trực tiếp trong UC05 tại thời điểm Đăng ký đến hệ thống. Trong MVP không chạy batch Lần phân bổ cho FCFS; có thể kiểm chứng FCFS qua `registeredAt`, trạng thái Đăng ký, Vé và log/giao dịch history.
 
 ### Hậu điều kiện
-- Số Đăng ký `CONFIRMED` không vượt sức chứa.
+- Số Đăng ký `ĐÃ_XÁC_NHẬN` không vượt sức chứa.
 - Chỉ một Lần phân bổ LOTTERY có thể commit cho Suất sự kiện.
 - Kết quả phân bổ có dữ liệu kiểm chứng gồm người kích hoạt và siêu dữ liệu thuật toán.
 - Người không trúng LOTTERY được xếp danh sách chờ theo thứ tự đã rút.
@@ -166,16 +166,16 @@ Nhân viên check-in.
 ### Luồng chính
 1. Staff quét QR hoặc nhập ticket code.
 2. Hệ thống tìm và khóa Vé cần kiểm tra.
-3. Hệ thống kiểm tra Vé ở trạng thái `VALID`.
+3. Hệ thống kiểm tra Vé ở trạng thái `HỢP_LỆ`.
 4. Hệ thống kiểm tra chưa có Lượt check-in thành công cho Vé.
 5. Hệ thống kiểm tra Vé qua Đăng ký thuộc đúng Suất sự kiện.
 6. Hệ thống tạo Lượt check-in record.
-7. Vé chuyển `USED`.
+7. Vé chuyển `ĐÃ_SỬ_DỤNG`.
 8. Hệ thống commit và trả kết quả check-in thành công.
 
 ### Ngoại lệ
 - Vé không tồn tại: từ chối.
-- Vé `CANCELLED`, `EXPIRED` hoặc `USED`: từ chối.
+- Vé `ĐÃ_HỦY`, `HẾT_HẠN` hoặc `ĐÃ_SỬ_DỤNG`: từ chối.
 - Vé thuộc Suất sự kiện khác: từ chối.
 - Yêu cầu đồng thời cho cùng Vé: chỉ một yêu cầu được commit thành công.
 
@@ -188,7 +188,7 @@ Vé đã dùng không thể check-in lần thứ hai theo luồng thông thườ
 | Use Case | Domain/Class | Sequence | Hoạt động | Trạng thái |
 |---|---:|---:|---:|---:|
 | UC05 Đăng ký suất | Bắt buộc | Bắt buộc | Bắt buộc | Đăng ký |
-| UC06 Hủy + promote danh sách chờ | Bắt buộc | Bắt buộc | Bắt buộc | Đăng ký/Vé |
+| UC06 Hủy + chọn người tiếp theo danh sách chờ | Bắt buộc | Bắt buộc | Bắt buộc | Đăng ký/Vé |
 | UC09 Tạo sự kiện | Bắt buộc | Nên có | Có thể | Sự kiện |
 | UC12 Phân bổ | Bắt buộc | Bắt buộc | Bắt buộc | Đăng ký |
 | UC14 Check-in | Bắt buộc | Bắt buộc | Có thể | Vé |
