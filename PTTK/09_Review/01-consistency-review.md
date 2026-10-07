@@ -1,25 +1,25 @@
 # Rà soát nhất quán PTTK giữa kỳ - MED-06
 
-## 1. Mục tiêu review
+## 1. Mục tiêu rà soát
 Kiểm tra tính nhất quán theo chuỗi:
 
 `Yêu cầu -> Ca sử dụng -> Mô hình miền -> Biểu đồ lớp -> ERD -> Tuần tự/Hoạt động/Trạng thái -> Architecture`
 
-Mốc chuẩn review này áp dụng cho nhánh `dev` trước khi mở Pull Yêu cầu sang `main`.
+Mốc chuẩn rà soát này áp dụng cho nhánh `dev` trước khi mở Pull Yêu cầu sang `main`.
 
-## 2. Kết quả review
+## 2. Kết quả rà soát
 
 | # | Phát hiện | Mức độ | Cách xử lý | Trạng thái |
 |---|---|---|---|---|
 | 1 | Quan hệ `<<extend>>` của chọn lên danh sách chờ trong Ca sử dụng Diagram bị đảo chiều. | Cao | Đổi thành `Promote danh sách chờ -> UC06 Hủy đăng ký` với `<<extend>>`. | Đã sửa |
-| 2 | Yêu cầu/Domain/Class dùng `Sự kiện 1..* Suất sự kiện`, nhưng UC09 cho phép tạo Sự kiện DRAFT trước khi thêm suất và DB không thể ép Sự kiện phải có session ngay khi insert. | Cao | Đổi cardinality thành `Sự kiện 1 -> 0..* Suất sự kiện`; thêm invariant chỉ được công bố khi có ít nhất 1 Suất sự kiện hợp lệ. | Đã sửa |
+| 2 | Yêu cầu/Domain/Class dùng `Sự kiện 1..* Suất sự kiện`, nhưng UC09 cho phép tạo Sự kiện NHÁP trước khi thêm suất và DB không thể ép Sự kiện phải có session ngay khi insert. | Cao | Đổi cardinality thành `Sự kiện 1 -> 0..* Suất sự kiện`; thêm invariant chỉ được công bố khi có ít nhất 1 Suất sự kiện hợp lệ. | Đã sửa |
 | 3 | `Lần phân bổ` thiếu người kích hoạt nên kiểm chứng chưa đủ. | Trung bình | Thêm `executedByNgười dùngId` / `executed_by_user_id` và quan hệ Người dùng -> Lần phân bổ. | Đã sửa |
 | 4 | UC12 dùng khái niệm `completed Lần phân bổ` nhưng model không có trạng thái run. | Cao | MVP coi Lần phân bổ chỉ tồn tại sau commit; dùng `UNIQUE(session_id)` và tối đa 1 Lottery Lần phân bổ / Session. | Đã sửa |
 | 5 | Biểu đồ lớp đặt `addSession` và hỗ trợ tiếp cận vào Dịch vụ sự kiện trong khi Biểu đồ thành phần đã tách Sessions/Accessibility Module. | Trung bình | Tách `Dịch vụ suất` và `Dịch vụ hỗ trợ tiếp cận`, giữ Dịch vụ sự kiện tập trung lifecycle Sự kiện. | Đã sửa |
-| 6 | Tuần tự UC06 kiểm tra Vé `USED` nhưng chưa hề tải Vé. | Cao | Thêm `Dịch vụ vé.findByĐăng kýId()` trước khi quyết định cho phép hủy. | Đã sửa |
-| 7 | Giao dịch boundary FCFS trong UC05 chưa rõ, có nguy cơ để lại Đăng ký PENDING khi allocate lỗi. | Cao | Gom create Đăng ký + lock Session + phân bổ + ticket/danh sách chờ vào một giao dịch cho FCFS. | Đã sửa |
+| 6 | Tuần tự UC06 kiểm tra Vé `ĐÃ_SỬ_DỤNG` nhưng chưa hề tải Vé. | Cao | Thêm `Dịch vụ vé.findByĐăng kýId()` trước khi quyết định cho phép hủy. | Đã sửa |
+| 7 | Giao dịch boundary FCFS trong UC05 chưa rõ, có nguy cơ để lại Đăng ký CHỜ_XỬ_LÝ khi allocate lỗi. | Cao | Gom create Đăng ký + lock Session + phân bổ + ticket/danh sách chờ vào một giao dịch cho FCFS. | Đã sửa |
 | 8 | Danh sách chờ dùng `position` nhưng chưa nói rõ có cần renumber khi hủy/chọn lên. | Thấp | Chốt `position` là khóa thứ tự ưu tiên; thứ hạng ACTIVE hiển thị được tính động. | Đã sửa |
-| 9 | Vé Trạng thái có nhánh hủy do Suất sự kiện nhưng Yêu cầu chưa mô tả cascade. | Trung bình | Thêm BR-19: hủy Session hủy Đăng ký hoạt động và Vé VALID; hủy Sự kiện cascade xuống Session chưa hoàn tất. | Đã sửa |
+| 9 | Vé Trạng thái có nhánh hủy do Suất sự kiện nhưng Yêu cầu chưa mô tả cascade. | Trung bình | Thêm BR-19: hủy Session hủy Đăng ký hoạt động và Vé HỢP_LỆ; hủy Sự kiện cascade xuống Session chưa hoàn tất. | Đã sửa |
 | 10 | Thiếu Trạng thái Diagram cho Sự kiện dù requirement đã định nghĩa Sự kiện lifecycle. | Trung bình | Bổ sung `07_Trạng thái/04-event-state.puml`. | Đã sửa |
 | 11 | Bộ Tuần tự mới có 4 luồng lõi, thiếu luồng setup Sự kiện để giải thích UC09. | Thấp | Bổ sung `05_Tuần tự/05-uc09-create-event.puml`. | Đã sửa |
 
@@ -41,7 +41,7 @@ Mốc chuẩn review này áp dụng cho nhánh `dev` trước khi mở Pull Yê
 |---|---|
 | Người dùng -> Sự kiện | `1 -> 0..*` |
 | Địa điểm -> Sự kiện | `1 -> 0..*` |
-| Sự kiện -> Suất sự kiện | `1 -> 0..*` (DRAFT có thể chưa có suất; công bố cần >=1) |
+| Sự kiện -> Suất sự kiện | `1 -> 0..*` (NHÁP có thể chưa có suất; công bố cần >=1) |
 | Người dùng -> Đăng ký | `1 -> 0..*` |
 | Suất sự kiện -> Đăng ký | `1 -> 0..*` |
 | Đăng ký -> Mục danh sách chờ | `1 -> 0..1` |
@@ -58,16 +58,16 @@ Mốc chuẩn review này áp dụng cho nhánh `dev` trước khi mở Pull Yê
 4. `UNIQUE(check_ins.ticket_id)`.
 5. `UNIQUE(phân bổ_runs.session_id)` cho Lottery MVP.
 6. Sự kiện chỉ công bố khi có ít nhất một Suất sự kiện hợp lệ.
-7. Vé chỉ phát khi Đăng ký đã `CONFIRMED`.
-8. Vé `USED` không quay lại `VALID` theo luồng thường.
-9. Hủy Đăng ký CONFIRMED + chọn lên danh sách chờ là một giao dịch.
+7. Vé chỉ phát khi Đăng ký đã `ĐÃ_XÁC_NHẬN`.
+8. Vé `ĐÃ_SỬ_DỤNG` không quay lại `HỢP_LỆ` theo luồng thường.
+9. Hủy Đăng ký ĐÃ_XÁC_NHẬN + chọn lên danh sách chờ là một giao dịch.
 10. Lottery phân bổ là một giao dịch và chỉ một run được commit.
 11. FCFS phải khóa/serialize phần kiểm tra sức chứa để không oversell.
 
-## 6. Kết luận review
-Về **logic PTTK**, mốc chuẩn giữa kỳ đã nhất quán sau vòng review này. Từ thời điểm này không nên tự ý đổi entity, tên trạng thái, cardinality hoặc quy tắc nghiệp vụ trong lúc code. Nếu có thay đổi, phải cập nhật lại các tài liệu phụ thuộc theo traceability ở trên.
+## 6. Kết luận rà soát
+Về **logic PTTK**, mốc chuẩn giữa kỳ đã nhất quán sau vòng rà soát này. Từ thời điểm này không nên tự ý đổi entity, tên trạng thái, cardinality hoặc quy tắc nghiệp vụ trong lúc code. Nếu có thay đổi, phải cập nhật lại các tài liệu phụ thuộc theo traceability ở trên.
 
 ### Gate cuối trước khi merge `dev -> main`
-- Preview toàn bộ `.puml` bằng PlantUML trong VS Code để kiểm tra lỗi render/layout.
+- Prà soát toàn bộ `.puml` bằng PlantUML trong VS Code để kiểm tra lỗi render/layout.
 - Kiểm tra chữ không bị chồng/diagram quá rộng khi đưa vào báo cáo.
-- Sau khi preview đạt, tạo PR `dev -> main` và chỉ merge mốc chuẩn giữa kỳ đã kiểm tra.
+- Sau khi prà soát đạt, tạo PR `dev -> main` và chỉ merge mốc chuẩn giữa kỳ đã kiểm tra.
