@@ -3,16 +3,13 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
 title MED-06 - BIỂU ĐỒ HOẠT ĐỘNG UC05: ĐĂNG KÝ MỘT SUẤT
-
 |Người tham dự|
 start
 :Chọn suất sự kiện;
 :Gửi yêu cầu đăng ký;
-
 |Hệ thống|
 :Kiểm tra tài khoản, chống bot,
 trùng lặp và cửa sổ đăng ký;
-
 if (Yêu cầu hợp lệ?) then (Có)
 else (Không)
   :Từ chối đăng ký;
@@ -20,7 +17,6 @@ else (Không)
   :Nhận thông báo lỗi;
   stop
 endif
-
 if (Chính sách = FCFS?) then (Có)
   :Khóa suất trong giao dịch;
   :Tạo đăng ký CHỜ_XỬ_LÝ;
