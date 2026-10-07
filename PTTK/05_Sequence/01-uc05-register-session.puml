@@ -6,63 +6,60 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
 
-title MED-06 - SEQUENCE UC05: ĐĂNG KÝ MỘT SUẤT
+title MED-06 - BIỂU ĐỒ TUẦN TỰ UC05: ĐĂNG KÝ MỘT SUẤT
 
-actor Attendee
-boundary "Next.js UI" as UI
-control "RegistrationService" as RS
-control "BotProtectionService" as BP
-control "AllocationService" as AS
-control "WaitlistService" as WS
-control "TicketService" as TS
-database "PostgreSQL" as DB
+actor "Người tham dự" as NTD
+boundary "Giao diện Next.js" as UI
+control "Dịch vụ đăng ký" as DK
+control "Dịch vụ chống bot" as CB
+control "Dịch vụ phân bổ" as PB
+control "Dịch vụ danh sách chờ" as DSC
+control "Dịch vụ vé" as VE
+database "PostgreSQL" as CSDL
 
 autonumber
-Attendee -> UI : Chọn suất và nhấn Đăng ký
-UI -> RS : register(attendeeId, sessionId)
-RS -> BP : validateRegistrationRequest(...)
-BP -> DB : kiểm tra account + rate limit + duplicate
-DB --> BP : hợp lệ
-BP --> RS : valid
+NTD -> UI : Chọn suất và nhấn Đăng ký
+UI -> DK : đăngKý(mãNgườiThamDự, mãSuất)
+DK -> CB : kiểmTraYêuCầuĐăngKý(...)
+CB -> CSDL : kiểm tra tài khoản + giới hạn tần suất + trùng lặp
+CSDL --> CB : hợp lệ
+CB --> DK : hợp lệ
 
-RS -> DB : đọc EventSession + registration window
-DB --> RS : session
+DK -> CSDL : đọc Suất sự kiện + cửa sổ đăng ký
+CSDL --> DK : dữ liệu suất
 
 alt FCFS
-  group Transaction + lock EventSession
-    RS -> AS : allocateImmediate(attendeeId, sessionId)
-    AS -> DB : lock session + tạo Registration PENDING
-    AS -> DB : đếm CONFIRMED
-
+  group Giao dịch + khóa Suất sự kiện
+    DK -> PB : phânBổNgay(mãNgườiThamDự, mãSuất)
+    PB -> CSDL : khóa suất + tạo Đăng ký CHỜ_XỬ_LÝ
+    PB -> CSDL : đếm số ĐÃ_XÁC_NHẬN
     alt còn chỗ
-      AS -> DB : Registration -> CONFIRMED
-      AS -> TS : issueTicket(registrationId)
-      TS -> DB : tạo Ticket VALID
-      TS --> AS : Ticket
-      AS --> RS : CONFIRMED
+      PB -> CSDL : Đăng ký -> ĐÃ_XÁC_NHẬN
+      PB -> VE : phátVé(mãĐăngKý)
+      VE -> CSDL : tạo Vé HỢP_LỆ
+      VE --> PB : Vé
+      PB --> DK : ĐÃ_XÁC_NHẬN
     else hết chỗ
-      AS -> DB : Registration -> WAITLISTED
-      AS -> WS : enqueue(registrationId)
-      WS -> DB : tạo WaitlistEntry ACTIVE
-      WS --> AS : waitlist position
-      AS --> RS : WAITLISTED
+      PB -> CSDL : Đăng ký -> DANH_SÁCH_CHỜ
+      PB -> DSC : thêmVàoDanhSách(mãĐăngKý)
+      DSC -> CSDL : tạo Mục danh sách chờ ĐANG_CHỜ
+      DSC --> PB : thứ tự chờ
+      PB --> DK : DANH_SÁCH_CHỜ
     end
   end
-
 else LOTTERY
-  RS -> DB : tạo Registration PENDING
-  DB --> RS : Registration
+  DK -> CSDL : tạo Đăng ký CHỜ_XỬ_LÝ
+  CSDL --> DK : Đăng ký
 end
 
-RS --> UI : trạng thái Registration (+ Ticket/position nếu có)
-UI --> Attendee : Hiển thị kết quả
+DK --> UI : trạng thái đăng ký (+ vé/thứ tự nếu có)
+UI --> NTD : Hiển thị kết quả
 
-note over BP,DB
-UNIQUE(attendee_id, session_id) là lớp bảo vệ cuối cho duplicate.
+note over CB,CSDL
+UNIQUE(ma_nguoi_tham_du, ma_suat) là lớp bảo vệ cuối chống đăng ký trùng.
 end note
 
-note over AS,DB
-FCFS phải khóa session trong transaction để không oversell.
+note over PB,CSDL
+FCFS phải khóa suất trong giao dịch để không cấp vượt sức chứa.
 end note
-
 @enduml
