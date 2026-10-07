@@ -9,91 +9,90 @@ skinparam ranksep 55
 hide circle
 hide stereotypes
 
-title MED-06 - CLASS DIAGRAM: DOMAIN ENTITIES
+title MED-06 - BIỂU ĐỒ LỚP: CÁC LỚP NGHIỆP VỤ
 
-class User {
-  - id: UUID
-  - fullName: string
+class "Người dùng" as NguoiDung {
+  - mã: UUID
+  - họTên: string
   - email: string
-  - role: UserRole
-  - status: AccountStatus
-  + isActive(): boolean
+  - vaiTrò: VaiTroNguoiDung
+  - trạngThái: TrangThaiTaiKhoan
+  + đangHoạtĐộng(): boolean
 }
-class Venue {
-  - id: UUID
-  - name: string
-  - capacity: int
-  + canHost(capacity: int): boolean
+class "Địa điểm" as DiaDiem {
+  - mã: UUID
+  - tên: string
+  - sứcChứa: int
+  + đủSứcChứa(sốNgười: int): boolean
 }
-class AccessibilityFeature {
-  - id: UUID
-  - name: string
+class "Đặc tính hỗ trợ tiếp cận" as HoTroTiepCan {
+  - mã: UUID
+  - tên: string
 }
-class Event {
-  - id: UUID
-  - name: string
-  - status: EventStatus
-  + canPublish(): boolean
-  + publish(): void
-  + cancel(): void
+class "Sự kiện" as SuKien {
+  - mã: UUID
+  - tên: string
+  - trạngThái: TrangThaiSuKien
+  + cóThểCôngBố(): boolean
+  + côngBố(): void
+  + hủy(): void
 }
-class EventSession {
-  - id: UUID
-  - startTime: DateTime
-  - capacity: int
-  - allocationPolicy: AllocationPolicy
-  - status: SessionStatus
-  + isRegistrationOpen(now): boolean
-  + availableSlots(confirmedCount): int
+class "Suất sự kiện" as SuatSuKien {
+  - mã: UUID
+  - thờiGianBắtĐầu: DateTime
+  - sứcChứa: int
+  - chínhSáchPhânBổ: ChinhSachPhanBo
+  - trạngThái: TrangThaiSuat
+  + đangMởĐăngKý(thờiĐiểm): boolean
+  + sốChỗCònLại(đãXácNhận): int
 }
-class AllocationRun {
-  - id: UUID
-  - policy: AllocationPolicy
-  - executedAt: DateTime
+class "Lần phân bổ" as LanPhanBo {
+  - mã: UUID
+  - chínhSách: ChinhSachPhanBo
+  - thờiĐiểmThựcHiện: DateTime
 }
-class Registration {
-  - id: UUID
-  - registeredAt: DateTime
-  - status: RegistrationStatus
-  + confirm(): void
-  + markWaitlisted(): void
-  + cancel(): void
+class "Đăng ký" as DangKy {
+  - mã: UUID
+  - thờiĐiểmĐăngKý: DateTime
+  - trạngThái: TrangThaiDangKy
+  + xácNhận(): void
+  + đưaVàoDanhSáchChờ(): void
+  + hủy(): void
 }
-class WaitlistEntry {
-  - id: UUID
-  - position: long
-  - status: WaitlistStatus
-  + promote(): void
+class "Mục danh sách chờ" as DanhSachCho {
+  - mã: UUID
+  - thứTự: long
+  - trạngThái: TrangThaiDanhSachCho
+  + chọnLên(): void
 }
-class Ticket {
-  - id: UUID
-  - ticketCode: string
-  - status: TicketStatus
-  + canCheckIn(): boolean
-  + markUsed(): void
-  + cancel(): void
+class "Vé" as Ve {
+  - mã: UUID
+  - mãVé: string
+  - trạngThái: TrangThaiVe
+  + cóThểCheckIn(): boolean
+  + đánhDấuĐãDùng(): void
+  + hủy(): void
 }
-class CheckIn {
-  - id: UUID
-  - checkedInAt: DateTime
-  - method: CheckInMethod
+class "Lượt check-in" as LuotCheckIn {
+  - mã: UUID
+  - thờiĐiểmCheckIn: DateTime
+  - phươngThức: PhuongThucCheckIn
 }
 
-Venue "1" -- "0..*" Event : hosts
-User "1" -- "0..*" Event : organizes
-Event "1" *-- "0..*" EventSession
-Event "0..*" -- "0..*" AccessibilityFeature
-EventSession "1" -- "0..*" Registration
-User "1" -- "0..*" Registration
-EventSession "1" *-- "0..1" AllocationRun
-Registration "1" *-- "0..1" WaitlistEntry
-Registration "1" *-- "0..1" Ticket
-Ticket "1" *-- "0..1" CheckIn
+DiaDiem "1" -- "0..*" SuKien : tổ chức tại
+NguoiDung "1" -- "0..*" SuKien : tổ chức
+SuKien "1" *-- "0..*" SuatSuKien
+SuKien "0..*" -- "0..*" HoTroTiepCan
+SuatSuKien "1" -- "0..*" DangKy
+NguoiDung "1" -- "0..*" DangKy
+SuatSuKien "1" *-- "0..1" LanPhanBo
+DangKy "1" *-- "0..1" DanhSachCho
+DangKy "1" *-- "0..1" Ve
+Ve "1" *-- "0..1" LuotCheckIn
 
-User -[hidden]right- Venue
-Venue -[hidden]right- AccessibilityFeature
-EventSession -[hidden]right- AllocationRun
-WaitlistEntry -[hidden]right- Ticket
-Ticket -[hidden]right- CheckIn
-
+NguoiDung -[hidden]right- DiaDiem
+DiaDiem -[hidden]right- HoTroTiepCan
+SuatSuKien -[hidden]right- LanPhanBo
+DanhSachCho -[hidden]right- Ve
+Ve -[hidden]right- LuotCheckIn
 @enduml
