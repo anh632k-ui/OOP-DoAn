@@ -10,68 +10,66 @@ skinparam ranksep 50
 hide circle
 hide stereotypes
 
-title MED-06 - CLASS DIAGRAM: APPLICATION SERVICES
+title MED-06 - BIỂU ĐỒ LỚP: CÁC DỊCH VỤ ỨNG DỤNG
 
-package "Event Management" {
-  class EventService {
-    + createEvent(...): Event
-    + updateEvent(...): Event
-    + publishEvent(...): Event
-    + cancelEvent(...): void
+package "Quản lý sự kiện" {
+  class "Dịch vụ sự kiện" as DVSuKien {
+    + tạoSựKiện(...): SuKien
+    + cậpNhậtSựKiện(...): SuKien
+    + côngBốSựKiện(...): SuKien
+    + hủySựKiện(...): void
   }
-  class SessionService {
-    + createSession(...): EventSession
-    + updateSession(...): EventSession
-    + openRegistration(...): void
-    + closeRegistration(...): void
+  class "Dịch vụ suất" as DVSuat {
+    + tạoSuất(...): SuatSuKien
+    + cậpNhậtSuất(...): SuatSuKien
+    + mởĐăngKý(...): void
+    + đóngĐăngKý(...): void
   }
-  class AccessibilityService {
-    + setEventFeatures(...): void
-    + findEventsByFeatures(...): Event[]
+  class "Dịch vụ hỗ trợ tiếp cận" as DVHoTro {
+    + gánĐặcTínhChoSựKiện(...): void
+    + tìmSựKiệnTheoĐặcTính(...): SuKien[]
   }
-
-  EventService --> SessionService
-  EventService --> AccessibilityService
+  DVSuKien --> DVSuat
+  DVSuKien --> DVHoTro
 }
 
-package "Registration & Ticketing" {
-  class RegistrationService {
-    + register(...): Registration
-    + cancelRegistration(...): void
+package "Đăng ký và vé" {
+  class "Dịch vụ đăng ký" as DVDangKy {
+    + đăngKý(...): DangKy
+    + hủyĐăngKý(...): void
   }
-  class BotProtectionService {
-    + validateRegistrationRequest(...): void
+  class "Dịch vụ chống bot" as DVChongBot {
+    + kiểmTraYêuCầuĐăngKý(...): void
   }
-  class AllocationService {
-    + allocateImmediate(...): void
-    + runAllocation(...): AllocationRun
+  class "Dịch vụ phân bổ" as DVPhanBo {
+    + phânBổNgay(...): void
+    + chạyPhânBổ(...): LanPhanBo
   }
-  class WaitlistService {
-    + enqueue(...): WaitlistEntry
-    + promoteNext(...): Registration?
+  class "Dịch vụ danh sách chờ" as DVDanhSachCho {
+    + thêmVàoDanhSách(...): DanhSachCho
+    + chọnNgườiTiếpTheo(...): DangKy?
   }
-  class TicketService {
-    + issueTicket(...): Ticket
-    + cancelTicket(...): void
-    + findByCode(...): Ticket
+  class "Dịch vụ vé" as DVVe {
+    + phátVé(...): Ve
+    + hủyVé(...): void
+    + tìmTheoMã(...): Ve
   }
-  class CheckInService {
-    + checkIn(...): CheckIn
+  class "Dịch vụ check-in" as DVCheckIn {
+    + checkIn(...): LuotCheckIn
   }
 
-  RegistrationService --> BotProtectionService
-  RegistrationService --> AllocationService
-  AllocationService --> WaitlistService
-  AllocationService --> TicketService
-  RegistrationService --> TicketService
-  CheckInService --> TicketService
+  DVDangKy --> DVChongBot
+  DVDangKy --> DVPhanBo
+  DVPhanBo --> DVDanhSachCho
+  DVPhanBo --> DVVe
+  DVDangKy --> DVVe
+  DVCheckIn --> DVVe
 
-  RegistrationService -[hidden]right- AllocationService
-  AllocationService -[hidden]right- TicketService
-  BotProtectionService -[hidden]right- WaitlistService
-  WaitlistService -[hidden]right- CheckInService
+  DVDangKy -[hidden]right- DVPhanBo
+  DVPhanBo -[hidden]right- DVVe
+  DVChongBot -[hidden]right- DVDanhSachCho
+  DVDanhSachCho -[hidden]right- DVCheckIn
 }
 
-SessionService --> RegistrationService : cancel cascade
-
+DVSuat --> DVDangKy : hủy dây chuyền
 @enduml
