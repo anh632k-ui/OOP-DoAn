@@ -11,12 +11,12 @@ skinparam usecase {
   FontColor Black
 }
 
-title MED-06 - USE CASE OVERVIEW
+title MED-06 - BIỂU ĐỒ CA SỬ DỤNG TỔNG QUAN
 
-actor Guest as Guest
-actor Attendee as Attendee
+actor "Khách" as Khach
+actor "Người tham dự" as NguoiThamDu
 
-rectangle "Cổng quản lý sự kiện văn hóa và vé miễn phí" as SYS {
+rectangle "Cổng quản lý sự kiện văn hóa và vé miễn phí" as HT {
   usecase "UC01\nĐăng ký tài khoản" as UC01
   usecase "UC02\nĐăng nhập" as UC02
   usecase "UC03\nTìm kiếm / lọc sự kiện" as UC03
@@ -24,61 +24,51 @@ rectangle "Cổng quản lý sự kiện văn hóa và vé miễn phí" as SYS {
 
   usecase "UC05\nĐăng ký một suất" as UC05
   usecase "UC06\nHủy đăng ký" as UC06
-  usecase "UC07\nXem đăng ký / waitlist" as UC07
+  usecase "UC07\nXem đăng ký / danh sách chờ" as UC07
   usecase "UC08\nXem vé điện tử" as UC08
 
   usecase "UC09\nTạo / cập nhật sự kiện" as UC09
-  usecase "UC10\nQuản lý suất và\naccessibility" as UC10
+  usecase "UC10\nQuản lý suất và\nhỗ trợ tiếp cận" as UC10
   usecase "UC11\nCông bố sự kiện và\nmở / đóng đăng ký" as UC11
   usecase "UC12\nThực hiện phân bổ vé" as UC12
-  usecase "UC13\nTheo dõi đăng ký,\nwaitlist và thống kê" as UC13
+  usecase "UC13\nTheo dõi đăng ký,\ndanh sách chờ và thống kê" as UC13
 
   usecase "UC14\nCheck-in vé" as UC14
   usecase "UC15\nQuản trị người dùng\nvà giám sát sự kiện" as UC15
 
-  ' Ép layout thành 4 cột gọn, không dùng các box con theo actor.
   UC01 -[hidden]down- UC02
   UC02 -[hidden]down- UC03
   UC03 -[hidden]down- UC04
-
   UC05 -[hidden]down- UC06
   UC06 -[hidden]down- UC07
   UC07 -[hidden]down- UC08
-
   UC09 -[hidden]down- UC10
   UC10 -[hidden]down- UC11
   UC11 -[hidden]down- UC12
   UC12 -[hidden]down- UC13
-
   UC14 -[hidden]down- UC15
-
   UC01 -[hidden]right- UC05
   UC05 -[hidden]right- UC09
   UC09 -[hidden]right- UC14
 }
 
-actor Organizer as Organizer
-actor "Check-in Staff" as Staff
-actor Administrator as Admin
+actor "Ban tổ chức" as BanToChuc
+actor "Nhân viên check-in" as NhanVien
+actor "Quản trị viên" as QuanTriVien
 
-' Association actor-use case dùng đường thường, không dùng arrowhead.
-Guest -- UC01
-Guest -- UC02
-Guest -- UC03
-Guest -- UC04
-
-Attendee -- UC05
-Attendee -- UC06
-Attendee -- UC07
-Attendee -- UC08
-
-UC09 -- Organizer
-UC10 -- Organizer
-UC11 -- Organizer
-UC12 -- Organizer
-UC13 -- Organizer
-
-UC14 -- Staff
-UC15 -- Admin
-
+Khach -- UC01
+Khach -- UC02
+Khach -- UC03
+Khach -- UC04
+NguoiThamDu -- UC05
+NguoiThamDu -- UC06
+NguoiThamDu -- UC07
+NguoiThamDu -- UC08
+UC09 -- BanToChuc
+UC10 -- BanToChuc
+UC11 -- BanToChuc
+UC12 -- BanToChuc
+UC13 -- BanToChuc
+UC14 -- NhanVien
+UC15 -- QuanTriVien
 @enduml
