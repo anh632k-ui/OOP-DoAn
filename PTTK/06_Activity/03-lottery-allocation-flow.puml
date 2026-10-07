@@ -2,50 +2,49 @@
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
+title MED-06 - BIỂU ĐỒ HOẠT ĐỘNG UC12: PHÂN BỔ LOTTERY
 
-title MED-06 - ACTIVITY UC12: LOTTERY ALLOCATION
-
-|Organizer|
+|Ban tổ chức|
 start
 :Yêu cầu chạy phân bổ;
 
 |Hệ thống|
-:Kiểm tra ownership, policy LOTTERY
-và registration đã đóng;
+:Kiểm tra quyền sở hữu, chính sách LOTTERY
+và cửa sổ đăng ký đã đóng;
 
 if (Điều kiện hợp lệ?) then (Có)
 else (Không)
-  :Từ chối AllocationRun;
-  |Organizer|
+  :Từ chối chạy phân bổ;
+  |Ban tổ chức|
   :Nhận thông báo lỗi;
   stop
 endif
 
-:Khóa EventSession;
-:Kiểm tra AllocationRun đã commit;
+:Khóa suất sự kiện;
+:Kiểm tra đã có lần phân bổ;
 
-if (Đã có run?) then (Có)
+if (Đã có?) then (Có)
   :Từ chối chạy lặp;
-  |Organizer|
+  |Ban tổ chức|
   :Nhận thông báo đã phân bổ;
   stop
 else (Không)
 endif
 
-:Lấy Registration PENDING hợp lệ;
-:Tính số slot còn lại;
+:Lấy các đăng ký CHỜ_XỬ_LÝ hợp lệ;
+:Tính số chỗ còn lại;
 
-|Allocation Strategy|
+|Chiến lược phân bổ|
 :Tạo thứ tự ngẫu nhiên công bằng;
-:Chia confirmed / waitlisted;
+:Chia nhóm đã xác nhận / danh sách chờ;
 
 |Hệ thống|
-:CONFIRMED -> phát Ticket VALID;
-:WAITLISTED -> tạo WaitlistEntry theo draw position;
-:Ghi AllocationRun + metadata audit;
-:Commit transaction;
+:Nhóm đã xác nhận -> phát vé HỢP_LỆ;
+:Nhóm chờ -> tạo mục danh sách chờ theo thứ tự bốc thăm;
+:Ghi lần phân bổ + dữ liệu kiểm chứng;
+:Ghi nhận giao dịch;
 
-|Organizer|
+|Ban tổ chức|
 :Nhận kết quả phân bổ;
 stop
 @enduml
