@@ -6,61 +6,58 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
 
-title MED-06 - SEQUENCE UC06: HỦY ĐĂNG KÝ + PROMOTE WAITLIST
+title MED-06 - BIỂU ĐỒ TUẦN TỰ UC06: HỦY ĐĂNG KÝ + CHỌN NGƯỜI TRONG DANH SÁCH CHỜ
 
-actor Attendee
-boundary "Next.js UI" as UI
-control "RegistrationService" as RS
-control "TicketService" as TS
-control "WaitlistService" as WS
-database "PostgreSQL" as DB
+actor "Người tham dự" as NTD
+boundary "Giao diện Next.js" as UI
+control "Dịch vụ đăng ký" as DK
+control "Dịch vụ vé" as VE
+control "Dịch vụ danh sách chờ" as DSC
+database "PostgreSQL" as CSDL
 
 autonumber
-Attendee -> UI : Chọn Hủy đăng ký
-UI -> RS : cancelRegistration(attendeeId, registrationId)
-RS -> DB : tải Registration + Session + Ticket
-DB --> RS : dữ liệu hiện tại
-RS -> RS : kiểm tra ownership + điều kiện hủy
+NTD -> UI : Chọn Hủy đăng ký
+UI -> DK : hủyĐăngKý(mãNgườiThamDự, mãĐăngKý)
+DK -> CSDL : tải Đăng ký + Suất + Vé
+CSDL --> DK : dữ liệu hiện tại
+DK -> DK : kiểm tra quyền sở hữu + điều kiện hủy
 
-alt Registration = PENDING
-  RS -> DB : Registration -> CANCELLED
-
-else Registration = WAITLISTED
-  group Transaction
-    RS -> DB : Registration -> CANCELLED
-    RS -> WS : cancelEntry(registrationId)
-    WS -> DB : WaitlistEntry -> CANCELLED
+alt Đăng ký = CHỜ_XỬ_LÝ
+  DK -> CSDL : Đăng ký -> ĐÃ_HỦY
+else Đăng ký = DANH_SÁCH_CHỜ
+  group Giao dịch
+    DK -> CSDL : Đăng ký -> ĐÃ_HỦY
+    DK -> DSC : hủyMụcChờ(mãĐăngKý)
+    DSC -> CSDL : Mục danh sách chờ -> ĐÃ_HỦY
   end
+else Đăng ký = ĐÃ_XÁC_NHẬN
+  group Giao dịch + khóa Suất sự kiện
+    DK -> CSDL : khóa suất + Đăng ký -> ĐÃ_HỦY
+    DK -> VE : hủyVé(mãĐăngKý)
+    VE -> CSDL : Vé HỢP_LỆ -> ĐÃ_HỦY
 
-else Registration = CONFIRMED
-  group Transaction + lock EventSession
-    RS -> DB : lock session + Registration -> CANCELLED
-    RS -> TS : cancelTicket(registrationId)
-    TS -> DB : Ticket VALID -> CANCELLED
-
-    RS -> WS : promoteNext(sessionId)
-    WS -> DB : lấy WaitlistEntry ACTIVE đầu tiên FOR UPDATE
+    DK -> DSC : chọnNgườiTiếpTheo(mãSuất)
+    DSC -> CSDL : lấy mục ĐANG_CHỜ đầu tiên FOR UPDATE
 
     alt có người chờ
-      DB --> WS : next entry
-      WS -> DB : Registration chờ -> CONFIRMED
-      WS -> DB : WaitlistEntry -> PROMOTED
-      WS -> TS : issueTicket(nextRegistrationId)
-      TS -> DB : tạo Ticket VALID
-      WS --> RS : promoted
+      CSDL --> DSC : mục tiếp theo
+      DSC -> CSDL : Đăng ký chờ -> ĐÃ_XÁC_NHẬN
+      DSC -> CSDL : Mục chờ -> ĐÃ_ĐƯỢC_CHỌN
+      DSC -> VE : phátVé(mãĐăngKýTiếpTheo)
+      VE -> CSDL : tạo Vé HỢP_LỆ
+      DSC --> DK : đã chọn người tiếp theo
     else không còn người chờ
-      DB --> WS : none
-      WS --> RS : none
+      CSDL --> DSC : không có
+      DSC --> DK : không có
     end
   end
 end
 
-RS --> UI : 204 No Content
-UI --> Attendee : Đã hủy đăng ký
+DK --> UI : 204 Không có nội dung
+UI --> NTD : Đã hủy đăng ký
 
-note over RS,DB
-Chỉ hủy CONFIRMED mới giải phóng slot và kích hoạt promote.
-Hủy + hủy Ticket + promote phải commit atomically.
+note over DK,CSDL
+Chỉ hủy đăng ký ĐÃ_XÁC_NHẬN mới giải phóng chỗ.
+Hủy đăng ký + hủy vé + chọn người chờ phải cùng một giao dịch.
 end note
-
 @enduml
