@@ -3,20 +3,17 @@ left to right direction
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
-skinparam state {
-  BackgroundColor White
-  BorderColor Black
-}
-
-title MED-06 - STATE: TICKET
-
-[*] --> VALID : issue khi Registration CONFIRMED
-VALID --> USED : check-in thành công
-VALID --> CANCELLED : Registration / Session bị hủy
-VALID --> EXPIRED : quá hạn sử dụng
-
-USED --> [*]
-CANCELLED --> [*]
-EXPIRED --> [*]
-
+skinparam state { BackgroundColor White BorderColor Black }
+title MED-06 - TRẠNG THÁI: VÉ
+state "HỢP LỆ" as HopLe
+state "ĐÃ SỬ DỤNG" as DaSuDung
+state "ĐÃ HỦY" as DaHuy
+state "HẾT HẠN" as HetHan
+[*] --> HopLe : phát khi đăng ký đã xác nhận
+HopLe --> DaSuDung : check-in thành công
+HopLe --> DaHuy : đăng ký / suất bị hủy
+HopLe --> HetHan : quá hạn sử dụng
+DaSuDung --> [*]
+DaHuy --> [*]
+HetHan --> [*]
 @enduml
