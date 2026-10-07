@@ -7,98 +7,96 @@ skinparam nodesep 55
 skinparam ranksep 55
 hide circle
 
-title MED-06 - ERD CORE
+title MED-06 - ERD CỐT LÕI
 
-entity "users" as users {
+entity "nguoi_dung" as nguoi_dung {
   * id : UUID <<PK>>
   --
   email : VARCHAR <<UQ>>
-  role : user_role
-  status : account_status
+  vai_tro : vai_tro_nguoi_dung
+  trang_thai : trang_thai_tai_khoan
 }
 
-entity "venues" as venues {
+entity "dia_diem" as dia_diem {
   * id : UUID <<PK>>
   --
-  name : VARCHAR
-  capacity : INTEGER
+  ten : VARCHAR
+  suc_chua : INTEGER
 }
 
-entity "events" as events {
+entity "su_kien" as su_kien {
   * id : UUID <<PK>>
   --
-  organizer_id : UUID <<FK>>
-  venue_id : UUID <<FK>>
-  name : VARCHAR
-  status : event_status
+  ma_nguoi_to_chuc : UUID <<FK>>
+  ma_dia_diem : UUID <<FK>>
+  ten : VARCHAR
+  trang_thai : trang_thai_su_kien
 }
 
-entity "event_sessions" as sessions {
+entity "suat_su_kien" as suat {
   * id : UUID <<PK>>
   --
-  event_id : UUID <<FK>>
-  capacity : INTEGER
-  allocation_policy : allocation_policy
-  status : session_status
+  ma_su_kien : UUID <<FK>>
+  suc_chua : INTEGER
+  chinh_sach_phan_bo : chinh_sach_phan_bo
+  trang_thai : trang_thai_suat
 }
 
-entity "registrations" as registrations {
+entity "dang_ky" as dang_ky {
   * id : UUID <<PK>>
   --
-  attendee_id : UUID <<FK>>
-  session_id : UUID <<FK>>
-  status : registration_status
+  ma_nguoi_tham_du : UUID <<FK>>
+  ma_suat : UUID <<FK>>
+  trang_thai : trang_thai_dang_ky
   --
-  UQ(attendee_id, session_id)
+  UQ(ma_nguoi_tham_du, ma_suat)
 }
 
-entity "waitlist_entries" as waitlist {
+entity "danh_sach_cho" as danh_sach_cho {
   * id : UUID <<PK>>
   --
-  registration_id : UUID <<FK, UQ>>
-  position : BIGINT
-  status : waitlist_status
+  ma_dang_ky : UUID <<FK, UQ>>
+  thu_tu : BIGINT
+  trang_thai : trang_thai_danh_sach_cho
 }
 
-entity "tickets" as tickets {
+entity "ve" as ve {
   * id : UUID <<PK>>
   --
-  registration_id : UUID <<FK, UQ>>
-  ticket_code : VARCHAR <<UQ>>
-  status : ticket_status
+  ma_dang_ky : UUID <<FK, UQ>>
+  ma_ve : VARCHAR <<UQ>>
+  trang_thai : trang_thai_ve
 }
 
-entity "check_ins" as checkins {
+entity "check_in" as check_in {
   * id : UUID <<PK>>
   --
-  ticket_id : UUID <<FK, UQ>>
-  staff_id : UUID <<FK>>
+  ma_ve : UUID <<FK, UQ>>
+  ma_nhan_vien : UUID <<FK>>
 }
 
-entity "allocation_runs" as runs {
+entity "lan_phan_bo" as lan_phan_bo {
   * id : UUID <<PK>>
   --
-  session_id : UUID <<FK, UQ>>
-  executed_by_user_id : UUID <<FK>>
-  policy : allocation_policy
+  ma_suat : UUID <<FK, UQ>>
+  ma_nguoi_thuc_hien : UUID <<FK>>
+  chinh_sach : chinh_sach_phan_bo
 }
 
-users ||--o{ events : organizes
-venues ||--o{ events : hosts
-events ||--o{ sessions : contains
-users ||--o{ registrations : submits
-sessions ||--o{ registrations : receives
-registrations ||--o| waitlist : waitlist
-registrations ||--o| tickets : ticket
-tickets ||--o| checkins : check-in
-sessions ||--o| runs : lottery run
-users ||--o{ checkins : staff
-users ||--o{ runs : executes
+nguoi_dung ||--o{ su_kien : tổ chức
+dia_diem ||--o{ su_kien : địa điểm
+su_kien ||--o{ suat : gồm
+nguoi_dung ||--o{ dang_ky : đăng ký
+suat ||--o{ dang_ky : nhận
+dang_ky ||--o| danh_sach_cho : danh sách chờ
+dang_ky ||--o| ve : cấp vé
+ve ||--o| check_in : check-in
+suat ||--o| lan_phan_bo : lần phân bổ
+nguoi_dung ||--o{ check_in : nhân viên
+nguoi_dung ||--o{ lan_phan_bo : thực hiện
 
-' Layout helpers - valid hidden arrows.
-users -[hidden]-> venues
-sessions -[hidden]-> runs
-waitlist -[hidden]-> tickets
-tickets -[hidden]-> checkins
-
+nguoi_dung -[hidden]-> dia_diem
+suat -[hidden]-> lan_phan_bo
+danh_sach_cho -[hidden]-> ve
+ve -[hidden]-> check_in
 @enduml
