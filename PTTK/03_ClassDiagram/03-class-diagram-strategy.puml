@@ -9,41 +9,40 @@ skinparam ranksep 55
 hide circle
 hide stereotypes
 
-title MED-06 - CLASS DIAGRAM: ALLOCATION STRATEGY
+title MED-06 - BIỂU ĐỒ LỚP: CHIẾN LƯỢC PHÂN BỔ VÉ
 
-class AllocationService {
-  + allocateImmediate(...): void
-  + runAllocation(...): AllocationRun
+class "Dịch vụ phân bổ" as DVPhanBo {
+  + phânBổNgay(...): void
+  + chạyPhânBổ(...): LanPhanBo
 }
 
-interface TicketAllocationStrategy {
-  + allocate(session, candidates, confirmedCount): AllocationPlan
+interface "Chiến lược phân bổ vé" as ChienLuocPhanBo {
+  + phânBổ(suất, ứngViên, sốĐãXácNhận): KeHoachPhanBo
 }
 
-class FcfsAllocationStrategy {
-  + allocate(...): AllocationPlan
+class "Chiến lược FCFS" as ChienLuocFCFS {
+  + phânBổ(...): KeHoachPhanBo
 }
 
-class LotteryAllocationStrategy {
-  + allocate(...): AllocationPlan
+class "Chiến lược bốc thăm" as ChienLuocBocTham {
+  + phânBổ(...): KeHoachPhanBo
 }
 
-class AllocationPlan {
-  + confirmedIds: UUID[]
-  + waitlistedIds: UUID[]
-  + orderedCandidateIds: UUID[]
+class "Kế hoạch phân bổ" as KeHoachPhanBo {
+  + danhSáchĐãXácNhận: UUID[]
+  + danhSáchChờ: UUID[]
+  + thứTựỨngViên: UUID[]
 }
 
-AllocationService --> TicketAllocationStrategy : uses
-TicketAllocationStrategy <|.. FcfsAllocationStrategy
-TicketAllocationStrategy <|.. LotteryAllocationStrategy
-TicketAllocationStrategy --> AllocationPlan : returns
+DVPhanBo --> ChienLuocPhanBo : sử dụng
+ChienLuocPhanBo <|.. ChienLuocFCFS
+ChienLuocPhanBo <|.. ChienLuocBocTham
+ChienLuocPhanBo --> KeHoachPhanBo : trả về
 
-FcfsAllocationStrategy -[hidden]right- LotteryAllocationStrategy
+ChienLuocFCFS -[hidden]right- ChienLuocBocTham
 
-note bottom of TicketAllocationStrategy
-Strategy chỉ tính kết quả phân bổ.
-AllocationService chịu trách nhiệm transaction và persistence.
+note bottom of ChienLuocPhanBo
+Chiến lược chỉ tính kết quả phân bổ.
+Dịch vụ phân bổ chịu trách nhiệm giao dịch và lưu dữ liệu.
 end note
-
 @enduml
