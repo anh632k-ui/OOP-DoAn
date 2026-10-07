@@ -1,83 +1,69 @@
 @startuml
-top to bottom direction
+left to right direction
 skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 skinparam defaultFontSize 14
-skinparam nodesep 55
-skinparam ranksep 55
 hide methods
 hide circle
 
-title MED-06 - DOMAIN MODEL CORE
+title MED-06 - MÔ HÌNH MIỀN
 
-class User {
-  id
-  fullName
-  role
+class "Người dùng" as NguoiDung {
+  họTên
+  vaiTrò
 }
-class Venue {
-  id
-  name
-  capacity
+class "Địa điểm" as DiaDiem {
+  tên
+  sứcChứa
 }
-class AccessibilityFeature {
-  id
-  name
+class "Đặc tính hỗ trợ tiếp cận" as HoTroTiepCan {
+  tên
 }
-class Event {
-  id
-  name
-  status
+class "Sự kiện" as SuKien {
+  tên
+  trạngThái
 }
-class EventSession {
-  id
-  startTime
-  capacity
-  allocationPolicy
-  status
+class "Suất sự kiện" as SuatSuKien {
+  thờiGianBắtĐầu
+  sứcChứa
+  chínhSáchPhânBổ
+  trạngThái
 }
-class AllocationRun {
-  id
-  policy
-  executedAt
+class "Lần phân bổ" as LanPhanBo {
+  chínhSách
+  thờiĐiểmThựcHiện
 }
-class Registration {
-  id
-  registeredAt
-  status
+class "Đăng ký" as DangKy {
+  thờiĐiểmĐăngKý
+  trạngThái
 }
-class WaitlistEntry {
-  id
-  position
-  status
+class "Mục danh sách chờ" as DanhSachCho {
+  thứTự
+  trạngThái
 }
-class Ticket {
-  id
-  ticketCode
-  status
+class "Vé" as Ve {
+  mãVé
+  trạngThái
 }
-class CheckIn {
-  id
-  checkedInAt
+class "Lượt check-in" as LuotCheckIn {
+  thờiĐiểmCheckIn
 }
 
-Venue "1" -- "0..*" Event : hosts
-User "1" -- "0..*" Event : organizes
-Event "1" *-- "0..*" EventSession : contains
-Event "0..*" -- "0..*" AccessibilityFeature : supports
-EventSession "1" -- "0..*" Registration : receives
-User "1" -- "0..*" Registration : submits
-Registration "1" -- "0..1" WaitlistEntry : waitlist
-Registration "1" -- "0..1" Ticket : ticket
-Ticket "1" -- "0..1" CheckIn : check-in
-EventSession "1" -- "0..1" AllocationRun : lottery audit
+DiaDiem "1" -- "0..*" SuKien : tổ chức tại
+NguoiDung "1" -- "0..*" SuKien : tổ chức
+SuKien "1" *-- "0..*" SuatSuKien : gồm
+SuKien "0..*" -- "0..*" HoTroTiepCan : hỗ trợ
+SuatSuKien "1" -- "0..*" DangKy : nhận đăng ký
+NguoiDung "1" -- "0..*" DangKy : thực hiện
+DangKy "1" -- "0..1" DanhSachCho : danh sách chờ
+DangKy "1" -- "0..1" Ve : cấp vé
+Ve "1" -- "0..1" LuotCheckIn : check-in
+SuatSuKien "1" -- "0..1" LanPhanBo : ghi nhận phân bổ
 
-' Layout helpers only.
-User -[hidden]right- Venue
-Venue -[hidden]right- AccessibilityFeature
-EventSession -[hidden]right- AllocationRun
-WaitlistEntry -[hidden]right- Ticket
-Ticket -[hidden]right- CheckIn
-
+NguoiDung -[hidden]right- DiaDiem
+DiaDiem -[hidden]right- HoTroTiepCan
+SuatSuKien -[hidden]right- LanPhanBo
+DanhSachCho -[hidden]right- Ve
+Ve -[hidden]right- LuotCheckIn
 @enduml
