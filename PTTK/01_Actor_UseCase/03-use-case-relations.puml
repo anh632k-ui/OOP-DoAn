@@ -9,41 +9,38 @@ skinparam usecase {
   FontColor Black
 }
 
-title MED-06 - USE CASE RELATIONS (CHI TIẾT)
+title MED-06 - QUAN HỆ CA SỬ DỤNG (CHI TIẾT)
 
 usecase "UC05\nĐăng ký một suất" as UC05
-usecase "Kiểm tra\nchống bot" as BOT
-usecase "Kiểm tra cửa sổ\nđăng ký" as WINDOW
-usecase "Xác định chính sách\nphân bổ" as POLICY
+usecase "Kiểm tra\nchống bot" as CHONGBOT
+usecase "Kiểm tra cửa sổ\nđăng ký" as CUASO
+usecase "Xác định chính sách\nphân bổ" as CHINHSACH
 
 usecase "UC06\nHủy đăng ký" as UC06
-usecase "Promote người tiếp theo\ntừ waitlist" as PROMOTE
+usecase "Đưa người tiếp theo\nlên từ danh sách chờ" as DAYLEN
 
 usecase "UC12\nThực hiện phân bổ vé" as UC12
 usecase "UC14\nCheck-in vé" as UC14
-usecase "Xác minh vé hợp lệ\nvà chưa sử dụng" as VALIDATE
+usecase "Xác minh vé hợp lệ\nvà chưa sử dụng" as XACMINH
 
-' Bố trí hai cụm chính, tránh kéo thành một dải ngang rất dài.
 UC05 -[hidden]down- UC06
 UC06 -[hidden]down- UC12
 UC12 -[hidden]down- UC14
+CHONGBOT -[hidden]down- CUASO
+CUASO -[hidden]down- CHINHSACH
+CHINHSACH -[hidden]down- DAYLEN
+DAYLEN -[hidden]down- XACMINH
 
-BOT -[hidden]down- WINDOW
-WINDOW -[hidden]down- POLICY
-POLICY -[hidden]down- PROMOTE
-PROMOTE -[hidden]down- VALIDATE
+UC05 .> CHONGBOT : <<include>>
+UC05 .> CUASO : <<include>>
+UC05 .> CHINHSACH : <<include>>
+DAYLEN .> UC06 : <<extend>>
+UC12 .> CHINHSACH : <<include>>
+UC14 .> XACMINH : <<include>>
 
-UC05 .> BOT : <<include>>
-UC05 .> WINDOW : <<include>>
-UC05 .> POLICY : <<include>>
-PROMOTE .> UC06 : <<extend>>
-UC12 .> POLICY : <<include>>
-UC14 .> VALIDATE : <<include>>
-
-note bottom of PROMOTE
-Điều kiện extend:
-Registration CONFIRMED bị hủy
-và waitlist còn người.
+note bottom of DAYLEN
+Điều kiện mở rộng:
+Đăng ký đã xác nhận bị hủy
+và danh sách chờ còn người.
 end note
-
 @enduml
