@@ -6,56 +6,55 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
 
-title MED-06 - SEQUENCE UC12: PHÂN BỔ VÉ LOTTERY
+title MED-06 - BIỂU ĐỒ TUẦN TỰ UC12: PHÂN BỔ VÉ LOTTERY
 
-actor Organizer
-boundary "Organizer UI" as UI
-control "AllocationService" as AS
-control "LotteryAllocationStrategy" as LS
-control "TicketService" as TS
-control "WaitlistService" as WS
-database "PostgreSQL" as DB
+actor "Ban tổ chức" as BTC
+boundary "Giao diện Ban tổ chức" as UI
+control "Dịch vụ phân bổ" as PB
+control "Chiến lược bốc thăm" as CL
+control "Dịch vụ vé" as VE
+control "Dịch vụ danh sách chờ" as DSC
+database "PostgreSQL" as CSDL
 
 autonumber
-Organizer -> UI : Chọn Chạy phân bổ
-UI -> AS : runAllocation(sessionId, organizerId)
+BTC -> UI : Chọn Chạy phân bổ
+UI -> PB : chạyPhânBổ(mãSuất, mãNgườiTổChức)
 
-group Transaction + lock EventSession
-  AS -> DB : lock session + kiểm tra ownership/policy/window
-  DB --> AS : EventSession LOTTERY
-  AS -> DB : kiểm tra AllocationRun đã tồn tại
-  DB --> AS : chưa có
-  AS -> DB : lấy PENDING candidates + confirmedCount
-  DB --> AS : candidates[] + confirmedCount
+group Giao dịch + khóa Suất sự kiện
+  PB -> CSDL : khóa suất + kiểm tra quyền sở hữu/chính sách/cửa sổ
+  CSDL --> PB : Suất dùng LOTTERY
+  PB -> CSDL : kiểm tra Lần phân bổ đã tồn tại
+  CSDL --> PB : chưa có
+  PB -> CSDL : lấy đăng ký CHỜ_XỬ_LÝ + số đã xác nhận
+  CSDL --> PB : danh sách ứng viên + số đã xác nhận
 
-  AS -> LS : allocate(session, candidates, confirmedCount)
-  LS --> AS : AllocationPlan
+  PB -> CL : phânBổ(suất, ứngViên, sốĐãXácNhận)
+  CL --> PB : Kế hoạch phân bổ
 
-  loop registrations được chọn
-    AS -> DB : status -> CONFIRMED
-    AS -> TS : issueTicket(registrationId)
-    TS -> DB : tạo Ticket VALID
+  loop đăng ký được chọn
+    PB -> CSDL : trạng thái -> ĐÃ_XÁC_NHẬN
+    PB -> VE : phátVé(mãĐăngKý)
+    VE -> CSDL : tạo Vé HỢP_LỆ
   end
 
-  loop registrations còn lại theo draw order
-    AS -> DB : status -> WAITLISTED
-    AS -> WS : enqueue(registrationId, drawPosition)
-    WS -> DB : tạo WaitlistEntry ACTIVE
+  loop đăng ký còn lại theo thứ tự bốc thăm
+    PB -> CSDL : trạng thái -> DANH_SÁCH_CHỜ
+    PB -> DSC : thêmVàoDanhSách(mãĐăngKý, thứTựBốcThăm)
+    DSC -> CSDL : tạo Mục danh sách chờ ĐANG_CHỜ
   end
 
-  AS -> DB : tạo AllocationRun + metadata audit
+  PB -> CSDL : tạo Lần phân bổ + dữ liệu kiểm chứng
 end
 
-AS --> UI : summary(confirmed, waitlisted)
-UI --> Organizer : Hiển thị kết quả phân bổ
+PB --> UI : tóm tắt(sốXácNhận, sốChờ)
+UI --> BTC : Hiển thị kết quả phân bổ
 
-note over AS,DB
-Row lock + UNIQUE(allocation_runs.session_id) bảo đảm chỉ một Lottery run commit.
-Lỗi giữa chừng => rollback toàn bộ.
+note over PB,CSDL
+Khóa dòng + UNIQUE(lan_phan_bo.ma_suat) bảo đảm chỉ một lần LOTTERY được ghi nhận.
+Lỗi giữa chừng => hoàn tác toàn bộ.
 end note
 
-note over AS,LS
-Strategy chỉ tính AllocationPlan; không tự ghi DB.
+note over PB,CL
+Chiến lược chỉ tính Kế hoạch phân bổ, không tự ghi CSDL.
 end note
-
 @enduml
