@@ -6,37 +6,36 @@ skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 hide footbox
 
-title MED-06 - SEQUENCE UC14: CHECK-IN VÉ
+title MED-06 - BIỂU ĐỒ TUẦN TỰ UC14: CHECK-IN VÉ
 
-actor "Check-in Staff" as Staff
-boundary "Check-in UI" as UI
-control "CheckInService" as CS
-database "PostgreSQL" as DB
+actor "Nhân viên check-in" as NV
+boundary "Giao diện check-in" as UI
+control "Dịch vụ check-in" as CI
+database "PostgreSQL" as CSDL
 
 autonumber
-Staff -> UI : Quét QR / nhập ticketCode
-UI -> CS : checkIn(staffId, sessionId, ticketCode)
+NV -> UI : Quét QR / nhập mã vé
+UI -> CI : checkIn(mãNhânViên, mãSuất, mãVé)
 
-CS -> DB : lock Ticket theo ticketCode
-DB --> CS : Ticket
-CS -> DB : tải EventSession + kiểm tra CheckIn hiện có
-DB --> CS : session + check-in status
-CS -> CS : validate đúng session + Ticket = VALID
+CI -> CSDL : khóa Vé theo mã vé
+CSDL --> CI : Vé
+CI -> CSDL : tải Suất sự kiện + kiểm tra lượt check-in hiện có
+CSDL --> CI : suất + trạng thái check-in
+CI -> CI : xác minh đúng suất + Vé = HỢP_LỆ
 
 alt hợp lệ và chưa dùng
-  group Transaction
-    CS -> DB : tạo CheckIn
-    CS -> DB : Ticket -> USED
+  group Giao dịch
+    CI -> CSDL : tạo Lượt check-in
+    CI -> CSDL : Vé -> ĐÃ_SỬ_DỤNG
   end
-  CS --> UI : success
-  UI --> Staff : Cho phép vào sự kiện
-else không hợp lệ / đã dùng / sai session
-  CS --> UI : domain error
-  UI --> Staff : Từ chối check-in
+  CI --> UI : thành công
+  UI --> NV : Cho phép vào sự kiện
+else không hợp lệ / đã dùng / sai suất
+  CI --> UI : lỗi nghiệp vụ
+  UI --> NV : Từ chối check-in
 end
 
-note over CS,DB
-Row lock + UNIQUE(check_ins.ticket_id) bảo đảm một Ticket chỉ check-in một lần.
+note over CI,CSDL
+Khóa dòng + UNIQUE(check_in.ma_ve) bảo đảm một vé chỉ check-in một lần.
 end note
-
 @enduml
