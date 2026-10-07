@@ -2,24 +2,23 @@
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
-skinparam state {
-  BackgroundColor White
-  BorderColor Black
-}
-
-title MED-06 - STATE: EVENT SESSION
-
-[*] --> DRAFT : tạo Session
-DRAFT --> REGISTRATION_OPEN : mở đăng ký
-REGISTRATION_OPEN --> REGISTRATION_CLOSED : hết hạn / Organizer đóng
-REGISTRATION_CLOSED --> ONGOING : đến giờ bắt đầu
-ONGOING --> COMPLETED : kết thúc suất
-COMPLETED --> [*]
-
-DRAFT --> CANCELLED : hủy
-REGISTRATION_OPEN --> CANCELLED : hủy
-REGISTRATION_CLOSED --> CANCELLED : hủy
-ONGOING --> CANCELLED : hủy bất thường
-CANCELLED --> [*]
-
+skinparam state { BackgroundColor White BorderColor Black }
+title MED-06 - TRẠNG THÁI: SUẤT SỰ KIỆN
+state "NHÁP" as Nhap
+state "ĐANG MỞ ĐĂNG KÝ" as MoDangKy
+state "ĐÃ ĐÓNG ĐĂNG KÝ" as DongDangKy
+state "ĐANG DIỄN RA" as DangDienRa
+state "HOÀN THÀNH" as HoanThanh
+state "ĐÃ HỦY" as DaHuy
+[*] --> Nhap : tạo suất
+Nhap --> MoDangKy : mở đăng ký
+MoDangKy --> DongDangKy : hết hạn / Ban tổ chức đóng
+DongDangKy --> DangDienRa : đến giờ bắt đầu
+DangDienRa --> HoanThanh : kết thúc suất
+HoanThanh --> [*]
+Nhap --> DaHuy : hủy
+MoDangKy --> DaHuy : hủy
+DongDangKy --> DaHuy : hủy
+DangDienRa --> DaHuy : hủy bất thường
+DaHuy --> [*]
 @enduml
