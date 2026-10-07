@@ -3,20 +3,17 @@ left to right direction
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
-skinparam state {
-  BackgroundColor White
-  BorderColor Black
-}
-
-title MED-06 - STATE: EVENT
-
-[*] --> DRAFT : tạo Event
-DRAFT --> PUBLISHED : publish [>= 1 Session hợp lệ]
-PUBLISHED --> COMPLETED : toàn bộ lịch kết thúc
-COMPLETED --> [*]
-
-DRAFT --> CANCELLED : hủy
-PUBLISHED --> CANCELLED : hủy
-CANCELLED --> [*]
-
+skinparam state { BackgroundColor White BorderColor Black }
+title MED-06 - TRẠNG THÁI: SỰ KIỆN
+state "NHÁP" as Nhap
+state "ĐÃ CÔNG BỐ" as DaCongBo
+state "HOÀN THÀNH" as HoanThanh
+state "ĐÃ HỦY" as DaHuy
+[*] --> Nhap : tạo sự kiện
+Nhap --> DaCongBo : công bố [>= 1 suất hợp lệ]
+DaCongBo --> HoanThanh : toàn bộ lịch kết thúc
+HoanThanh --> [*]
+Nhap --> DaHuy : hủy
+DaCongBo --> DaHuy : hủy
+DaHuy --> [*]
 @enduml
