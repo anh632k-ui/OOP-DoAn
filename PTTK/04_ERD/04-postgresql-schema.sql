@@ -1,172 +1,167 @@
--- MED-06 - PostgreSQL physical schema baseline
--- Mục tiêu: hiện thực hóa ERD cho giữa kỳ, chưa phụ thuộc ORM/migration tool.
+-- MED-06 - Lược đồ vật lý PostgreSQL bản tiếng Việt
+-- Mục tiêu: hiện thực hóa ERD giữa kỳ bằng tên bảng/cột tiếng Việt không dấu.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TYPE user_role AS ENUM ('ATTENDEE', 'ORGANIZER', 'STAFF', 'ADMIN');
-CREATE TYPE account_status AS ENUM ('ACTIVE', 'LOCKED');
-CREATE TYPE event_status AS ENUM ('DRAFT', 'PUBLISHED', 'COMPLETED', 'CANCELLED');
-CREATE TYPE session_status AS ENUM (
-  'DRAFT',
-  'REGISTRATION_OPEN',
-  'REGISTRATION_CLOSED',
-  'ONGOING',
-  'COMPLETED',
-  'CANCELLED'
+CREATE TYPE vai_tro_nguoi_dung AS ENUM ('NGUOI_THAM_DU', 'BAN_TO_CHUC', 'NHAN_VIEN', 'QUAN_TRI_VIEN');
+CREATE TYPE trang_thai_tai_khoan AS ENUM ('HOAT_DONG', 'BI_KHOA');
+CREATE TYPE trang_thai_su_kien AS ENUM ('NHAP', 'DA_CONG_BO', 'HOAN_THANH', 'DA_HUY');
+CREATE TYPE trang_thai_suat AS ENUM (
+  'NHAP',
+  'DANG_MO_DANG_KY',
+  'DA_DONG_DANG_KY',
+  'DANG_DIEN_RA',
+  'HOAN_THANH',
+  'DA_HUY'
 );
-CREATE TYPE allocation_policy AS ENUM ('FCFS', 'LOTTERY');
-CREATE TYPE registration_status AS ENUM ('PENDING', 'CONFIRMED', 'WAITLISTED', 'CANCELLED');
-CREATE TYPE waitlist_status AS ENUM ('ACTIVE', 'PROMOTED', 'CANCELLED');
-CREATE TYPE ticket_status AS ENUM ('VALID', 'USED', 'CANCELLED', 'EXPIRED');
-CREATE TYPE check_in_method AS ENUM ('QR', 'MANUAL_CODE');
+CREATE TYPE chinh_sach_phan_bo AS ENUM ('FCFS', 'LOTTERY');
+CREATE TYPE trang_thai_dang_ky AS ENUM ('CHO_XU_LY', 'DA_XAC_NHAN', 'DANH_SACH_CHO', 'DA_HUY');
+CREATE TYPE trang_thai_danh_sach_cho AS ENUM ('DANG_CHO', 'DA_DUOC_CHON', 'DA_HUY');
+CREATE TYPE trang_thai_ve AS ENUM ('HOP_LE', 'DA_SU_DUNG', 'DA_HUY', 'HET_HAN');
+CREATE TYPE phuong_thuc_check_in AS ENUM ('QR', 'MA_THU_CONG');
 
-CREATE TABLE users (
+CREATE TABLE nguoi_dung (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  full_name VARCHAR(120) NOT NULL,
+  ho_ten VARCHAR(120) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  role user_role NOT NULL,
-  status account_status NOT NULL DEFAULT 'ACTIVE',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  mat_khau_bam VARCHAR(255) NOT NULL,
+  vai_tro vai_tro_nguoi_dung NOT NULL,
+  trang_thai trang_thai_tai_khoan NOT NULL DEFAULT 'HOAT_DONG',
+  tao_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cap_nhat_luc TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE venues (
+CREATE TABLE dia_diem (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(200) NOT NULL,
-  address TEXT NOT NULL,
-  capacity INTEGER NOT NULL CHECK (capacity > 0),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  ten VARCHAR(200) NOT NULL,
+  dia_chi TEXT NOT NULL,
+  suc_chua INTEGER NOT NULL CHECK (suc_chua > 0),
+  tao_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cap_nhat_luc TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE events (
+CREATE TABLE su_kien (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organizer_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE RESTRICT,
-  name VARCHAR(200) NOT NULL,
-  description TEXT,
-  status event_status NOT NULL DEFAULT 'DRAFT',
-  start_date TIMESTAMPTZ NOT NULL,
-  end_date TIMESTAMPTZ NOT NULL,
-  image_url TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT chk_events_date_range CHECK (start_date < end_date)
+  ma_nguoi_to_chuc UUID NOT NULL REFERENCES nguoi_dung(id) ON DELETE RESTRICT,
+  ma_dia_diem UUID NOT NULL REFERENCES dia_diem(id) ON DELETE RESTRICT,
+  ten VARCHAR(200) NOT NULL,
+  mo_ta TEXT,
+  trang_thai trang_thai_su_kien NOT NULL DEFAULT 'NHAP',
+  bat_dau_luc TIMESTAMPTZ NOT NULL,
+  ket_thuc_luc TIMESTAMPTZ NOT NULL,
+  url_anh TEXT,
+  tao_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cap_nhat_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT kt_su_kien_thoi_gian CHECK (bat_dau_luc < ket_thuc_luc)
 );
 
-CREATE TABLE event_sessions (
+CREATE TABLE suat_su_kien (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES events(id) ON DELETE RESTRICT,
-  start_time TIMESTAMPTZ NOT NULL,
-  end_time TIMESTAMPTZ NOT NULL,
-  capacity INTEGER NOT NULL CHECK (capacity > 0),
-  registration_open_at TIMESTAMPTZ NOT NULL,
-  registration_close_at TIMESTAMPTZ NOT NULL,
-  allocation_policy allocation_policy NOT NULL,
-  status session_status NOT NULL DEFAULT 'DRAFT',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT chk_sessions_time_range CHECK (start_time < end_time),
-  CONSTRAINT chk_sessions_registration_window CHECK (registration_open_at < registration_close_at),
-  CONSTRAINT chk_sessions_registration_before_start CHECK (registration_close_at <= start_time)
+  ma_su_kien UUID NOT NULL REFERENCES su_kien(id) ON DELETE RESTRICT,
+  bat_dau_luc TIMESTAMPTZ NOT NULL,
+  ket_thuc_luc TIMESTAMPTZ NOT NULL,
+  suc_chua INTEGER NOT NULL CHECK (suc_chua > 0),
+  mo_dang_ky_luc TIMESTAMPTZ NOT NULL,
+  dong_dang_ky_luc TIMESTAMPTZ NOT NULL,
+  chinh_sach_phan_bo chinh_sach_phan_bo NOT NULL,
+  trang_thai trang_thai_suat NOT NULL DEFAULT 'NHAP',
+  tao_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cap_nhat_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT kt_suat_thoi_gian CHECK (bat_dau_luc < ket_thuc_luc),
+  CONSTRAINT kt_suat_cua_so_dang_ky CHECK (mo_dang_ky_luc < dong_dang_ky_luc),
+  CONSTRAINT kt_suat_dong_truoc_bat_dau CHECK (dong_dang_ky_luc <= bat_dau_luc)
 );
 
-CREATE TABLE registrations (
+CREATE TABLE dang_ky (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  attendee_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  session_id UUID NOT NULL REFERENCES event_sessions(id) ON DELETE RESTRICT,
-  status registration_status NOT NULL DEFAULT 'PENDING',
-  registered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT uq_registration_attendee_session UNIQUE (attendee_id, session_id)
+  ma_nguoi_tham_du UUID NOT NULL REFERENCES nguoi_dung(id) ON DELETE RESTRICT,
+  ma_suat UUID NOT NULL REFERENCES suat_su_kien(id) ON DELETE RESTRICT,
+  trang_thai trang_thai_dang_ky NOT NULL DEFAULT 'CHO_XU_LY',
+  dang_ky_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cap_nhat_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_dang_ky_nguoi_suat UNIQUE (ma_nguoi_tham_du, ma_suat)
 );
 
-CREATE TABLE waitlist_entries (
+CREATE TABLE danh_sach_cho (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  registration_id UUID NOT NULL UNIQUE REFERENCES registrations(id) ON DELETE RESTRICT,
-  position BIGINT NOT NULL CHECK (position > 0),
-  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  status waitlist_status NOT NULL DEFAULT 'ACTIVE',
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  ma_dang_ky UUID NOT NULL UNIQUE REFERENCES dang_ky(id) ON DELETE RESTRICT,
+  thu_tu BIGINT NOT NULL CHECK (thu_tu > 0),
+  vao_danh_sach_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  trang_thai trang_thai_danh_sach_cho NOT NULL DEFAULT 'DANG_CHO',
+  cap_nhat_luc TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE tickets (
+CREATE TABLE ve (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  registration_id UUID NOT NULL UNIQUE REFERENCES registrations(id) ON DELETE RESTRICT,
-  ticket_code VARCHAR(100) NOT NULL UNIQUE,
-  qr_code TEXT NOT NULL,
-  status ticket_status NOT NULL DEFAULT 'VALID',
-  issued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  ma_dang_ky UUID NOT NULL UNIQUE REFERENCES dang_ky(id) ON DELETE RESTRICT,
+  ma_ve VARCHAR(100) NOT NULL UNIQUE,
+  ma_qr TEXT NOT NULL,
+  trang_thai trang_thai_ve NOT NULL DEFAULT 'HOP_LE',
+  phat_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cap_nhat_luc TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE check_ins (
+CREATE TABLE check_in (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  ticket_id UUID NOT NULL UNIQUE REFERENCES tickets(id) ON DELETE RESTRICT,
-  staff_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  checked_in_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  method check_in_method NOT NULL
+  ma_ve UUID NOT NULL UNIQUE REFERENCES ve(id) ON DELETE RESTRICT,
+  ma_nhan_vien UUID NOT NULL REFERENCES nguoi_dung(id) ON DELETE RESTRICT,
+  check_in_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  phuong_thuc phuong_thuc_check_in NOT NULL
 );
 
-CREATE TABLE accessibility_features (
+CREATE TABLE dac_tinh_tiep_can (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(120) NOT NULL UNIQUE,
-  description TEXT
+  ten VARCHAR(120) NOT NULL UNIQUE,
+  mo_ta TEXT
 );
 
-CREATE TABLE event_accessibility (
-  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  accessibility_feature_id UUID NOT NULL REFERENCES accessibility_features(id) ON DELETE RESTRICT,
-  PRIMARY KEY (event_id, accessibility_feature_id)
+CREATE TABLE su_kien_tiep_can (
+  ma_su_kien UUID NOT NULL REFERENCES su_kien(id) ON DELETE CASCADE,
+  ma_dac_tinh UUID NOT NULL REFERENCES dac_tinh_tiep_can(id) ON DELETE RESTRICT,
+  PRIMARY KEY (ma_su_kien, ma_dac_tinh)
 );
 
-CREATE TABLE allocation_runs (
+CREATE TABLE lan_phan_bo (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id UUID NOT NULL UNIQUE REFERENCES event_sessions(id) ON DELETE RESTRICT,
-  executed_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  policy allocation_policy NOT NULL,
-  executed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  candidate_count INTEGER NOT NULL CHECK (candidate_count >= 0),
-  confirmed_count INTEGER NOT NULL CHECK (confirmed_count >= 0),
-  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-  CONSTRAINT chk_allocation_run_counts CHECK (confirmed_count <= candidate_count)
+  ma_suat UUID NOT NULL UNIQUE REFERENCES suat_su_kien(id) ON DELETE RESTRICT,
+  ma_nguoi_thuc_hien UUID NOT NULL REFERENCES nguoi_dung(id) ON DELETE RESTRICT,
+  chinh_sach chinh_sach_phan_bo NOT NULL,
+  thuc_hien_luc TIMESTAMPTZ NOT NULL DEFAULT now(),
+  so_ung_vien INTEGER NOT NULL CHECK (so_ung_vien >= 0),
+  so_xac_nhan INTEGER NOT NULL CHECK (so_xac_nhan >= 0),
+  du_lieu_kiem_chung JSONB NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT kt_lan_phan_bo_so_luong CHECK (so_xac_nhan <= so_ung_vien)
 );
 
--- ===== Indexes phục vụ truy vấn nghiệp vụ =====
-CREATE INDEX idx_events_organizer_id ON events(organizer_id);
-CREATE INDEX idx_events_status ON events(status);
-CREATE INDEX idx_events_start_date ON events(start_date);
+CREATE INDEX idx_su_kien_nguoi_to_chuc ON su_kien(ma_nguoi_to_chuc);
+CREATE INDEX idx_su_kien_trang_thai ON su_kien(trang_thai);
+CREATE INDEX idx_su_kien_bat_dau ON su_kien(bat_dau_luc);
 
-CREATE INDEX idx_sessions_event_id ON event_sessions(event_id);
-CREATE INDEX idx_sessions_status ON event_sessions(status);
-CREATE INDEX idx_sessions_registration_window
-  ON event_sessions(registration_open_at, registration_close_at);
+CREATE INDEX idx_suat_su_kien ON suat_su_kien(ma_su_kien);
+CREATE INDEX idx_suat_trang_thai ON suat_su_kien(trang_thai);
+CREATE INDEX idx_suat_cua_so_dang_ky ON suat_su_kien(mo_dang_ky_luc, dong_dang_ky_luc);
 
-CREATE INDEX idx_registrations_session_status
-  ON registrations(session_id, status);
-CREATE INDEX idx_registrations_attendee
-  ON registrations(attendee_id);
+CREATE INDEX idx_dang_ky_suat_trang_thai ON dang_ky(ma_suat, trang_thai);
+CREATE INDEX idx_dang_ky_nguoi ON dang_ky(ma_nguoi_tham_du);
 
-CREATE INDEX idx_waitlist_active_position
-  ON waitlist_entries(position)
-  WHERE status = 'ACTIVE';
+CREATE INDEX idx_danh_sach_cho_thu_tu
+  ON danh_sach_cho(thu_tu)
+  WHERE trang_thai = 'DANG_CHO';
 
-CREATE INDEX idx_tickets_status ON tickets(status);
-CREATE INDEX idx_checkins_staff ON check_ins(staff_id);
-CREATE INDEX idx_allocation_runs_executor ON allocation_runs(executed_by_user_id);
+CREATE INDEX idx_ve_trang_thai ON ve(trang_thai);
+CREATE INDEX idx_check_in_nhan_vien ON check_in(ma_nhan_vien);
+CREATE INDEX idx_lan_phan_bo_nguoi_thuc_hien ON lan_phan_bo(ma_nguoi_thuc_hien);
 
--- Search MVP: PostgreSQL Full Text Search cho Event.
-CREATE INDEX idx_events_fts
-  ON events
-  USING GIN (to_tsvector('simple', coalesce(name, '') || ' ' || coalesce(description, '')));
+CREATE INDEX idx_su_kien_tim_kiem
+  ON su_kien
+  USING GIN (to_tsvector('simple', coalesce(ten, '') || ' ' || coalesce(mo_ta, '')));
 
--- ===== Business rules phải bảo vệ ở service/transaction =====
--- 1) event_sessions.capacity <= Venue.capacity (rule liên bảng).
--- 2) COUNT(registrations WHERE status='CONFIRMED') <= event_sessions.capacity.
--- 3) Ticket chỉ tạo khi Registration = CONFIRMED.
--- 4) WaitlistEntry ACTIVE chỉ tồn tại cho Registration = WAITLISTED.
--- 5) AllocationRun trong MVP chỉ chạy cho Session policy = LOTTERY và sau khi đóng đăng ký.
--- 6) Publish Event yêu cầu >= 1 EventSession hợp lệ.
--- 7) Hủy confirmed + cancel ticket + promote waitlist phải cùng transaction.
--- 8) Check-in phải lock/validate Ticket để request đồng thời chỉ một lần thành công.
+-- Quy tắc nghiệp vụ do dịch vụ + giao dịch bảo vệ:
+-- 1) suat_su_kien.suc_chua <= dia_diem.suc_chua.
+-- 2) Số đăng ký DA_XAC_NHAN <= suc_chua của suất.
+-- 3) Vé chỉ tạo khi đăng ký = DA_XAC_NHAN.
+-- 4) Mục DANG_CHO chỉ tồn tại cho đăng ký DANH_SACH_CHO.
+-- 5) Lần phân bổ chỉ chạy cho suất LOTTERY sau khi đóng đăng ký.
+-- 6) Công bố sự kiện yêu cầu có ít nhất một suất hợp lệ.
+-- 7) Hủy đăng ký đã xác nhận + hủy vé + chọn người chờ phải cùng một giao dịch.
+-- 8) Check-in phải khóa và xác minh vé để hai yêu cầu đồng thời chỉ một yêu cầu thành công.
