@@ -69,7 +69,7 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 
 ### 02 - Mô hình miền
 - 02_DomainModel/01-domain-model.puml
-- 02_DomainModel/02-domain-status-enums.puml
+- 02_DomainModel/02-domain-trạng thái-enums.puml
 
 ### 03 - Biểu đồ lớp
 - 03_ClassDiagram/01-class-diagram-entities.puml
