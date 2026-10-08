@@ -2,7 +2,11 @@
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontSize 13
-skinparam state { BackgroundColor White BorderColor Black }
+skinparam state {
+  BackgroundColor White
+  BorderColor Black
+  FontColor Black
+}
 title MED-06 - TRẠNG THÁI: SUẤT SỰ KIỆN
 state "NHÁP" as Nhap
 state "ĐANG MỞ ĐĂNG KÝ" as MoDangKy
