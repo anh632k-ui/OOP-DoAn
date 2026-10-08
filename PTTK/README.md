@@ -66,10 +66,12 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - 01_Actor_UseCase/01-use-case-overview.mmd
 - 01_Actor_UseCase/02-use-case-specifications.md
 - 01_Actor_UseCase/03-use-case-relations.puml
+- 01_Actor_UseCase/04-use-case-event-management.puml
+- 01_Actor_UseCase/05-use-case-checkin-admin.puml
 
 ### 02 - Mô hình miền
 - 02_DomainModel/01-domain-model.puml
-- 02_DomainModel/02-domain-trạng thái-enums.puml
+- 02_DomainModel/02-domain-status-enums.puml
 
 ### 03 - Biểu đồ lớp
 - 03_ClassDiagram/01-class-diagram-entities.puml
