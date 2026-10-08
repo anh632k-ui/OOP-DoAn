@@ -1,0 +1,58 @@
+@startuml
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam actorStyle stick
+skinparam defaultFontSize 14
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  FontColor Black
+}
+
+title MED-06 - PHÂN RÃ CA SỬ DỤNG: CHECK-IN VÀ QUẢN TRỊ
+
+actor "Nhân viên check-in" as NV
+actor "Quản trị viên" as QTV
+
+rectangle "Check-in và quản trị hệ thống" as HT {
+  usecase "UC14\nCheck-in vé" as UC14
+  usecase "UC15\nQuản trị người dùng\nvà giám sát sự kiện" as UC15
+
+  usecase "Tra cứu vé\ntheo mã / QR" as LOOKUP
+  usecase "Xác minh vé hợp lệ,\nđúng suất và chưa sử dụng" as VALIDATE
+  usecase "Ghi nhận\nlượt check-in" as RECORD
+
+  usecase "Khóa / mở khóa\ntài khoản" as ACCOUNT
+  usecase "Giám sát\nsự kiện" as MONITOR
+
+  UC14 .> LOOKUP : <<include>>
+  UC14 .> VALIDATE : <<include>>
+  UC14 .> RECORD : <<include>>
+
+  UC15 .> ACCOUNT : <<include>>
+  UC15 .> MONITOR : <<include>>
+
+  LOOKUP -[hidden]down- VALIDATE
+  VALIDATE -[hidden]down- RECORD
+
+  ACCOUNT -[hidden]down- MONITOR
+  UC14 -[hidden]down- UC15
+}
+
+NV -- UC14
+QTV -- UC15
+
+note right of VALIDATE
+Vé phải thuộc đúng suất,
+ở trạng thái HỢP LỆ
+và chưa check-in trước đó.
+end note
+
+note right of ACCOUNT
+Quản trị viên có thể
+khóa hoặc mở khóa tài khoản.
+end note
+
+@enduml
