@@ -12,16 +12,14 @@ actor "Người dùng web" as NguoiDung
 component "Ứng dụng web Next.js" as GiaoDien
 
 rectangle "Khối nguyên khối mô-đun NestJS" as MayChu {
-  [API HTTP / Bộ điều khiển] as API
-
-  [Xác thực & Người dùng] as NguoiDungModule
-  [Sự kiện & Suất] as SuKienModule
-  [Hỗ trợ tiếp cận & Tìm kiếm] as TimKiemModule
-  [Đăng ký] as DangKyModule
-  [Phân bổ & Danh sách chờ] as PhanBoModule
-  [Vé & Check-in] as VeModule
-
-  [Kho dữ liệu / Lớp lưu trữ] as DuLieu
+  component "API HTTP / Bộ điều khiển" as API
+  component "Xác thực và Người dùng" as NguoiDungModule
+  component "Sự kiện và Suất" as SuKienModule
+  component "Hỗ trợ tiếp cận và Tìm kiếm" as TimKiemModule
+  component "Đăng ký" as DangKyModule
+  component "Phân bổ và Danh sách chờ" as PhanBoModule
+  component "Vé và Check-in" as VeModule
+  component "Kho dữ liệu / Lớp lưu trữ" as DuLieu
 
   API --> NguoiDungModule
   API --> SuKienModule
@@ -43,8 +41,7 @@ rectangle "Khối nguyên khối mô-đun NestJS" as MayChu {
 }
 
 database "PostgreSQL" as CSDL
-cloud "Kho lưu trữ đối tượng
-S3 / MinIO" as KhoAnh
+cloud "Kho lưu trữ đối tượng\nS3 / MinIO" as KhoAnh
 
 NguoiDung --> GiaoDien
 GiaoDien --> API : HTTPS REST/JSON
@@ -58,6 +55,7 @@ end note
 
 note bottom of MayChu
 Một phía máy chủ triển khai duy nhất;
-chia mô-đun theo miền nghiệp vụ, không dùng vi dịch vụ trong MVP.
+chia mô-đun theo miền nghiệp vụ,
+không dùng vi dịch vụ trong MVP.
 end note
 @enduml
