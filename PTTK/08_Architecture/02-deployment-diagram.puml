@@ -10,31 +10,29 @@ node "Thiết bị người dùng" as ThietBi {
   artifact "Trình duyệt web" as TrinhDuyet
 }
 
-node "Máy chủ / Docker" as MayChu {
+node "Máy chủ Docker" as MayChu {
   node "Khối giao diện" as GiaoDien {
-    artifact "Ứng dụng Next.js" as Next
+    artifact "Ứng dụng Next.js" as NextApp
   }
 
-  node "Khối phía máy chủ" as Backend {
-    artifact "API NestJS" as API
+  node "Khối phía máy chủ" as BackendNode {
+    artifact "API NestJS" as NestApi
   }
 
   node "Khối cơ sở dữ liệu" as CSDLNode {
-    database "PostgreSQL" as PG
+    database "PostgreSQL" as PostgreSQL
   }
 
-  node "Khối lưu trữ đối tượng
-(phát triển/kiểm thử)" as KhoNode {
+  node "Khối lưu trữ đối tượng\n(phát triển / kiểm thử)" as KhoNode {
     artifact "MinIO" as MinIO
   }
 }
 
-cloud "Kho lưu trữ tương thích S3
-(phương án triển khai thật)" as S3
+cloud "Kho lưu trữ tương thích S3\n(phương án triển khai thật)" as S3
 
-TrinhDuyet --> Next : HTTPS
-Next --> API : REST/JSON HTTPS
-API --> PG : kết nối SQL
-API --> MinIO : API S3
-API ..> S3 : API S3 [triển khai thật]
+TrinhDuyet --> NextApp : HTTPS
+NextApp --> NestApi : REST/JSON HTTPS
+NestApi --> PostgreSQL : kết nối SQL
+NestApi --> MinIO : API S3
+NestApi ..> S3 : API S3 [triển khai thật]
 @enduml
