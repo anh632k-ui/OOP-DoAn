@@ -1,0 +1,70 @@
+@startuml
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam actorStyle stick
+skinparam defaultFontSize 14
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  FontColor Black
+}
+
+title MED-06 - PHÂN RÃ CA SỬ DỤNG: QUẢN LÝ SỰ KIỆN
+
+actor "Ban tổ chức" as BTC
+
+rectangle "Quản lý sự kiện" as HT {
+  usecase "UC09\nTạo / cập nhật\nsự kiện" as UC09
+  usecase "UC10\nQuản lý suất và\nhỗ trợ tiếp cận" as UC10
+  usecase "UC11\nCông bố sự kiện và\nmở / đóng đăng ký" as UC11
+  usecase "UC12\nThực hiện\nphân bổ vé" as UC12
+  usecase "UC13\nTheo dõi đăng ký,\ndanh sách chờ và thống kê" as UC13
+
+  usecase "Kiểm tra quyền sở hữu\nsự kiện" as OWN
+  usecase "Quản lý\nsuất sự kiện" as SESSION
+  usecase "Quản lý đặc tính\nhỗ trợ tiếp cận" as ACCESS
+  usecase "Kiểm tra điều kiện\ncông bố" as PUBLISH
+  usecase "Kiểm tra điều kiện\nphân bổ" as ALLOC
+
+  UC09 -[hidden]down- UC10
+  UC10 -[hidden]down- UC11
+  UC11 -[hidden]down- UC12
+  UC12 -[hidden]down- UC13
+
+  OWN -[hidden]down- SESSION
+  SESSION -[hidden]down- ACCESS
+  ACCESS -[hidden]down- PUBLISH
+  PUBLISH -[hidden]down- ALLOC
+
+  UC09 .> OWN : <<include>>
+  UC10 .> OWN : <<include>>
+  UC11 .> OWN : <<include>>
+  UC12 .> OWN : <<include>>
+  UC13 .> OWN : <<include>>
+
+  UC10 .> SESSION : <<include>>
+  UC10 .> ACCESS : <<include>>
+  UC11 .> PUBLISH : <<include>>
+  UC12 .> ALLOC : <<include>>
+}
+
+BTC -- UC09
+BTC -- UC10
+BTC -- UC11
+BTC -- UC12
+BTC -- UC13
+
+note right of PUBLISH
+Sự kiện chỉ được công bố
+khi có ít nhất một suất hợp lệ.
+end note
+
+note right of ALLOC
+LOTTERY chỉ chạy sau khi
+đóng đăng ký và chưa có
+lần phân bổ đã ghi nhận.
+end note
+
+@enduml
