@@ -1,5 +1,10 @@
 @startuml
-skinparam monochrome true
+skinparam activity {
+ BackgroundColor #FFF8CE
+ BorderColor #C05773
+ ArrowColor #C05773
+ FontColor #222222
+}
 skinparam shadowing false
 skinparam defaultFontSize 13
 title MED-06 - BIỂU ĐỒ HOẠT ĐỘNG UC12: PHÂN BỔ LOTTERY
