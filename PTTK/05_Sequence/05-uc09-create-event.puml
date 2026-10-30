@@ -1,47 +1,59 @@
 @startuml
-skinparam monochrome true
+skinparam backgroundColor white
 skinparam shadowing false
+skinparam defaultFontName Arial
 skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+skinparam sequence {
+  ArrowColor #C05773
+  LifeLineBorderColor #C05773
+  ParticipantBackgroundColor #FFF8CE
+  ParticipantBorderColor #C05773
+  ActorBorderColor #C05773
+}
 hide footbox
-title MED-06 - BIỂU ĐỒ TUẦN TỰ UC09: TẠO SỰ KIỆN VÀ THIẾT LẬP BAN ĐẦU
-actor "Ban tổ chức" as BTC
-boundary "Giao diện Ban tổ chức" as UI
-control "Dịch vụ sự kiện" as SK
-control "Dịch vụ suất" as SUAT
-control "Dịch vụ hỗ trợ tiếp cận" as HT
-database "PostgreSQL" as CSDL
-participant "Kho lưu trữ đối tượng" as KHO
 autonumber
-BTC -> UI : Nhập thông tin sự kiện
-opt Có ảnh sự kiện
-  UI -> KHO : tải ảnh lên
-  KHO --> UI : đường dẫn ảnh
+title MED-06 - TUẦN TỰ UC09: TẠO SỰ KIỆN VÀ SUẤT
+actor "Ban tổ chức" as A
+boundary "Trang quản lý sự kiện" as UI
+control "Dịch vụ sự kiện" as SK
+control "Dịch vụ suất" as SU
+entity "Sự kiện" as ENT
+entity "Suất sự kiện" as ENT_SU
+database "PostgreSQL" as DB
+A -> UI : Nhập thông tin sự kiện
+UI -> SK : tạoSựKiện(mãNgườiTổChức, dữLiệu)
+activate SK
+SK -> DB : kiểm tra quyền, địa điểm, thời gian
+DB --> SK : dữ liệu tham chiếu
+alt Dữ liệu không hợp lệ
+  SK --> UI : lỗi và thông tin cần sửa
+  UI --> A : Hiển thị thông báo
+else Hợp lệ
+  SK -> ENT : tạo Sự kiện NHÁP
+  ENT -> DB : INSERT su_kien
+  DB --> ENT : mã sự kiện
+  ENT --> SK : sự kiện đã tạo
+  SK --> UI : Sự kiện NHÁP
+  UI --> A : Hiển thị sự kiện
+  opt Ban tổ chức thêm suất
+    A -> UI : Nhập lịch, sức chứa, chính sách
+    UI -> SU : tạoSuất(mãSựKiện, dữLiệuSuất)
+    SU -> DB : kiểm tra quyền sở hữu, lịch, sức chứa
+    alt Suất không hợp lệ
+      SU --> UI : lỗi dữ liệu suất
+    else Hợp lệ
+      SU -> ENT_SU : tạo suất NHÁP
+      ENT_SU -> DB : INSERT suat_su_kien
+      SU --> UI : Suất đã lưu
+    end
+    UI --> A : Hiển thị kết quả
+  end
 end
-UI -> SK : tạoSựKiện(mãNgườiTổChức, dữLiệuSựKiện, đườngDẫnẢnh)
-SK -> SK : kiểm tra địa điểm/thời gian/dữ liệu cơ bản
-SK -> CSDL : tạo Sự kiện NHÁP
-CSDL --> SK : Sự kiện
-SK --> UI : Sự kiện NHÁP
-BTC -> UI : Thêm Suất sự kiện
-UI -> SUAT : tạoSuất(mãSựKiện, mãNgườiTổChức, dữLiệuSuất)
-SUAT -> CSDL : kiểm tra quyền sở hữu sự kiện
-CSDL --> SUAT : Sự kiện NHÁP
-SUAT -> SUAT : kiểm tra thời gian/sức chứa/cửa sổ/chính sách
-SUAT -> CSDL : tạo Suất sự kiện NHÁP
-CSDL --> SUAT : Suất sự kiện
-SUAT --> UI : Suất sự kiện
-opt Khai báo hỗ trợ tiếp cận
-  BTC -> UI : Chọn đặc tính hỗ trợ tiếp cận
-  UI -> HT : gánĐặcTính(mãSựKiện, mãNgườiTổChức, danhSáchĐặcTính)
-  HT -> CSDL : kiểm tra quyền sở hữu + thay danh sách đặc tính
-  CSDL --> HT : thành công
-  HT --> UI : thành công
-end
-UI --> BTC : Hiển thị sự kiện NHÁP đã thiết lập
-note over SK,SUAT
-Sự kiện NHÁP có thể chưa có suất.
-UC11 chỉ công bố khi có ít nhất một suất hợp lệ.
+deactivate SK
+note over SK,ENT_SU
+Tạo sự kiện NHÁP không bắt buộc có suất;
+công bố (UC11) mới đòi >= 1 suất hợp lệ.
 end note
 @enduml

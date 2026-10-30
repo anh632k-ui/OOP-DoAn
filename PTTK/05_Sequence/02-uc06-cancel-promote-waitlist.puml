@@ -1,55 +1,70 @@
 @startuml
-skinparam monochrome true
+skinparam backgroundColor white
 skinparam shadowing false
+skinparam defaultFontName Arial
 skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+skinparam sequence {
+  ArrowColor #C05773
+  LifeLineBorderColor #C05773
+  ParticipantBackgroundColor #FFF8CE
+  ParticipantBorderColor #C05773
+  ActorBorderColor #C05773
+}
 hide footbox
-title MED-06 - BIỂU ĐỒ TUẦN TỰ UC06: HỦY ĐĂNG KÝ + CHỌN NGƯỜI CHỜ
-actor "Người tham dự" as NTD
-boundary "Giao diện Next.js" as UI
-control "Dịch vụ đăng ký" as DK
-control "Dịch vụ vé" as VE
-control "Dịch vụ danh sách chờ" as DSC
-database "PostgreSQL" as CSDL
 autonumber
-NTD -> UI : Chọn Hủy đăng ký
+title MED-06 - TUẦN TỰ UC06: HỦY ĐĂNG KÝ VÀ ĐÔN DANH SÁCH CHỜ
+actor "Người tham dự" as A
+boundary "Trang đăng ký" as UI
+control "Dịch vụ đăng ký" as DK
+control "Dịch vụ danh sách chờ" as CHO
+entity "Đăng ký" as ENT
+entity "Vé" as VE
+database "PostgreSQL" as DB
+A -> UI : Chọn Hủy đăng ký
 UI -> DK : hủyĐăngKý(mãNgườiThamDự, mãĐăngKý)
-DK -> CSDL : tải Đăng ký + Suất + Vé
-CSDL --> DK : dữ liệu hiện tại
-DK -> DK : kiểm tra quyền sở hữu + điều kiện hủy
-alt Đăng ký = CHỜ_XỬ_LÝ
-  DK -> CSDL : Đăng ký -> ĐÃ_HỦY
-else Đăng ký = DANH_SÁCH_CHỜ
-  group Giao dịch
-    DK -> CSDL : Đăng ký -> ĐÃ_HỦY
-    DK -> DSC : hủyMụcChờ(mãĐăngKý)
-    DSC -> CSDL : Mục danh sách chờ -> ĐÃ_HỦY
-  end
-else Đăng ký = ĐÃ_XÁC_NHẬN
-  group Giao dịch + khóa Suất sự kiện
-    DK -> CSDL : khóa suất + Đăng ký -> ĐÃ_HỦY
-    DK -> VE : hủyVé(mãĐăngKý)
-    VE -> CSDL : Vé HỢP_LỆ -> ĐÃ_HỦY
-    DK -> DSC : chọnNgườiTiếpTheo(mãSuất)
-    DSC -> CSDL : lấy mục ĐANG_CHỜ đầu tiên FOR UPDATE
-    alt có người chờ
-      CSDL --> DSC : mục tiếp theo
-      DSC -> CSDL : Đăng ký chờ -> ĐÃ_XÁC_NHẬN
-      DSC -> CSDL : Mục chờ -> ĐÃ_ĐƯỢC_CHỌN
-      DSC -> VE : phátVé(mãĐăngKýTiếpTheo)
-      VE -> CSDL : tạo Vé HỢP_LỆ
-      DSC --> DK : đã chọn người tiếp theo
-    else không còn người chờ
-      CSDL --> DSC : không có
-      DSC --> DK : không có
+activate DK
+DK -> DB : tải đăng ký, vé, trạng thái suất
+DB --> DK : thông tin nghiệp vụ
+alt Không sở hữu / vé đã dùng / quá hạn
+  DK --> UI : lỗi nghiệp vụ (403 / 409)
+  UI --> A : Thông báo không thể hủy
+else Được phép hủy
+  alt Chờ xử lý
+    DK -> ENT : hủy()
+    ENT -> DB : UPDATE đăng ký ĐÃ_HỦY
+  else Đang trong danh sách chờ
+    group Giao dịch
+      DK -> ENT : hủy()
+      ENT -> DB : UPDATE đăng ký ĐÃ_HỦY
+      DK -> CHO : hủyMụcChờ(mãĐăngKý)
+      CHO -> DB : UPDATE mục chờ ĐÃ_HỦY
+    end
+  else Đã xác nhận
+    group Giao dịch khóa suất
+      DK -> ENT : hủy()
+      ENT -> DB : UPDATE đăng ký ĐÃ_HỦY
+      DK -> VE : hủy()
+      VE -> DB : UPDATE vé ĐÃ_HỦY
+      DK -> CHO : chọnNgườiTiếpTheo(mãSuất)
+      CHO -> DB : khóa và lấy mục đang chờ đầu tiên
+      alt Có người chờ
+        DB --> CHO : mục ưu tiên
+        CHO -> DB : UPDATE đăng ký ĐÃ_XÁC_NHẬN
+        CHO -> DB : UPDATE mục chờ ĐÃ_ĐƯỢC_CHỌN
+        CHO -> DB : INSERT vé mới HỢP_LỆ
+      else Không có người chờ
+        DB --> CHO : rỗng
+      end
     end
   end
+  DK --> UI : 204 - đã hủy
+  UI --> A : Hiển thị kết quả
 end
-DK --> UI : 204 Không có nội dung
-UI --> NTD : Đã hủy đăng ký
-note over DK,CSDL
-Chỉ hủy đăng ký ĐÃ_XÁC_NHẬN mới giải phóng chỗ.
-Hủy đăng ký + hủy vé + chọn người chờ phải cùng một giao dịch.
+deactivate DK
+note over DK,DB
+Nếu hủy đã xác nhận: hủy vé và chọn
+người chờ phải trong cùng giao dịch.
 end note
 @enduml

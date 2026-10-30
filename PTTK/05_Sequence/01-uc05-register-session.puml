@@ -1,57 +1,73 @@
 @startuml
-skinparam monochrome true
+skinparam backgroundColor white
 skinparam shadowing false
+skinparam defaultFontName Arial
 skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+skinparam sequence {
+  ArrowColor #C05773
+  LifeLineBorderColor #C05773
+  ParticipantBackgroundColor #FFF8CE
+  ParticipantBorderColor #C05773
+  ActorBorderColor #C05773
+}
 hide footbox
-title MED-06 - BIỂU ĐỒ TUẦN TỰ UC05: ĐĂNG KÝ MỘT SUẤT
-actor "Người tham dự" as NTD
-boundary "Giao diện Next.js" as UI
+autonumber
+title MED-06 - TUẦN TỰ UC05: ĐĂNG KÝ MỘT SUẤT
+actor "Người tham dự" as A
+boundary "Trang đăng ký" as UI
 control "Dịch vụ đăng ký" as DK
 control "Dịch vụ chống bot" as CB
 control "Dịch vụ phân bổ" as PB
-control "Dịch vụ danh sách chờ" as DSC
-control "Dịch vụ vé" as VE
-database "PostgreSQL" as CSDL
-autonumber
-NTD -> UI : Chọn suất và nhấn Đăng ký
+entity "Đăng ký" as ENT
+database "PostgreSQL" as DB
+A -> UI : Chọn suất, nhấn Đăng ký
 UI -> DK : đăngKý(mãNgườiThamDự, mãSuất)
-DK -> CB : kiểmTraYêuCầuĐăngKý(...)
-CB -> CSDL : kiểm tra tài khoản + giới hạn tần suất + trùng lặp
-CSDL --> CB : hợp lệ
-CB --> DK : hợp lệ
-DK -> CSDL : đọc Suất sự kiện + cửa sổ đăng ký
-CSDL --> DK : dữ liệu suất
-alt FCFS
-  group Giao dịch + khóa Suất sự kiện
-    DK -> PB : phânBổNgay(mãNgườiThamDự, mãSuất)
-    PB -> CSDL : khóa suất + tạo Đăng ký CHỜ_XỬ_LÝ
-    PB -> CSDL : đếm số ĐÃ_XÁC_NHẬN
-    alt còn chỗ
-      PB -> CSDL : Đăng ký -> ĐÃ_XÁC_NHẬN
-      PB -> VE : phátVé(mãĐăngKý)
-      VE -> CSDL : tạo Vé HỢP_LỆ
-      VE --> PB : Vé
-      PB --> DK : ĐÃ_XÁC_NHẬN
-    else hết chỗ
-      PB -> CSDL : Đăng ký -> DANH_SÁCH_CHỜ
-      PB -> DSC : thêmVàoDanhSách(mãĐăngKý)
-      DSC -> CSDL : tạo Mục danh sách chờ ĐANG_CHỜ
-      DSC --> PB : thứ tự chờ
-      PB --> DK : DANH_SÁCH_CHỜ
+activate DK
+DK -> CB : kiểmTraYêuCầuĐăngKý(mãNgườiThamDự, mãSuất)
+CB -> DB : kiểm tra tài khoản, tốc độ, trùng
+DB --> CB : kết quả kiểm tra
+alt Không hợp lệ / đăng ký trùng
+  CB --> DK : lỗi (401 / 409 / 429)
+  DK --> UI : thông báo từ chối
+  UI --> A : Hiển thị lý do
+else Hợp lệ
+  CB --> DK : cho phép
+  DK -> DB : đọc suất, cửa sổ, sức chứa, chính sách
+  DB --> DK : dữ liệu suất
+  alt Suất không mở đăng ký
+    DK --> UI : lỗi (409)
+    UI --> A : Không thể đăng ký
+  else FCFS
+    group Giao dịch khóa suất
+      DK -> PB : phânBổNgay(mãNgườiThamDự, mãSuất)
+      PB -> ENT : tạo đăng ký CHỜ_XỬ_LÝ
+      ENT -> DB : INSERT đăng ký
+      PB -> DB : khóa suất, đếm số đã xác nhận
+      alt Còn chỗ
+        PB -> ENT : xácNhận()
+        ENT -> DB : UPDATE trạng thái
+        PB -> DB : INSERT vé HỢP_LỆ
+      else Hết chỗ
+        PB -> ENT : đưaVàoDanhSáchChờ()
+        ENT -> DB : UPDATE + INSERT danh_sach_cho
+      end
     end
+    PB --> DK : trạng thái và vé / số thứ tự
+    DK --> UI : kết quả FCFS
+    UI --> A : Hiển thị vé hoặc danh sách chờ
+  else LOTTERY
+    DK -> ENT : tạo đăng ký CHỜ_XỬ_LÝ
+    ENT -> DB : INSERT đăng ký
+    DB --> DK : đã lưu
+    DK --> UI : đang chờ phân bổ
+    UI --> A : Hiển thị trạng thái CHỜ_XỬ_LÝ
   end
-else LOTTERY
-  DK -> CSDL : tạo Đăng ký CHỜ_XỬ_LÝ
-  CSDL --> DK : Đăng ký
 end
-DK --> UI : trạng thái đăng ký (+ vé/thứ tự nếu có)
-UI --> NTD : Hiển thị kết quả
-note over CB,CSDL
-UNIQUE(ma_nguoi_tham_du, ma_suat) là lớp bảo vệ cuối chống đăng ký trùng.
-end note
-note over PB,CSDL
-FCFS phải khóa suất trong giao dịch để không cấp vượt sức chứa.
+deactivate DK
+note over PB,DB
+UNIQUE(người tham dự, suất);
+FCFS phải khóa dữ liệu và dùng giao dịch.
 end note
 @enduml

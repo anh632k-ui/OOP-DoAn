@@ -1,35 +1,51 @@
 @startuml
-skinparam monochrome true
+skinparam backgroundColor white
 skinparam shadowing false
+skinparam defaultFontName Arial
 skinparam defaultFontSize 13
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
+skinparam sequence {
+  ArrowColor #C05773
+  LifeLineBorderColor #C05773
+  ParticipantBackgroundColor #FFF8CE
+  ParticipantBorderColor #C05773
+  ActorBorderColor #C05773
+}
 hide footbox
-title MED-06 - BIỂU ĐỒ TUẦN TỰ UC14: CHECK-IN VÉ
-actor "Nhân viên check-in" as NV
-boundary "Giao diện check-in" as UI
-control "Dịch vụ check-in" as CI
-database "PostgreSQL" as CSDL
 autonumber
-NV -> UI : Quét QR / nhập mã vé
+title MED-06 - TUẦN TỰ UC14: CHECK-IN MỘT VÉ
+actor "Nhân viên check-in" as A
+boundary "Trang check-in" as UI
+control "Dịch vụ check-in" as CI
+entity "Vé" as VE
+entity "Lượt check-in" as LK
+database "PostgreSQL" as DB
+A -> UI : Quét QR / nhập mã vé
 UI -> CI : checkIn(mãNhânViên, mãSuất, mãVé)
-CI -> CSDL : khóa Vé theo mã vé
-CSDL --> CI : Vé
-CI -> CSDL : tải Suất sự kiện + kiểm tra lượt check-in hiện có
-CSDL --> CI : suất + trạng thái check-in
-CI -> CI : xác minh đúng suất + Vé = HỢP_LỆ
-alt hợp lệ và chưa dùng
+activate CI
+CI -> VE : tìmTheoMã(mãVé)
+VE -> DB : SELECT FOR UPDATE vé
+DB --> VE : vé + trạng thái
+VE --> CI : thông tin vé
+CI -> DB : kiểm tra suất, lượt check-in
+DB --> CI : dữ liệu liên quan
+alt Vé không tồn tại / sai suất / đã dùng / hết hạn
+  CI --> UI : lỗi nghiệp vụ (404 / 409)
+  UI --> A : Từ chối check-in
+else Vé hợp lệ
   group Giao dịch
-    CI -> CSDL : tạo Lượt check-in
-    CI -> CSDL : Vé -> ĐÃ_SỬ_DỤNG
+    CI -> LK : ghi nhận lượt check-in
+    LK -> DB : INSERT check_in
+    CI -> VE : đánhDấuĐãDùng()
+    VE -> DB : UPDATE vé ĐÃ_SỬ_DỤNG
   end
-  CI --> UI : thành công
-  UI --> NV : Cho phép vào sự kiện
-else không hợp lệ / đã dùng / sai suất
-  CI --> UI : lỗi nghiệp vụ
-  UI --> NV : Từ chối check-in
+  CI --> UI : Check-in thành công
+  UI --> A : Cho phép vào cổng
 end
-note over CI,CSDL
-Khóa dòng + UNIQUE(check_in.ma_ve) bảo đảm một vé chỉ check-in một lần.
+deactivate CI
+note over VE,DB
+Khóa dòng vé + UNIQUE(check_in.ma_ve)
+để hai lần quét chỉ một lần thành công.
 end note
 @enduml
