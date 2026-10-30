@@ -55,6 +55,7 @@ class "Lần phân bổ" as LanPhanBo {
   - mã: UUID
   - chínhSách: ChinhSachPhanBo
   - thờiĐiểmThựcHiện: DateTime
+  + ghiNhận(): void
 }
 class "Đăng ký" as DangKy {
   - mã: UUID
