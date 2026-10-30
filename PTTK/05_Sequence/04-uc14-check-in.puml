@@ -24,10 +24,10 @@ database "PostgreSQL" as DB
 A -> UI : Quét QR / nhập mã vé
 UI -> CI : checkIn(mãNhânViên, mãSuất, mãVé)
 activate CI
-CI -> VE : tìmTheoMã(mãVé)
-VE -> DB : SELECT FOR UPDATE vé
-DB --> VE : vé + trạng thái
-VE --> CI : thông tin vé
+CI -> DB : SELECT FOR UPDATE vé theo mã
+DB --> CI : vé + trạng thái
+CI -> VE : cóThểCheckIn()
+VE --> CI : kết quả kiểm tra
 CI -> DB : kiểm tra suất, lượt check-in
 DB --> CI : dữ liệu liên quan
 alt Vé không tồn tại / sai suất / đã dùng / hết hạn
