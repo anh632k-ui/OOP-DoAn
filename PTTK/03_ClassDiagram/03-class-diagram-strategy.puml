@@ -26,7 +26,7 @@ interface "Chiến lược phân bổ vé" as ChienLuocPhanBo {
 }
 
 class "Chiến lược FCFS" as ChienLuocFCFS {
-  + phânBổ(suất: SuatSuKien, ứngViên: DangKy[]): KeHoachPhanBo
+  + phânBổ(suất: SuatSuKien, ứngViên: DangKy[], sốĐãXácNhận: int): KeHoachPhanBo
 }
 
 class "Chiến lược bốc thăm" as ChienLuocBocTham {
