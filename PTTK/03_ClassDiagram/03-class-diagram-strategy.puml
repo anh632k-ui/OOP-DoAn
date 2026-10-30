@@ -1,6 +1,11 @@
 @startuml
+skinparam class {
+ BackgroundColor #FFF8CE
+ BorderColor #C05773
+ ArrowColor #C05773
+ FontColor #222222
+}
 top to bottom direction
-skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 skinparam defaultFontSize 14
@@ -12,8 +17,8 @@ hide stereotypes
 title MED-06 - BIỂU ĐỒ LỚP: CHIẾN LƯỢC PHÂN BỔ VÉ
 
 class "Dịch vụ phân bổ" as DVPhanBo {
-  + phânBổNgay(...): void
-  + chạyPhânBổ(...): LanPhanBo
+  + phânBổNgay(mãNgườiThamDự: UUID, mãSuất: UUID): TrangThaiDangKy
+  + chạyPhânBổ(mãSuất: UUID, mãNgườiThựcHiện: UUID): LanPhanBo
 }
 
 interface "Chiến lược phân bổ vé" as ChienLuocPhanBo {
@@ -21,7 +26,7 @@ interface "Chiến lược phân bổ vé" as ChienLuocPhanBo {
 }
 
 class "Chiến lược FCFS" as ChienLuocFCFS {
-  + phânBổ(...): KeHoachPhanBo
+  + phânBổ(suất: SuatSuKien, ứngViên: DangKy[]): KeHoachPhanBo
 }
 
 class "Chiến lược bốc thăm" as ChienLuocBocTham {

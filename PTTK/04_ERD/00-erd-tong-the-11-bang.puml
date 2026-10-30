@@ -1,0 +1,104 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontSize 13
+skinparam linetype ortho
+skinparam entity {
+ BackgroundColor #FFF8CE
+ BorderColor #C05773
+ ArrowColor #C05773
+ FontColor #222222
+}
+
+title MED-06 - ERD TOAN BO 11 BANG POSTGRESQL
+entity "nguoi_dung" as U {
+ * id : UUID <<PK>>
+ --
+ email : VARCHAR(255) <<UQ>>
+ vai_tro : vai_tro_nguoi_dung
+ trang_thai : trang_thai_tai_khoan
+}
+entity "dia_diem" as D {
+ * id : UUID <<PK>>
+ --
+ ten : VARCHAR(200)
+ suc_chua : INTEGER
+}
+entity "su_kien" as E {
+ * id : UUID <<PK>>
+ --
+ ma_nguoi_to_chuc : UUID <<FK>>
+ ma_dia_diem : UUID <<FK>>
+ ten : VARCHAR(200)
+ trang_thai : trang_thai_su_kien
+}
+entity "suat_su_kien" as S {
+ * id : UUID <<PK>>
+ --
+ ma_su_kien : UUID <<FK>>
+ suc_chua : INTEGER
+ chinh_sach_phan_bo : chinh_sach_phan_bo
+ trang_thai : trang_thai_suat
+}
+entity "dang_ky" as R {
+ * id : UUID <<PK>>
+ --
+ ma_nguoi_tham_du : UUID <<FK>>
+ ma_suat : UUID <<FK>>
+ trang_thai : trang_thai_dang_ky
+ --
+ UQ(ma_nguoi_tham_du, ma_suat)
+}
+entity "danh_sach_cho" as W {
+ * id : UUID <<PK>>
+ --
+ ma_dang_ky : UUID <<FK, UQ>>
+ thu_tu : BIGINT
+ trang_thai : trang_thai_danh_sach_cho
+}
+entity "ve" as T {
+ * id : UUID <<PK>>
+ --
+ ma_dang_ky : UUID <<FK, UQ>>
+ ma_ve : VARCHAR(100) <<UQ>>
+ trang_thai : trang_thai_ve
+}
+entity "check_in" as C {
+ * id : UUID <<PK>>
+ --
+ ma_ve : UUID <<FK, UQ>>
+ ma_nhan_vien : UUID <<FK>>
+ check_in_luc : TIMESTAMPTZ
+}
+entity "lan_phan_bo" as L {
+ * id : UUID <<PK>>
+ --
+ ma_suat : UUID <<FK, UQ>>
+ ma_nguoi_thuc_hien : UUID <<FK>>
+ chinh_sach : chinh_sach_phan_bo
+ du_lieu_kiem_chung : JSONB
+}
+entity "su_kien_tiep_can" as M {
+ * ma_su_kien : UUID <<PK, FK>>
+ * ma_dac_tinh : UUID <<PK, FK>>
+}
+entity "dac_tinh_tiep_can" as A {
+ * id : UUID <<PK>>
+ --
+ ten : VARCHAR(120) <<UQ>>
+}
+U ||--o{ E : tổ chức
+D ||--o{ E : địa điểm
+E ||--o{ S : gồm
+U ||--o{ R : đăng ký
+S ||--o{ R : nhận
+R ||--o| W : chờ
+R ||--o| T : vé
+T ||--o| C : check-in
+U ||--o{ C : nhân viên
+S ||--o| L : phân bổ
+U ||--o{ L : thực hiện
+E ||--o{ M
+A ||--o{ M
+@enduml

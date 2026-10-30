@@ -1,6 +1,11 @@
 @startuml
+skinparam class {
+ BackgroundColor #FFF8CE
+ BorderColor #C05773
+ ArrowColor #C05773
+ FontColor #222222
+}
 top to bottom direction
-skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 skinparam defaultFontSize 13
@@ -14,20 +19,20 @@ title MED-06 - BIỂU ĐỒ LỚP: CÁC DỊCH VỤ ỨNG DỤNG
 
 package "Quản lý sự kiện" {
   class "Dịch vụ sự kiện" as DVSuKien {
-    + tạoSựKiện(...): SuKien
-    + cậpNhậtSựKiện(...): SuKien
-    + côngBốSựKiện(...): SuKien
-    + hủySựKiện(...): void
+    + tạoSựKiện(mãNgườiTổChức: UUID, dữLiệu: ThongTinSuKien): SuKien
+    + cậpNhậtSựKiện(mãSựKiện: UUID, dữLiệu: ThongTinSuKien): SuKien
+    + côngBốSựKiện(mãSựKiện: UUID): SuKien
+    + hủySựKiện(mãSựKiện: UUID): void
   }
   class "Dịch vụ suất" as DVSuat {
-    + tạoSuất(...): SuatSuKien
-    + cậpNhậtSuất(...): SuatSuKien
-    + mởĐăngKý(...): void
-    + đóngĐăngKý(...): void
+    + tạoSuất(mãSựKiện: UUID, dữLiệu: ThongTinSuat): SuatSuKien
+    + cậpNhậtSuất(mãSuất: UUID, dữLiệu: ThongTinSuat): SuatSuKien
+    + mởĐăngKý(mãSuất: UUID): void
+    + đóngĐăngKý(mãSuất: UUID): void
   }
   class "Dịch vụ hỗ trợ tiếp cận" as DVHoTro {
-    + gánĐặcTínhChoSựKiện(...): void
-    + tìmSựKiệnTheoĐặcTính(...): SuKien[]
+    + gánĐặcTínhChoSựKiện(mãSựKiện: UUID, danhSáchĐặcTính: UUID[]): void
+    + tìmSựKiệnTheoĐặcTính(mãĐặcTính: UUID): SuKien[]
   }
   DVSuKien --> DVSuat
   DVSuKien --> DVHoTro
@@ -35,27 +40,28 @@ package "Quản lý sự kiện" {
 
 package "Đăng ký và vé" {
   class "Dịch vụ đăng ký" as DVDangKy {
-    + đăngKý(...): DangKy
-    + hủyĐăngKý(...): void
+    + đăngKý(mãNgườiThamDự: UUID, mãSuất: UUID): DangKy
+    + hủyĐăngKý(mãNgườiThamDự: UUID, mãĐăngKý: UUID): void
   }
   class "Dịch vụ chống bot" as DVChongBot {
-    + kiểmTraYêuCầuĐăngKý(...): void
+    + kiểmTraYêuCầuĐăngKý(mãNgườiThamDự: UUID, mãSuất: UUID): void
   }
   class "Dịch vụ phân bổ" as DVPhanBo {
-    + phânBổNgay(...): void
-    + chạyPhânBổ(...): LanPhanBo
+    + phânBổNgay(mãNgườiThamDự: UUID, mãSuất: UUID): TrangThaiDangKy
+    + chạyPhânBổ(mãSuất: UUID, mãNgườiThựcHiện: UUID): LanPhanBo
   }
   class "Dịch vụ danh sách chờ" as DVDanhSachCho {
-    + thêmVàoDanhSách(...): DanhSachCho
-    + chọnNgườiTiếpTheo(...): DangKy?
+    + thêmVàoDanhSách(mãĐăngKý: UUID): DanhSachCho
+    + chọnNgườiTiếpTheo(mãSuất: UUID): DangKy?
+    + hủyMụcChờ(mãĐăngKý: UUID): void
   }
   class "Dịch vụ vé" as DVVe {
-    + phátVé(...): Ve
-    + hủyVé(...): void
-    + tìmTheoMã(...): Ve
+    + phátVé(mãĐăngKý: UUID): Ve
+    + hủyVé(mãĐăngKý: UUID): void
+    + tìmTheoMã(mãVé: string): Ve
   }
   class "Dịch vụ check-in" as DVCheckIn {
-    + checkIn(...): LuotCheckIn
+    + checkIn(mãNhânViên: UUID, mãSuất: UUID, mãVé: string): LuotCheckIn
   }
 
   DVDangKy --> DVChongBot

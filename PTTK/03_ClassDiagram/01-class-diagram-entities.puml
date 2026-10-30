@@ -1,6 +1,11 @@
 @startuml
+skinparam class {
+ BackgroundColor #FFF8CE
+ BorderColor #C05773
+ ArrowColor #C05773
+ FontColor #222222
+}
 top to bottom direction
-skinparam monochrome true
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 skinparam defaultFontSize 13
@@ -86,9 +91,11 @@ SuKien "0..*" -- "0..*" HoTroTiepCan
 SuatSuKien "1" -- "0..*" DangKy
 NguoiDung "1" -- "0..*" DangKy
 SuatSuKien "1" *-- "0..1" LanPhanBo
+NguoiDung "1" -- "0..*" LanPhanBo : thực hiện
 DangKy "1" *-- "0..1" DanhSachCho
 DangKy "1" *-- "0..1" Ve
 Ve "1" *-- "0..1" LuotCheckIn
+NguoiDung "1" -- "0..*" LuotCheckIn : nhân viên check-in
 
 NguoiDung -[hidden]right- DiaDiem
 DiaDiem -[hidden]right- HoTroTiepCan
