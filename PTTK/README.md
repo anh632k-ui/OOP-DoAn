@@ -58,7 +58,7 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - [x] REST API
 - [x] Ma trận kiểm chứng / thiết kế kiểm thử
 - [x] Việt hóa thuật ngữ PTTK trên nhánh TV
-- [ ] Xem lại trực quan toàn bộ sơ đồ sau khi kéo nhánh TV về máy
+- [ ] Render và kiểm tra trực quan toàn bộ 26 sơ đồ trên nhánh chỉnh sửa trước khi nộp
 
 ## 6. Bộ tài liệu
 ### 01 - Tác nhân / Ca sử dụng
@@ -79,6 +79,7 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 - 03_ClassDiagram/03-class-diagram-strategy.puml
 
 ### 04 - Thiết kế CSDL / ERD
+- 04_ERD/00-erd-tong-the-11-bang.puml (bản tổng thể theo mẫu Bài 6)
 - 04_ERD/01-erd-core.puml
 - 04_ERD/02-erd-supporting.puml
 - 04_ERD/03-data-dictionary.md
@@ -123,3 +124,9 @@ Hệ thống hỗ trợ công bố sự kiện văn hóa, quản lý các suất
 
 ## 8. Ghi chú về bản tiếng Việt
 Nhánh TV ưu tiên ngôn ngữ báo cáo. Tên bảng/cột PostgreSQL cũng đã có bản tiếng Việt không dấu để đồng bộ với ERD và từ điển dữ liệu. Nhánh dev vẫn giữ bản gốc để đối chiếu khi cần.
+
+## 10. Bản chỉnh sửa tham khảo (30/10/2026)
+- Nhánh `pttk-chuan-mau-thay-20261030` sửa ngữ nghĩa Use Case, các quan hệ lớp, chữ ký Service và 5 Sequence.
+- Sơ đồ mới: `04_ERD/00-erd-tong-the-11-bang.puml`.
+- Bản kiểm tra tĩnh 5 lượt: `09_Review/04-ra-soat-5-luot-theo-mau-thay.md`.
+- Chưa tự xác nhận render/kiểm thử thực thi; người nộp cần mở Preview từng sơ đồ và kiểm tra bằng chứng.
