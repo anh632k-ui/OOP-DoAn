@@ -1,14 +1,14 @@
 @startuml
 left to right direction
-skinparam monochrome true
 skinparam shadowing false
 skinparam actorStyle stick
 skinparam defaultFontSize 14
 skinparam packageStyle rectangle
 skinparam usecase {
-  BackgroundColor White
-  BorderColor Black
-  FontColor Black
+ BackgroundColor #FFF8CE
+ BorderColor #C05773
+ ArrowColor #C05773
+ FontColor #222222
 }
 
 title MED-06 - BIỂU ĐỒ CA SỬ DỤNG TỔNG QUAN
@@ -60,6 +60,8 @@ Khach -- UC01
 Khach -- UC02
 Khach -- UC03
 Khach -- UC04
+NguoiThamDu -- UC03
+NguoiThamDu -- UC04
 NguoiThamDu -- UC05
 NguoiThamDu -- UC06
 NguoiThamDu -- UC07

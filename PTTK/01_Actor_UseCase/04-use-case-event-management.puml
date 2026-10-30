@@ -1,14 +1,14 @@
 @startuml
 left to right direction
-skinparam monochrome true
 skinparam shadowing false
 skinparam actorStyle stick
 skinparam defaultFontSize 14
 skinparam packageStyle rectangle
 skinparam usecase {
-  BackgroundColor White
-  BorderColor Black
-  FontColor Black
+ BackgroundColor #FFF8CE
+ BorderColor #C05773
+ ArrowColor #C05773
+ FontColor #222222
 }
 
 title MED-06 - PHÂN RÃ CA SỬ DỤNG: QUẢN LÝ SỰ KIỆN
@@ -44,8 +44,8 @@ rectangle "Quản lý sự kiện" as HT {
   UC12 .> OWN : <<include>>
   UC13 .> OWN : <<include>>
 
-  UC10 .> SESSION : <<include>>
-  UC10 .> ACCESS : <<include>>
+  SESSION -|> UC10
+  ACCESS -|> UC10
   UC11 .> PUBLISH : <<include>>
   UC12 .> ALLOC : <<include>>
 }
