@@ -32,6 +32,26 @@ jobs:
         run: docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1 < database/tests/001_constraints.sql
       - name: List tables
         run: docker compose exec -T db psql -U med06 -d med06 -c "\dt"
+      - name: Build and start NestJS + Next.js with PostgreSQL
+        run: docker compose up --build -d
+      - name: Smoke test API and public events
+        run: |
+          curl --fail --silent --show-error --retry 15 --retry-delay 3 --retry-connrefused http://127.0.0.1:3001/api/health > /tmp/health.json
+          curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-connrefused http://127.0.0.1:3001/api/events > /tmp/events.json
+          python3 - <<'PY'
+          import json
+          health=json.load(open('/tmp/health.json'))
+          assert health['status']=='ok' and health['database']=='connected'
+          events=json.load(open('/tmp/events.json'))
+          assert len(events['items']) == 2, events
+          assert sum(e['sessionCount'] for e in events['items']) == 3
+          print('PASS: API health and two published events / three sessions')
+          PY
+      - name: Smoke test Next.js
+        run: |
+          curl --fail --silent --show-error --retry 15 --retry-delay 3 --retry-connrefused http://127.0.0.1:3000/ > /tmp/med06.html
+          grep -q 'Trien lam Di san' /tmp/med06.html
+          echo 'PASS: Next.js renders seeded event data'
       - name: Show Docker logs on failure
         if: failure()
         run: docker compose logs --tail=100
