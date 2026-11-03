@@ -62,3 +62,7 @@ button:disabled { opacity: .5; cursor: wait; }
 }
 .management-area input[type="checkbox"] { width: auto; }
 .success-note { font-weight: 600; color: #14532d; }
+
+.action-panel { padding-top: 10px; }
+.ticket-card img { display: block; margin: 20px 0; max-width: 100%; }
+.ticket-code { display: block; overflow-wrap: anywhere; background: #f3f4f6; padding: 10px; border-radius: 6px; }

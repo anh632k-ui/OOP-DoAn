@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import SessionRegisterButton from './session-register-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,8 @@ type Session = {
   capacity: number;
   issuedSeats: number;
   status: string;
+  registrationOpensAt: string;
+  registrationClosesAt: string;
   allocationMethod: string | null;
   venue: string;
   address: string;
@@ -101,12 +104,22 @@ export default async function EventPage({
                   {' '}· Phân bổ: {session.allocationMethod ?? 'Chưa cấu hình'}
                 </p>
                 <p className="note">Trạng thái: {session.status}</p>
+                <p className="note">Đăng ký từ {formatDate(session.registrationOpensAt)}
+                  {' '}đến {formatDate(session.registrationClosesAt)}</p>
+                <SessionRegisterButton
+                  sessionId={session.id}
+                  method={session.allocationMethod}
+                  available={Date.now() >= new Date(session.registrationOpensAt).getTime()
+                    && Date.now() < new Date(session.registrationClosesAt).getTime()
+                    && new Date(session.startsAt).getTime() > Date.now()
+                    && session.status !== 'DA_HUY'}
+                />
               </li>
             ))}
           </ul>
         )}
         <p className="note">
-          Chức năng đăng ký và nhận vé sẽ được triển khai ở giai đoạn tiếp theo.
+          Mỗi tài khoản chỉ được có một đăng ký còn hiệu lực cho một suất.
         </p>
       </section>
     </main>
