@@ -76,3 +76,6 @@ button:disabled { opacity: .5; cursor: wait; }
   border: 1px solid #999; border-radius: 6px; background: white;
 }
 .search-form button { justify-self: start; }
+
+.cover-image { width: 100%; max-width: 720px; height: auto;
+  border-radius: 10px; object-fit: cover; }

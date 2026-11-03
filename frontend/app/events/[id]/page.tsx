@@ -4,7 +4,7 @@ import SessionRegisterButton from './session-register-button';
 
 export const dynamic = 'force-dynamic';
 
-type EventDetail = { id: string; title: string; description: string; accessibility: { name: string; note: string }[] };
+type EventDetail = { id: string; title: string; description: string; hasCover: boolean; accessibility: { name: string; note: string }[] };
 type Session = {
   id: string;
   startsAt: string;
@@ -74,6 +74,8 @@ export default async function EventPage({
         <p className="eyebrow">MED-06 · THÔNG TIN SỰ KIỆN</p>
         <h1>{event.title}</h1>
         <p>{event.description}</p>
+        {event.hasCover && <img className="cover-image" alt={event.title}
+          src={`/api/event-cover/${event.id}`} width={720} height={360}/>}
       </header>
 
       <section className="panel" aria-labelledby="accessibility-heading">

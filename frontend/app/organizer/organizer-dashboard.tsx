@@ -101,6 +101,20 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     });
   }
 
+  function uploadCover(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!eventId) return;
+    const form = e.currentTarget, data = new FormData(form);
+    void perform(async () => {
+      const response = await fetch('/api/event-cover/' + eventId, {
+        method: 'POST', body: data,
+      });
+      const result = (await response.json()) as { message?: string };
+      if (!response.ok) throw new Error(result.message ?? 'Không thể tải ảnh lên');
+      form.reset();
+    });
+  }
+
   function createVenue(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget, data = new FormData(form);
@@ -214,6 +228,18 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
               <textarea name="description" defaultValue={chosen.description} maxLength={4000}/>
             </label>
             <button type="submit" disabled={busy}>Lưu thay đổi</button>
+          </form>
+        </section>
+      )}
+      {chosen && chosen.status === 'NHAP' && (
+        <section className="panel">
+          <h2>Ảnh bìa sự kiện</h2>
+          <p className="note">Lưu trong object storage S3-compatible, không lưu binary trong PostgreSQL.</p>
+          <form className="auth-form" onSubmit={uploadCover}>
+            <label>Chọn ảnh (PNG/JPEG/WebP, tối đa 2 MB)
+              <input name="image" type="file" accept="image/png,image/jpeg,image/webp" required/>
+            </label>
+            <button type="submit" disabled={busy}>Tải ảnh bìa</button>
           </form>
         </section>
       )}
