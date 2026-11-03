@@ -66,6 +66,9 @@ export default async function Home() {
           <Link href="/account/register">Đăng ký</Link>
           <Link href="/account">Tài khoản của tôi</Link>
           <Link href="/organizer">Quản lý sự kiện</Link>
+          <Link href="/registrations">Đăng ký của tôi</Link>
+          <Link href="/tickets">Vé của tôi</Link>
+          <Link href="/checkin">Check-in</Link>
         </nav>
       </header>
 

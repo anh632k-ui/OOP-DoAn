@@ -34,7 +34,7 @@ export default async function AccountPage() {
     <main className="container">
       <Link href="/">← Danh sách sự kiện</Link>
       <header>
-        <p className="eyebrow">MED-06 · GIAI ĐOẠN 3</p>
+        <p className="eyebrow">MED-06 · TÀI KHOẢN</p>
         <h1>Tài khoản của bạn</h1>
       </header>
       <section className="panel">
@@ -46,9 +46,12 @@ export default async function AccountPage() {
           <button type="submit">Đăng xuất</button>
         </form>
       </section>
-      <p className="note">
-        Chức năng đăng ký vé sẽ được bổ sung sau khi hoàn thiện quản lý suất.
-      </p>
+      <nav className="auth-nav" aria-label="Các chức năng của tôi">
+        <Link href="/registrations">Đăng ký của tôi</Link>
+        <Link href="/tickets">Vé điện tử</Link>
+        <Link href="/organizer">Quản lý sự kiện</Link>
+        <Link href="/checkin">Kiểm tra vé</Link>
+      </nav>
     </main>
   );
 }
