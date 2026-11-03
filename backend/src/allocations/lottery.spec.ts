@@ -15,4 +15,4 @@ describe('Lottery deterministic audit ordering', () => {
   it('rejects malformed audit seeds', () => {
     expect(() => lotteryOrder(ids, 'bad')).toThrow();
   });
-}
+});
