@@ -7,10 +7,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.6;
 }
+a { color: #164c8b; }
+a:hover { text-decoration: none; }
 .container { max-width: 920px; margin: 0 auto; padding: 64px 24px; }
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .12em; }
 h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.2; }
 h2 { margin-top: 0; font-size: 21px; }
+h3 { margin: 0 0 8px; font-size: 19px; }
 .panel {
   background: white;
   border: 1px solid #ddd;
@@ -22,5 +25,8 @@ h2 { margin-top: 0; font-size: 21px; }
 .ok { color: #14532d; background: #dcfce7; }
 .error { color: #7f1d1d; background: #fee2e2; }
 .note { color: #525252; }
+.event-list { list-style: none; padding: 0; margin: 0; }
+.event-item { border-top: 1px solid #e5e5e5; padding: 18px 0; }
+.event-item p { margin: 8px 0; }
 li { margin: 6px 0; }
 :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
