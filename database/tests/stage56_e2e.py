@@ -60,7 +60,7 @@ def time_at(minutes):
 
 def event_and_session(organizer, title, method, capacity=1):
     event = must("POST", "/manage/events",
-                 {"title": title, "description": "Integration test"}, organizer)
+                 {"title": title, "description": "Integration test"}, organizer, status=201)
     session = must("POST", f"/manage/events/{event['id']}/sessions", {
         "venueId": VENUE,
         "capacity": capacity,
@@ -68,10 +68,10 @@ def event_and_session(organizer, title, method, capacity=1):
         "endsAt": time_at(210),
         "registrationOpensAt": time_at(-120),
         "registrationClosesAt": time_at(30),
-    }, organizer)
+    }, organizer, status=201)
     must("PUT", f"/manage/sessions/{session['id']}/policy",
          {"method": method}, organizer)
-    must("POST", f"/manage/events/{event['id']}/publish", {}, organizer)
+    must("POST", f"/manage/events/{event['id']}/publish", {}, organizer, status=201)
     return event["id"], session["id"]
 
 
@@ -111,7 +111,7 @@ def main():
     assert duplicate_status == 409, duplicate_status
 
     must("POST", f"/registrations/{results[issued]['id']}/cancel",
-         {}, users[issued])
+         {}, users[issued], status=201)
     current = must("GET", "/registrations/mine", token=users[waiting])["items"]
     promoted = next(r for r in current if r["id"] == results[waiting]["id"])
     assert promoted["status"] == "DA_XAC_NHAN", promoted
@@ -182,7 +182,7 @@ def main():
     )
     assert second_draw_status == 409
     winning_index = next(i for i, entry in enumerate(entries) if entry["id"] == winner)
-    must("POST", f"/registrations/{winner}/cancel", {}, users[winning_index])
+    must("POST", f"/registrations/{winner}/cancel", {}, users[winning_index], status=201)
     lottery_loser = users[1 - winning_index]
     tickets = must("GET", "/tickets/mine", token=lottery_loser)["items"]
     assert any(t["sessionId"] == lottery_session and
