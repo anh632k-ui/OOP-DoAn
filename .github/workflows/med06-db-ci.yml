@@ -6,11 +6,15 @@ on:
     paths:
       - 'database/**'
       - 'docker-compose.yml'
+      - 'frontend/**'
+      - 'backend/**'
       - '.github/workflows/med06-db-ci.yml'
   pull_request:
     paths:
       - 'database/**'
       - 'docker-compose.yml'
+      - 'frontend/**'
+      - 'backend/**'
       - '.github/workflows/med06-db-ci.yml'
 
 jobs:
@@ -88,7 +92,7 @@ jobs:
           echo 'PASS: Next.js renders seeded event data'
       - name: Smoke test browser registration and account session
         run: |
-          curl --fail --silent --show-error --cookie-jar /tmp/med06-cookies -H 'Content-Type: application/json' -d '{"email":"stage3-web@example.invalid","name":"Web User","password":"SecureDemo98765"}' http://127.0.0.1:3000/api/auth/register > /tmp/med06-web-auth.json
+          curl -4 --fail --silent --show-error --cookie-jar /tmp/med06-cookies -H 'Origin: http://localhost:3000' -H 'Content-Type: application/json' -d '{"email":"stage3-web@example.invalid","name":"Web User","password":"SecureDemo98765"}' http://localhost:3000/api/auth/register > /tmp/med06-web-auth.json
           python3 - <<'PY'
           import json
           user=json.load(open('/tmp/med06-web-auth.json'))['user']
@@ -97,7 +101,8 @@ jobs:
           PY
           curl --fail --silent --show-error --cookie /tmp/med06-cookies http://127.0.0.1:3000/account > /tmp/med06-account.html
           grep -q 'stage3-web@example.invalid' /tmp/med06-account.html
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' --cookie /tmp/med06-cookies --request POST http://127.0.0.1:3000/api/auth/logout)" = 303
+          test "$(curl -4 --silent --output /dev/null --write-out '%{http_code}' --cookie /tmp/med06-cookies -H 'Origin: http://localhost:3000' --request POST http://localhost:3000/api/auth/logout)" = 303
+          test "$(curl -4 --silent --output /dev/null --write-out '%{http_code}' -H 'Origin: https://invalid.example' -H 'Content-Type: application/json' -d '{"email":"other@example.invalid","name":"Invalid","password":"SecureDemo98765"}' http://localhost:3000/api/auth/register)" = 403
           echo 'PASS: account page, HttpOnly cookie login and logout'
       - name: Show Docker logs on failure
         if: failure()
