@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 
 export type EventSummary = {
@@ -34,7 +34,20 @@ export type SessionSummary = {
 export class EventsService {
   constructor(private readonly database: DatabaseService) {}
 
-  async listPublished(): Promise<{ items: EventSummary[] }> {
+  async listPublished(q?: string, featureId?: string): Promise<{ items: EventSummary[] }> {
+    if (q !== undefined && (typeof q !== 'string' || q.length > 100)) {
+      throw new BadRequestException('Từ khóa tối đa 100 ký tự');
+    }
+    if (featureId !== undefined && (
+      typeof featureId !== 'string'
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(featureId)
+    )) {
+      throw new BadRequestException('featureId phải là UUID hợp lệ');
+    }
+    const normalized = q?.trim();
+    const pattern = normalized
+      ? '%' + normalized.replace(/[\\%_]/g, '\\  async listPublished(): Promise<{ items: EventSummary[] }> {
+    const items = await this.database.queryRows<EventSummary>(') + '%' : null;
     const items = await this.database.queryRows<EventSummary>(
       `
       SELECT e.ma_su_kien AS id,
@@ -46,12 +59,26 @@ export class EventsService {
       LEFT JOIN suat_su_kien s
         ON s.ma_su_kien = e.ma_su_kien AND s.trang_thai <> 'DA_HUY'
       WHERE e.trang_thai = 'DA_CONG_BO'
+        AND ($1::text IS NULL OR e.ten_su_kien ILIKE $1 ESCAPE '\\'
+          OR e.mo_ta ILIKE $1 ESCAPE '\\')
+        AND ($2::uuid IS NULL OR EXISTS (
+          SELECT 1 FROM su_kien_dac_tinh sd
+          WHERE sd.ma_su_kien=e.ma_su_kien AND sd.ma_dac_tinh=$2
+        ))
       GROUP BY e.ma_su_kien
       ORDER BY "nextSessionAt" NULLS LAST, e.ten_su_kien
       LIMIT 50
       `,
+      [pattern, featureId ?? null],
     );
     return { items };
+  }
+
+  async accessibilityOptions() {
+    return { items: await this.database.queryRows(
+      `SELECT ma_dac_tinh AS id,ten_dac_tinh AS name
+        FROM dac_tinh_tiep_can ORDER BY ten_dac_tinh`,
+    ) };
   }
 
   async getPublished(id: string): Promise<EventDetail> {

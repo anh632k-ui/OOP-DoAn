@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { EventsService } from './events.service';
 
 @Controller('events')
@@ -6,8 +6,13 @@ export class EventsController {
   constructor(private readonly events: EventsService) {}
 
   @Get()
-  list() {
-    return this.events.listPublished();
+  list(@Query('q') q?: string, @Query('featureId') featureId?: string) {
+    return this.events.listPublished(q, featureId);
+  }
+
+  @Get('accessibility/options')
+  accessibilityOptions() {
+    return this.events.accessibilityOptions();
   }
 
   @Get(':id')
