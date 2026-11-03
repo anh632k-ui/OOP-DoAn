@@ -16,9 +16,27 @@ export async function POST(
     return NextResponse.json({ message: 'Không tìm thấy chức năng' }, { status: 404 });
   }
 
+  // Next.js can internally normalize nextUrl to 127.0.0.1 while the
+  // browser uses localhost. Compare Origin with the actual Host header.
+  // Keep rejecting cross-origin POSTs (CSRF protection).
   const origin = request.headers.get('origin');
-  if (origin && origin !== request.nextUrl.origin) {
-    return NextResponse.json({ message: 'Nguồn yêu cầu không hợp lệ' }, { status: 403 });
+  const host = request.headers.get('host');
+  if (origin) {
+    let sameOrigin = false;
+    try {
+      const parsed = new URL(origin);
+      sameOrigin = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+        && host !== null
+        && parsed.host === host.toLowerCase()
+        && parsed.pathname === '/'
+        && !parsed.search
+        && !parsed.hash;
+    } catch {
+      sameOrigin = false;
+    }
+    if (!sameOrigin) {
+      return NextResponse.json({ message: 'Nguồn yêu cầu không hợp lệ' }, { status: 403 });
+    }
   }
 
   if (action === 'logout') {
