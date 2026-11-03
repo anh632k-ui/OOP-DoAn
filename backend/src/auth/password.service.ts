@@ -1,19 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, scrypt as nodeScrypt, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'node:util';
 
-const scrypt = promisify(nodeScrypt);
 const HASH_LENGTH = 64;
 
 @Injectable()
 export class PasswordService {
   private async derive(password: string, salt: Buffer): Promise<Buffer> {
-    return (await scrypt(password, salt, HASH_LENGTH, {
-      N: 16384,
-      r: 8,
-      p: 1,
-      maxmem: 64 * 1024 * 1024,
-    })) as Buffer;
+    return new Promise<Buffer>((resolve, reject) => {
+      nodeScrypt(password, salt, HASH_LENGTH, {
+        N: 16384,
+        r: 8,
+        p: 1,
+        maxmem: 64 * 1024 * 1024,
+      }, (error, derivedKey) => {
+        if (error) reject(error);
+        else resolve(derivedKey as Buffer);
+      });
+    });
   }
 
   async hash(password: string): Promise<string> {
