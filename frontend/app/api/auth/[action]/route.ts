@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+type AuthResponse = {
+  accessToken?: string;
+  user?: { id: string; email: string; name: string; roles: string[] };
+};
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ action: string }> },
+) {
+  const { action } = await params;
+  if (!['login', 'register', 'logout'].includes(action)) {
+    return NextResponse.json({ message: 'Không tìm thấy chức năng' }, { status: 404 });
+  }
+
+  const origin = request.headers.get('origin');
+  if (origin && origin !== request.nextUrl.origin) {
+    return NextResponse.json({ message: 'Nguồn yêu cầu không hợp lệ' }, { status: 403 });
+  }
+
+  if (action === 'logout') {
+    const response = NextResponse.redirect(new URL('/', request.url), { status: 303 });
+    response.cookies.delete('med06_session');
+    return response;
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ message: 'JSON không hợp lệ' }, { status: 400 });
+  }
+
+  try {
+    const backend = await fetch(`${api}/api/auth/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(12000),
+    });
+
+    const payload = (await backend.json()) as AuthResponse & {
+      message?: string | string[];
+    };
+    if (!backend.ok) {
+      return NextResponse.json(
+        { message: payload.message ?? 'Không thể thực hiện yêu cầu' },
+        { status: backend.status },
+      );
+    }
+    if (typeof payload.accessToken !== 'string' || !payload.user) {
+      return NextResponse.json({ message: 'Phản hồi xác thực không hợp lệ' }, { status: 502 });
+    }
+    const response = NextResponse.json({ user: payload.user }, { status: backend.status });
+    response.cookies.set('med06_session', payload.accessToken, {
+      httpOnly: true,
+      secure: request.nextUrl.protocol === 'https:',
+      sameSite: 'lax',
+      maxAge: 60 * 60,
+      path: '/',
+    });
+    return response;
+  } catch {
+    return NextResponse.json({ message: 'Không thể kết nối máy chủ xác thực' }, { status: 502 });
+  }
+}

@@ -58,9 +58,14 @@ export default async function Home() {
   return (
     <main className="container">
       <header>
-        <p className="eyebrow">MED-06 · GIAI ĐOẠN 2</p>
+        <p className="eyebrow">MED-06 · GIAI ĐOẠN 3</p>
         <h1>Cổng quản lý sự kiện văn hóa và vé miễn phí</h1>
         <p>Khám phá chương trình và những suất tổ chức miễn phí.</p>
+        <nav className="auth-nav" aria-label="Tài khoản">
+          <Link href="/account/login">Đăng nhập</Link>
+          <Link href="/account/register">Đăng ký</Link>
+          <Link href="/account">Tài khoản của tôi</Link>
+        </nav>
       </header>
 
       <section className="panel" aria-labelledby="system-status">
@@ -103,7 +108,7 @@ export default async function Home() {
 
       <section className="panel" aria-labelledby="next-steps">
         <h2 id="next-steps">Chức năng tiếp theo</h2>
-        <p>Đăng nhập, quản lý sự kiện, đăng ký suất, FCFS/Lottery và check-in.</p>
+        <p>Tiếp theo: quản lý sự kiện, đăng ký suất, FCFS/Lottery và check-in.</p>
       </section>
     </main>
   );
