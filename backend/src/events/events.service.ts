@@ -14,6 +14,7 @@ export type EventDetail = {
   title: string;
   description: string;
   accessibility: Array<{ name: string; note: string }>;
+  hasCover: boolean;
 };
 
 export type SessionSummary = {
@@ -85,6 +86,7 @@ export class EventsService {
       SELECT e.ma_su_kien AS id,
              e.ten_su_kien AS title,
              e.mo_ta AS description,
+             (e.anh_bia_key IS NOT NULL) AS "hasCover",
              COALESCE((
                SELECT jsonb_agg(jsonb_build_object(
                  'name', d.ten_dac_tinh, 'note', sd.ghi_chu
