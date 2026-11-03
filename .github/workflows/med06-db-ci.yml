@@ -104,6 +104,51 @@ jobs:
           test "$(curl -4 --silent --output /dev/null --write-out '%{http_code}' --cookie /tmp/med06-cookies -H 'Origin: http://localhost:3000' --request POST http://localhost:3000/api/auth/logout)" = 303
           test "$(curl -4 --silent --output /dev/null --write-out '%{http_code}' -H 'Origin: https://invalid.example' -H 'Content-Type: application/json' -d '{"email":"other@example.invalid","name":"Invalid","password":"SecureDemo98765"}' http://localhost:3000/api/auth/register)" = 403
           echo 'PASS: account page, HttpOnly cookie login and logout'
+      - name: Smoke test organizer ownership, publishing and policy
+        run: |
+          # A newly registered ATTENDEE cannot manage events.
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -H "Authorization: Bearer $(cat /tmp/med06-jwt)" http://127.0.0.1:3001/api/manage/events)" = 403
+          # Demo-only role grant performed inside this isolated CI database.
+          docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1 -c "INSERT INTO nguoi_dung_vai_tro(ma_nguoi_dung,ma_vai_tro) SELECT n.ma_nguoi_dung,v.ma_vai_tro FROM nguoi_dung n CROSS JOIN vai_tro v WHERE n.email='stage3-test@example.invalid' AND v.ten_vai_tro='ORGANIZER' ON CONFLICT DO NOTHING;"
+          token="$(cat /tmp/med06-jwt)"
+          curl --fail --silent --show-error -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"title":"CI Cultural Event","description":"Integration test"}' http://127.0.0.1:3001/api/manage/events > /tmp/manage-event.json
+          python3 - <<'PY'
+          import json
+          event=json.load(open('/tmp/manage-event.json'))
+          assert event['status']=='NHAP'
+          assert event['title']=='CI Cultural Event'
+          open('/tmp/med06-managed-id','w').write(event['id'])
+          PY
+          eid="$(cat /tmp/med06-managed-id)"
+          # Publishing without a configured session is rejected.
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -H "Authorization: Bearer $token" -X POST http://127.0.0.1:3001/api/manage/events/$eid/publish)" = 409
+          curl --fail --silent --show-error -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"venueId":"30000000-0000-4000-8000-000000000001","capacity":20,"startsAt":"2031-06-01T10:00:00+07:00","endsAt":"2031-06-01T12:00:00+07:00","registrationOpensAt":"2031-05-01T10:00:00+07:00","registrationClosesAt":"2031-05-31T10:00:00+07:00"}' "http://127.0.0.1:3001/api/manage/events/$eid/sessions" > /tmp/med06-managed-session.json
+          python3 - <<'PY'
+          import json
+          s=json.load(open('/tmp/med06-managed-session.json'))
+          assert s['status']=='NHAP'
+          open('/tmp/med06-managed-session-id','w').write(s['id'])
+          PY
+          sid="$(cat /tmp/med06-managed-session-id)"
+          curl --fail --silent --show-error -X PUT -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"method":"FCFS"}' "http://127.0.0.1:3001/api/manage/sessions/$sid/policy" > /tmp/med06-policy.json
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"method":"HYBRID"}' -X PUT "http://127.0.0.1:3001/api/manage/sessions/$sid/policy")" = 400
+          curl --fail --silent --show-error -X POST -H "Authorization: Bearer $token" "http://127.0.0.1:3001/api/manage/events/$eid/publish" > /tmp/med06-published.json
+          python3 - <<'PY'
+          import json
+          assert json.load(open('/tmp/med06-published.json'))['status']=='DA_CONG_BO'
+          PY
+          curl --fail --silent --show-error "http://127.0.0.1:3001/api/events/$eid/sessions" > /tmp/med06-published-sessions.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/med06-published-sessions.json'))
+          assert len(data['items'])==1 and data['items'][0]['allocationMethod']=='FCFS'
+          print('PASS: RBAC, event draft, capacity, policy and publishing')
+          PY
+          # Organizer page must render only for an authorized role.
+          curl -4 --fail --silent --show-error --cookie-jar /tmp/med06-org-cookies -H 'Origin: http://localhost:3000' -H 'Content-Type: application/json' -d '{"email":"stage3-test@example.invalid","password":"DemoSecurePass123"}' http://localhost:3000/api/auth/login > /tmp/med06-org-login.json
+          curl -4 --fail --silent --show-error --cookie /tmp/med06-org-cookies http://localhost:3000/organizer > /tmp/med06-organizer.html
+          grep -q 'CI Cultural Event' /tmp/med06-organizer.html
+          echo 'PASS: authorized organizer dashboard renders in Next.js'
       - name: Show Docker logs on failure
         if: failure()
         run: docker compose logs --tail=100
