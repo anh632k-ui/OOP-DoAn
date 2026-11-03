@@ -5,9 +5,10 @@
 ## Đã hoàn thành
 
 - **Giai đoạn 1:** NestJS, Next.js, PostgreSQL 16, Docker Compose, API `GET /api/health` kiểm tra DB thật.
-- **Giai đoạn 2:** Migration 16 bảng nghiệp vụ + bảng `schema_migrations`, seed dữ liệu minh họa, kiểm thử ràng buộc bằng PostgreSQL, API chỉ-đọc công bố sự kiện/suất và trang Next.js hiển thị dữ liệu.
+- **Giai đoạn 2:** Migration 16 bảng nghiệp vụ + bảng `schema_migrations`, seed dữ liệu minh họa, kiểm thử ràng buộc, API sự kiện/suất và trang Next.js.
+- **Giai đoạn 3:** Đăng ký, đăng nhập, JWT, kiểm tra trạng thái và vai trò theo PostgreSQL, trang đăng ký/đăng nhập/tài khoản, cookie HttpOnly.
 
-**Chưa có:** đăng ký/đăng nhập thực, phân quyền API, tạo/sửa sự kiện, đăng ký vé, thuật toán FCFS/Lottery, danh sách chờ, check-in API, object storage, bộ tìm kiếm riêng. Các phần này thuộc giai đoạn tiếp theo.
+**Chưa có:** giao diện quản trị, CRUD sự kiện/suất, cấp vai trò quản trị viên, đăng ký vé, FCFS/Lottery, danh sách chờ, check-in, object storage và bộ tìm kiếm riêng.
 
 ## Các thư mục
 
@@ -99,7 +100,7 @@ GitHub Actions dùng hai workflow: `med06-ci.yml` kiểm tra TypeScript/build/un
 
 Triển khai xác thực và RBAC, sau đó CRUD sự kiện/suất với kiểm tra nghiệp vụ, rồi phân bổ FCFS/Lottery, danh sách chờ và check-in.
 
-## Giai đoạn 3A – Tài khoản, JWT và phân quyền
+## Giai đoạn 3 – Tài khoản, JWT và phân quyền
 
 Backend đã có API: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` (Bearer token), `GET /api/auth/organizer-check` (chỉ ADMIN/ORGANIZER).
 
@@ -108,7 +109,8 @@ Backend đã có API: `POST /api/auth/register`, `POST /api/auth/login`, `GET /a
 - JWT HS256 có hạn một giờ; guard luôn kiểm tra trạng thái tài khoản và vai trò từ PostgreSQL khi truy cập.
 - Đăng ký/đăng nhập giới hạn số lần gọi từ một địa chỉ IP bằng ThrottlerGuard.
 - Tài khoản demo seed không có mật khẩu nên không thể dùng để đăng nhập; hãy đăng ký tài khoản riêng.
-- Chưa triển khai API tạo quản trị viên, làm mới token, khôi phục mật khẩu hoặc giao diện đăng nhập hoàn chỉnh.
+- Đã có giao diện `http://localhost:3000/account/register` và `/account/login` cùng `/account` (thông tin người dùng). JWT nằm trong cookie HttpOnly của Next.js, không lưu vào localStorage.
+- Chưa triển khai API tạo quản trị viên, làm mới token, khôi phục mật khẩu hoặc quy trình quên mật khẩu.
 
 ### Thiết lập khóa JWT trên Windows PowerShell 5.1
 
@@ -143,3 +145,18 @@ Invoke-RestMethod 'http://localhost:3001/api/auth/me' -Headers @{Authorization="
 ```
 
 Vai trò cần hiện `ATTENDEE`. Truy cập `/api/auth/organizer-check` bằng token này phải trả HTTP 403; không có token truy cập `/api/auth/me` phải trả HTTP 401.
+
+### Kiểm tra bằng trình duyệt
+
+1. Mở `http://localhost:3000/account/register`; nhập tên, email và mật khẩu thử nghiệm riêng từ 10 ký tự có chữ và số.
+2. Sau khi đăng ký, website mở `/account`; phải thấy tài khoản mới và vai trò `ATTENDEE`.
+3. Chọn **Đăng xuất**, mở `/account/login` và dùng tài khoản vừa tạo đăng nhập lại.
+4. Trang `/account` là vùng cần xác thực; không có phiên sẽ chuyển về `/account/login`.
+
+Khóa JWT **chỉ dùng cho việc ký token**, không phải mật khẩu PostgreSQL. Đổi khóa làm token cũ mất hiệu lực. Không được đưa khóa vào Git.
+
+### Các giới hạn của giai đoạn 3
+
+- Đã chứng minh bảo vệ vai trò `ORGANIZER`/`ADMIN` tại `/api/auth/organizer-check`; API CRUD quản lý chưa được xây dựng.
+- Các tài khoản seed không đăng nhập được vì chưa có mật khẩu; dùng giao diện đăng ký để tạo tài khoản người tham dự.
+- Khi khai thác ngoài môi trường demo cần bổ sung chính sách cookie phù hợp tên miền, bảo vệ đăng nhập, giám sát bảo mật, quên mật khẩu và làm mới token.

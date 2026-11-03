@@ -30,3 +30,5 @@ Các lệnh chạy trong CMD tại thư mục gốc OOP-DoAn:
 Migrate chạy tự động trước backend. Migrate và seed chạy lặp lại an toàn,
 seed không tạo mật khẩu hoặc tài khoản đăng nhập thật.
 Không chạy docker compose down -v nếu muốn giữ dữ liệu!
+
+Migration 002_role_defaults.sql nạp bốn vai trò mặc định (ATTENDEE, ORGANIZER, CHECKIN, ADMIN) để đăng ký tài khoản hoạt động mà không cần chạy seed demo.
