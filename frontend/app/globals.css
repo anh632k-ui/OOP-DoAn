@@ -46,3 +46,19 @@ button {
 }
 button:disabled { opacity: .5; cursor: wait; }
 .form-error { color: #9f1239; font-weight: 600; }
+
+.management-area textarea,
+.management-area select {
+  font: inherit; padding: 10px 12px; border: 1px solid #999;
+  border-radius: 6px; background: #fff; color: #171717;
+}
+.management-area textarea { width: 100%; }
+.management-label { display: grid; gap: 6px; margin-top: 14px; }
+.management-area fieldset {
+  border: 1px solid #ddd; border-radius: 6px; padding: 12px;
+}
+.management-area .check-line {
+  display: flex; align-items: center; gap: 8px; font-weight: 400;
+}
+.management-area input[type="checkbox"] { width: auto; }
+.success-note { font-weight: 600; color: #14532d; }
