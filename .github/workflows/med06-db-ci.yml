@@ -99,7 +99,7 @@ jobs:
           assert user['email']=='stage3-web@example.invalid' and user['roles']==['ATTENDEE']
           print('PASS: browser registration endpoint')
           PY
-          curl --fail --silent --show-error --cookie /tmp/med06-cookies http://127.0.0.1:3000/account > /tmp/med06-account.html
+          curl -4 --fail --silent --show-error --cookie /tmp/med06-cookies http://localhost:3000/account > /tmp/med06-account.html
           grep -q 'stage3-web@example.invalid' /tmp/med06-account.html
           test "$(curl -4 --silent --output /dev/null --write-out '%{http_code}' --cookie /tmp/med06-cookies -H 'Origin: http://localhost:3000' --request POST http://localhost:3000/api/auth/logout)" = 303
           test "$(curl -4 --silent --output /dev/null --write-out '%{http_code}' -H 'Origin: https://invalid.example' -H 'Content-Type: application/json' -d '{"email":"other@example.invalid","name":"Invalid","password":"SecureDemo98765"}' http://localhost:3000/api/auth/register)" = 403
