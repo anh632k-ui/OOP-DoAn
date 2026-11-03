@@ -16,6 +16,37 @@ services:
       timeout: 3s
       retries: 15
 
+  migrate:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-med06}
+      POSTGRES_USER: ${POSTGRES_USER:-med06}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-med06_dev_password}
+    volumes:
+      - ./database:/sql:ro
+    entrypoint: ["/bin/sh", "/sql/run-migrations.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    image: postgres:16-alpine
+    profiles: ["seed"]
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB:-med06}
+      PGUSER: ${POSTGRES_USER:-med06}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-med06_dev_password}
+    volumes:
+      - ./database:/sql:ro
+    entrypoint: ["psql", "-X", "-v", "ON_ERROR_STOP=1", "-f", "/sql/seed/001_demo.sql"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   backend:
     build:
       context: ./backend
@@ -28,8 +59,8 @@ services:
     ports:
       - "127.0.0.1:${BACKEND_PORT:-3001}:3001"
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
