@@ -32,6 +32,8 @@ jobs:
         run: docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1 < database/tests/001_constraints.sql
       - name: List tables
         run: docker compose exec -T db psql -U med06 -d med06 -c "\dt"
+      - name: Set local-only JWT secret for integration tests
+        run: echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
       - name: Build and start NestJS + Next.js with PostgreSQL
         run: docker compose up --build -d
       - name: Smoke test API and public events
@@ -47,6 +49,38 @@ jobs:
           assert sum(e['sessionCount'] for e in events['items']) == 3
           print('PASS: API health and two published events / three sessions')
           PY
+      - name: Smoke test registration, JWT, login, and role protection
+        run: |
+          curl --fail --silent --show-error -H 'Content-Type: application/json' -d '{"email":"stage3-test@example.invalid","name":"Stage3 Test","password":"DemoSecurePass123","roles":["ADMIN"]}' http://127.0.0.1:3001/api/auth/register > /tmp/med06-auth.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/med06-auth.json'))
+          assert data['user']['roles']==['ATTENDEE']
+          assert data['tokenType']=='Bearer' and len(data['accessToken'])>30
+          open('/tmp/med06-jwt','w').write(data['accessToken'])
+          print('PASS: new account is ATTENDEE only')
+          PY
+          curl --fail --silent --show-error -H "Authorization: Bearer $(cat /tmp/med06-jwt)" http://127.0.0.1:3001/api/auth/me > /tmp/med06-me.json
+          python3 - <<'PY'
+          import json
+          user=json.load(open('/tmp/med06-me.json'))
+          assert user['email']=='stage3-test@example.invalid'
+          assert user['roles']==['ATTENDEE']
+          print('PASS: authenticated user lookup')
+          PY
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -H "Authorization: Bearer $(cat /tmp/med06-jwt)" http://127.0.0.1:3001/api/auth/organizer-check)" = 403
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3001/api/auth/me)" = 401
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -H 'Content-Type: application/json' -d '{"email":"stage3-test@example.invalid","name":"Again","password":"DemoSecurePass123"}' http://127.0.0.1:3001/api/auth/register)" = 409
+          curl --fail --silent --show-error -H 'Content-Type: application/json' -d '{"email":"stage3-test@example.invalid","password":"DemoSecurePass123"}' http://127.0.0.1:3001/api/auth/login > /tmp/med06-login.json
+          python3 - <<'PY'
+          import json
+          result=json.load(open('/tmp/med06-login.json'))
+          assert result['user']['email']=='stage3-test@example.invalid'
+          assert result['accessToken']
+          print('PASS: login with valid credentials')
+          PY
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -H 'Content-Type: application/json' -d '{"email":"stage3-test@example.invalid","password":"WrongPassword123"}' http://127.0.0.1:3001/api/auth/login)" = 401
+          echo 'PASS: authentication and RBAC smoke tests'
       - name: Smoke test Next.js
         run: |
           curl --fail --silent --show-error --retry 20 --retry-delay 2 --retry-all-errors --retry-connrefused http://127.0.0.1:3000/ > /tmp/med06.html

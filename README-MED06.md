@@ -98,3 +98,48 @@ GitHub Actions dùng hai workflow: `med06-ci.yml` kiểm tra TypeScript/build/un
 ## Bước tiếp theo
 
 Triển khai xác thực và RBAC, sau đó CRUD sự kiện/suất với kiểm tra nghiệp vụ, rồi phân bổ FCFS/Lottery, danh sách chờ và check-in.
+
+## Giai đoạn 3A – Tài khoản, JWT và phân quyền
+
+Backend đã có API: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` (Bearer token), `GET /api/auth/organizer-check` (chỉ ADMIN/ORGANIZER).
+
+- Đăng ký công khai chỉ được cấp `ATTENDEE`, không thể tự chọn ADMIN/ORGANIZER/CHECKIN.
+- Mật khẩu được băm với `scrypt` và salt ngẫu nhiên, không lưu mật khẩu gốc.
+- JWT HS256 có hạn một giờ; guard luôn kiểm tra trạng thái tài khoản và vai trò từ PostgreSQL khi truy cập.
+- Đăng ký/đăng nhập giới hạn số lần gọi từ một địa chỉ IP bằng ThrottlerGuard.
+- Tài khoản demo seed không có mật khẩu nên không thể dùng để đăng nhập; hãy đăng ký tài khoản riêng.
+- Chưa triển khai API tạo quản trị viên, làm mới token, khôi phục mật khẩu hoặc giao diện đăng nhập hoàn chỉnh.
+
+### Thiết lập khóa JWT trên Windows PowerShell 5.1
+
+**Bắt buộc tạo khóa bí mật trước khi chạy backend mới. Không gửi khóa cho người khác hoặc commit lên GitHub.**
+
+```powershell
+cd 'D:\k1\T6\OOP-DoAn'
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$bytes = New-Object byte[] 32
+$rng.GetBytes($bytes)
+$rng.Dispose()
+$jwtSecret = ([BitConverter]::ToString($bytes)).Replace('-','').ToLowerInvariant()
+Add-Content -Path .env -Value "JWT_SECRET=$jwtSecret"
+```
+
+Nếu `.env` đã có dòng `JWT_SECRET=`, chỉ sửa giá trị dòng đó, không thêm dòng trùng. Giữ nguyên `POSTGRES_PORT=55432`.
+
+```powershell
+git switch med06-code
+git pull --ff-only origin med06-code
+docker compose up --build -d
+docker compose ps
+```
+
+### Thử đăng ký, đăng nhập trong PowerShell (password thử nghiệm, không phải mật khẩu CSDL)
+
+```powershell
+$newAccount = @{email='demo-stage3@example.invalid';name='Demo User';password='TestSecure98765'} | ConvertTo-Json
+$registered = Invoke-RestMethod 'http://localhost:3001/api/auth/register' -Method Post -ContentType 'application/json' -Body $newAccount
+$token = $registered.accessToken
+Invoke-RestMethod 'http://localhost:3001/api/auth/me' -Headers @{Authorization="Bearer $token"}
+```
+
+Vai trò cần hiện `ATTENDEE`. Truy cập `/api/auth/organizer-check` bằng token này phải trả HTTP 403; không có token truy cập `/api/auth/me` phải trả HTTP 401.
