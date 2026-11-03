@@ -159,6 +159,8 @@ jobs:
           assert event['accessibility'][0]['note']=='CI synthetic verified feature'
           print('PASS: accessibility available to public event visitors')
           PY
+      - name: End-to-end FCFS, Lottery, waitlist, ticket and check-in
+        run: python3 database/tests/stage56_e2e.py
       - name: Show Docker logs on failure
         if: failure()
         run: docker compose logs --tail=100
