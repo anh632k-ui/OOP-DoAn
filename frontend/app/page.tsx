@@ -10,6 +10,7 @@ type EventSummary = {
 
 type HealthResponse = { status?: string; database?: string };
 type EventsResponse = { items: EventSummary[] };
+type FeaturesResponse = { items: { id: string; name: string }[] };
 
 export const dynamic = 'force-dynamic';
 
@@ -29,9 +30,12 @@ async function checkBackend(): Promise<boolean> {
   }
 }
 
-async function loadEvents(): Promise<EventSummary[] | null> {
+async function loadEvents(q: string, featureId: string): Promise<EventSummary[] | null> {
   try {
-    const response = await fetch(`${api}/api/events`, {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (featureId) params.set('featureId', featureId);
+    const response = await fetch(`${api}/api/events?${params.toString()}`, {
       cache: 'no-store',
       signal: AbortSignal.timeout(5000),
     });
@@ -43,6 +47,16 @@ async function loadEvents(): Promise<EventSummary[] | null> {
   }
 }
 
+async function getFeatures(): Promise<FeaturesResponse> {
+  try {
+    const response = await fetch(`${api}/api/events/accessibility/options`, {
+      cache: 'no-store', signal: AbortSignal.timeout(5000),
+    });
+    if (response.ok) return (await response.json()) as FeaturesResponse;
+  } catch { /* no filters when API is temporarily unavailable */ }
+  return { items: [] };
+}
+
 function formatDate(value: string | null): string {
   if (!value) return 'Chưa có lịch';
   return new Intl.DateTimeFormat('vi-VN', {
@@ -52,8 +66,17 @@ function formatDate(value: string | null): string {
   }).format(new Date(value));
 }
 
-export default async function Home() {
-  const [connected, events] = await Promise.all([checkBackend(), loadEvents()]);
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; featureId?: string }>;
+}) {
+  const filters = await searchParams;
+  const q = typeof filters.q === 'string' ? filters.q.trim().slice(0, 100) : '';
+  const featureId = typeof filters.featureId === 'string' ? filters.featureId : '';
+  const [connected, events, features] = await Promise.all([
+    checkBackend(), loadEvents(q, featureId), getFeatures(),
+  ]);
 
   return (
     <main className="container">
@@ -84,6 +107,21 @@ export default async function Home() {
 
       <section className="panel" aria-labelledby="event-list">
         <h2 id="event-list">Sự kiện đã công bố</h2>
+        <form method="GET" className="search-form" role="search">
+          <label>Tìm kiếm tên hoặc mô tả
+            <input type="search" name="q" defaultValue={q}
+              placeholder="Ví dụ: di sản, dân gian" maxLength={100}/>
+          </label>
+          <label>Đặc tính tiếp cận đã xác nhận
+            <select name="featureId" defaultValue={featureId}>
+              <option value="">Tất cả</option>
+              {features.items.map(feature => <option key={feature.id} value={feature.id}>
+                {feature.name}
+              </option>)}
+            </select>
+          </label>
+          <button type="submit">Tìm sự kiện</button>
+        </form>
         {events === null ? (
           <p role="status">Chưa tải được danh sách sự kiện. Kiểm tra backend.</p>
         ) : events.length === 0 ? (

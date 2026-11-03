@@ -68,3 +68,11 @@ button:disabled { opacity: .5; cursor: wait; }
 .ticket-code { display: block; overflow-wrap: anywhere; background: #f3f4f6; padding: 10px; border-radius: 6px; }
 
 .scan-video { width: 100%; max-width: 500px; max-height: 350px; border-radius: 8px; background: #111; }
+
+.search-form { display: grid; gap: 10px; margin-bottom: 20px; }
+.search-form label { display: grid; gap: 4px; font-weight: 600; }
+.search-form input, .search-form select {
+  font: inherit; min-width: 0; width: 100%; padding: 10px;
+  border: 1px solid #999; border-radius: 6px; background: white;
+}
+.search-form button { justify-self: start; }
