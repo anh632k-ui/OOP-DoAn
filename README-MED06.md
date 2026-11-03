@@ -160,3 +160,65 @@ Khóa JWT **chỉ dùng cho việc ký token**, không phải mật khẩu Postg
 - Đã chứng minh bảo vệ vai trò `ORGANIZER`/`ADMIN` tại `/api/auth/organizer-check`; API CRUD quản lý chưa được xây dựng.
 - Các tài khoản seed không đăng nhập được vì chưa có mật khẩu; dùng giao diện đăng ký để tạo tài khoản người tham dự.
 - Khi khai thác ngoài môi trường demo cần bổ sung chính sách cookie phù hợp tên miền, bảo vệ đăng nhập, giám sát bảo mật, quên mật khẩu và làm mới token.
+
+## Giai đoạn 4 – Ban tổ chức quản lý sự kiện (bản đầu tiên)
+
+Phần quản lý sử dụng vai trò `ORGANIZER` hoặc `ADMIN`. Đường dẫn website `http://localhost:3000/organizer`. Một người đăng ký tự do chỉ có vai trò `ATTENDEE`, **không thể tự chọn quyền ban tổ chức**.
+
+### Cấp quyền ORGANIZER cho tài khoản thử nghiệm trên máy local
+
+1. Đăng ký/đăng nhập tài khoản thử nghiệm thật trên website trước.
+2. Trong PowerShell tại thư mục gốc dự án, dùng câu SQL dưới đây và **thay `your-test-email@example.com` bằng email tài khoản vừa tạo**. Chỉ dùng trên PostgreSQL demo của bạn, không triển khai thao tác này thành API công khai.
+
+```powershell
+$sql = @'
+INSERT INTO nguoi_dung_vai_tro(ma_nguoi_dung, ma_vai_tro)
+SELECT n.ma_nguoi_dung, v.ma_vai_tro
+FROM nguoi_dung n JOIN vai_tro v ON v.ten_vai_tro='ORGANIZER'
+WHERE lower(n.email)=lower('your-test-email@example.com')
+ON CONFLICT DO NOTHING;
+'@
+$sql | docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1
+```
+
+Chỉ thực hiện bước này với **tài khoản bạn được phép quản trị**. Sau đó mở lại `http://localhost:3000/organizer`. Token đăng nhập cũ vẫn hoạt động vì backend lấy quyền trực tiếp từ PostgreSQL theo mỗi yêu cầu.
+
+### Chức năng quản lý đã có
+
+- Tạo sự kiện nháp, sửa tên/mô tả qua API, xem sự kiện do mình sở hữu (ADMIN xem toàn bộ).
+- Tạo địa điểm; thêm suất với mốc thời gian ISO 8601, sức chứa và thời gian đăng ký.
+- Chọn một phương thức `FCFS` **hoặc** `LOTTERY` cho mỗi suất; chưa hỗ trợ tách số lượng vé FCFS/Lottery trong *cùng* một suất.
+- Chỉ công bố sau khi có suất tương lai và chính sách phân bổ. Hủy sự kiện đã có đăng ký hiện bị chặn, chờ xử lý nghiệp vụ hoàn vé/đăng ký.
+- Lưu thuộc tính accessibility **chỉ sau khi người tổ chức xác nhận đã kiểm tra thực tế**.
+- Tài khoản `ATTENDEE` bị chặn ở API bằng JWT và RBAC; quyền sở hữu sự kiện kiểm tra ở PostgreSQL.
+
+### API quản lý (cần Bearer JWT và vai trò phù hợp)
+
+| Phương thức | Đường dẫn | Mục đích |
+|---|---|---|
+| GET/POST | `/api/manage/events` | Danh sách / tạo nháp |
+| PATCH | `/api/manage/events/:id` | Sửa bản nháp |
+| POST | `/api/manage/events/:id/publish` | Công bố |
+| POST | `/api/manage/events/:id/cancel` | Hủy khi chưa có đăng ký |
+| GET/POST | `/api/manage/venues` | Xem / thêm địa điểm |
+| GET/POST | `/api/manage/events/:id/sessions` | Xem / thêm suất |
+| PUT | `/api/manage/sessions/:id/policy` | Cấu hình FCFS/LOTTERY |
+| GET | `/api/manage/accessibility/options` | Danh mục đặc tính tiếp cận |
+| PUT | `/api/manage/events/:id/accessibility` | Xác nhận đặc tính tiếp cận |
+
+Website Next.js chuyển tiếp các yêu cầu quản lý qua `/api/manage/...` bằng cookie `HttpOnly`, không đưa JWT vào JavaScript phía trình duyệt.
+
+### Cập nhật máy Windows
+
+```powershell
+cd 'D:\k1\T6\OOP-DoAn'
+git status
+git switch med06-code
+git pull --ff-only origin med06-code
+docker compose up --build -d
+docker compose ps
+```
+
+Không chép đè `.env` và phải giữ `JWT_SECRET`, `POSTGRES_PORT=55432` của máy bạn. Không dùng `docker compose down -v` vì sẽ xóa volume CSDL.
+
+**Lưu ý:** Giai đoạn 4 tập trung quản lý cấu hình sự kiện. FCFS/Lottery hiện mới là cấu hình, chưa chạy thuật toán cấp vé hoặc danh sách chờ (giai đoạn 5).
