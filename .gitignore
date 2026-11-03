@@ -1,0 +1,13 @@
+# MED-06 local/generated files
+node_modules/
+**/node_modules/
+**/dist/
+**/.next/
+**/coverage/
+**/.turbo/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
