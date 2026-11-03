@@ -47,6 +47,19 @@ services:
         condition: service_completed_successfully
     restart: "no"
 
+  objectstore:
+    image: chrislusf/seaweedfs:latest
+    profiles: ["storage"]
+    restart: unless-stopped
+    environment:
+      AWS_ACCESS_KEY_ID: ${OBJECT_STORAGE_ACCESS_KEY:-med06_local_access}
+      AWS_SECRET_ACCESS_KEY: ${OBJECT_STORAGE_SECRET_KEY:-med06_local_secret_key_change_me}
+      S3_BUCKET: med06-media
+    ports:
+      - "127.0.0.1:${OBJECT_STORAGE_PORT:-8333}:8333"
+    volumes:
+      - med06_object_data:/data
+
   backend:
     build:
       context: ./backend
@@ -56,6 +69,10 @@ services:
       PORT: "3001"
       DATABASE_URL: postgresql://${POSTGRES_USER:-med06}:${POSTGRES_PASSWORD:-med06_dev_password}@db:5432/${POSTGRES_DB:-med06}
       FRONTEND_ORIGIN: http://localhost:${FRONTEND_PORT:-3000}
+      S3_ENDPOINT: http://objectstore:8333
+      S3_BUCKET: med06-media
+      S3_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-med06_local_access}
+      S3_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-med06_local_secret_key_change_me}
       JWT_SECRET: ${JWT_SECRET:-}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-3001}:3001"
@@ -86,3 +103,4 @@ services:
 
 volumes:
   med06_postgres_data:
+  med06_object_data:
