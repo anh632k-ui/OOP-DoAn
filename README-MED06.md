@@ -1,104 +1,100 @@
 # MED-06 – Cổng quản lý sự kiện văn hóa và vé miễn phí
 
-**Nhánh lập trình:** `med06-code` (tách từ `dev`; không chỉnh sửa các file PTTK cũ).
+**Nhánh code duy nhất trong giai đoạn này:** `med06-code`. Không sửa `main`, `dev`, `TV`, các file `.drawio` và thư mục `PTTK` cũ.
 
-## Giai đoạn 1 – Bộ khung chạy được
+## Đã hoàn thành
 
-- `backend/`: NestJS API; `GET /api/health` truy vấn thật `SELECT 1` đến PostgreSQL.
-- `frontend/`: Next.js App Router; trang chủ hiển thị kết nối API và CSDL.
-- `docker-compose.yml`: PostgreSQL 16, NestJS, Next.js.
-- `database/`: vị trí cho schema, migration và seed giai đoạn sau.
+- **Giai đoạn 1:** NestJS, Next.js, PostgreSQL 16, Docker Compose, API `GET /api/health` kiểm tra DB thật.
+- **Giai đoạn 2:** Migration 16 bảng nghiệp vụ + bảng `schema_migrations`, seed dữ liệu minh họa, kiểm thử ràng buộc bằng PostgreSQL, API chỉ-đọc công bố sự kiện/suất và trang Next.js hiển thị dữ liệu.
 
-Đây mới là scaffold, **chưa có đăng nhập, CRUD sự kiện, FCFS, Lottery, danh sách chờ, object storage, search hay check-in**.
+**Chưa có:** đăng ký/đăng nhập thực, phân quyền API, tạo/sửa sự kiện, đăng ký vé, thuật toán FCFS/Lottery, danh sách chờ, check-in API, object storage, bộ tìm kiếm riêng. Các phần này thuộc giai đoạn tiếp theo.
 
-## Chạy trên Windows (Docker Desktop + Git)
+## Các thư mục
 
-1. Mở Docker Desktop, chờ Docker Engine chạy.
-2. Mở PowerShell trong thư mục `OOP-DoAn` và chạy:
+| Đường dẫn | Vai trò |
+|---|---|
+| `backend/` | NestJS API và kết nối PostgreSQL bằng pg |
+| `frontend/` | Next.js hiển thị sự kiện đã công bố và suất |
+| `database/migrations/` | DDL PostgreSQL theo phiên bản (chạy một lần) |
+| `database/seed/` | Dữ liệu giả để demo; chỉ chạy thủ công |
+| `database/tests/` | SQL test ràng buộc, rollback sau kiểm thử |
+| `docker-compose.yml` | PostgreSQL, migrate, seed (profile), backend, frontend |
 
-```powershell
-git fetch origin
-git switch --track origin/med06-code
-Copy-Item .env.example .env
+## Chạy Giai đoạn 2 trên máy Windows (CMD)
+
+Máy đã có Docker Desktop và `.env` với `POSTGRES_PORT=55432`. **Không xóa hoặc chép đè `.env`** vì cổng 5432 từng bị lỗi trên Windows.
+
+Trong **CMD**:
+
+```cmd
+cd /d D:\k1\T6\OOP-DoAn
+git status
+git switch med06-code
+git pull --ff-only origin med06-code
 docker compose up --build -d
 docker compose ps
 ```
 
-Nếu local đã có nhánh `med06-code` thì dùng `git switch med06-code` rồi `git pull origin med06-code`.
-Không chạy `git reset --hard` vì có thể mất các thay đổi chưa commit.
+Nếu `git status` cho thấy có file đã sửa mà chưa commit, hãy lưu/commit hoặc xử lý những thay đổi đó trước khi pull. Không sử dụng `git reset --hard`.
 
-3. Mở:
-   - Frontend: http://localhost:3000
-   - Backend: http://localhost:3001/api/health
+`migrate` chạy tự động sau khi `db` healthy và trước khi `backend` khởi động. Nếu bảng đã được tạo, chương trình bỏ qua migration đã áp dụng. CSDL hiện tại và volume Docker vẫn được giữ nguyên.
 
-4. Kiểm tra API trong PowerShell:
+### Nạp dữ liệu mẫu
 
-```powershell
-Invoke-RestMethod http://localhost:3001/api/health
+```cmd
+docker compose --profile seed run --rm seed
+docker compose exec -T db psql -U med06 -d med06 -c "\dt"
+docker compose exec -T db psql -U med06 -d med06 -c "SELECT ten_su_kien, trang_thai FROM su_kien;"
 ```
 
-Kỳ vọng khi PostgreSQL hoạt động: `{"status":"ok","service":"med06-backend","database":"connected"}`.
+Seed tạo 2 sự kiện và 3 suất minh họa, cùng dữ liệu địa điểm, vai trò, người dùng mẫu **không có mật khẩu đăng nhập**. Có thể chạy lại seed mà không tạo bản sao trùng. Các thông tin tiện ích tiếp cận chưa được xác nhận sẽ không được tự công bố.
 
-5. Xem lỗi nếu có:
+### Kiểm tra các ràng buộc trong CSDL
 
-```powershell
+```cmd
+docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1 < database\tests\001_constraints.sql
+```
+
+Kiểm thử không để lại các đăng ký/vé tạm vì toàn bộ dữ liệu kiểm thử được `ROLLBACK`.
+
+### Kiểm tra API và website
+
+- Website: http://localhost:3000
+- Kiểm tra PostgreSQL: http://localhost:3001/api/health
+- Danh sách sự kiện đã công bố: http://localhost:3001/api/events
+- Chi tiết một sự kiện: `GET /api/events/:id`
+- Danh sách suất của sự kiện: `GET /api/events/:id/sessions`
+
+Các API hiện tại chỉ đọc dữ liệu đã công bố; chưa có chức năng gửi đăng ký.
+
+### pgAdmin 4 có bắt buộc không?
+
+Không. Nếu muốn xem bảng bằng giao diện pgAdmin, thông số mặc định trên máy sau khi sửa `.env` là: Host `127.0.0.1`, Port `55432`, Database `med06`, User `med06`. Mật khẩu lấy từ `POSTGRES_PASSWORD` trong `.env`, không lưu password thật vào repository.
+
+### Xem log khi gặp lỗi
+
+```cmd
+docker compose logs --tail=100 migrate
+docker compose logs --tail=100 db
 docker compose logs --tail=100 backend
 docker compose logs --tail=100 frontend
-docker compose logs --tail=100 db
 ```
 
-6. Dừng môi trường nhưng giữ dữ liệu:
+Không dùng `docker compose down -v` nếu muốn giữ dữ liệu! Muốn dừng container nhưng giữ dữ liệu: `docker compose down`.
 
-```powershell
-docker compose down
-```
+## Quy tắc nghiệp vụ đã được bảo vệ ở PostgreSQL
 
-**Không dùng** `docker compose down -v` nếu cần giữ dữ liệu PostgreSQL.
+- Mỗi (người tham dự, suất) chỉ có một đăng ký còn hiệu lực.
+- Một đăng ký chỉ có tối đa một vé; ticket phải thuộc đúng suất của đăng ký.
+- Trigger khóa suất trước khi cấp vé, chặn cấp quá sức chứa ngay cả khi có nhiều yêu cầu đồng thời ở mức `READ COMMITTED`.
+- Check-in thành công chỉ xảy ra tối đa một lần/ vé, đồng thời chuyển vé sang `DA_SU_DUNG`.
+- Một suất có tối đa một chính sách phân bổ `FCFS` hoặc `LOTTERY`.
+- Chưa hoàn thiện quy tắc xử lý FCFS/Lottery từ API: đây là bảo vệ nền tảng dữ liệu, không đồng nghĩa thuật toán đã hoạt động.
 
-## Cổng mặc định
+## CI
 
-| Dịch vụ | Cổng trên Windows | Cổng container |
-| --- | --- | --- |
-| Next.js | 3000 | 3000 |
-| NestJS | 3001 | 3001 |
-| PostgreSQL | 5432 | 5432 |
+GitHub Actions dùng hai workflow: `med06-ci.yml` kiểm tra TypeScript/build/unit tests; `med06-db-ci.yml` chạy PostgreSQL thật, migration hai lượt, seed hai lượt và SQL tests. Docker chưa được chạy trực tiếp từ ChatGPT; môi trường Windows của bạn là nơi cần kiểm tra việc khởi động cuối cùng.
 
-Nếu cổng Windows đã bị chiếm, sửa `FRONTEND_PORT`, `BACKEND_PORT`, `POSTGRES_PORT` trong `.env` rồi chạy lại `docker compose up -d`. Các dịch vụ nội bộ vẫn dùng cổng cố định.
+## Bước tiếp theo
 
-Các mật khẩu trong `.env.example` **chỉ dành cho môi trường học tập trên máy cá nhân**; tuyệt đối không đưa thông tin thật hoặc mật khẩu triển khai lên GitHub. Sau khi thay đổi mật khẩu PostgreSQL, volume cũ không tự đổi tài khoản DB.
-
-## Chạy từng ứng dụng không dùng Docker
-
-Cần Node.js 22.12+ và PostgreSQL có sẵn.
-
-```powershell
-cd backend
-npm install
-$env:DATABASE_URL="postgresql://med06:med06_dev_password@localhost:5432/med06"
-npm run dev
-```
-
-Mở terminal mới:
-
-```powershell
-cd frontend
-npm install
-$env:BACKEND_INTERNAL_URL="http://localhost:3001"
-npm run dev
-```
-
-## Kiểm thử và giới hạn
-
-```powershell
-cd backend
-npm run typecheck
-npm test
-npm run build
-cd ../frontend
-npm run typecheck
-npm run build
-```
-
-CI chạy lại những bước này trên GitHub Actions. Ở môi trường tạo code hiện tại không có Docker và không truy cập được npm registry, do đó **chưa thể khẳng định Docker image đã build hay cả ba dịch vụ đã chạy thành công** cho đến khi chạy thực tế trên Windows hoặc CI.
-
-Giai đoạn 2: thống nhất mô hình dữ liệu, bổ sung migration/seed, rồi API tài khoản, sự kiện và suất.
+Triển khai xác thực và RBAC, sau đó CRUD sự kiện/suất với kiểm tra nghiệp vụ, rồi phân bổ FCFS/Lottery, danh sách chờ và check-in.
