@@ -1,0 +1,37 @@
+name: MED-06 database CI
+
+on:
+  push:
+    branches: [med06-code]
+    paths:
+      - 'database/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/med06-db-ci.yml'
+  pull_request:
+    paths:
+      - 'database/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/med06-db-ci.yml'
+
+jobs:
+  postgres-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start PostgreSQL
+        run: docker compose up -d db
+      - name: Apply migration
+        run: docker compose run --rm migrate
+      - name: Verify migration repeatability
+        run: docker compose run --rm migrate
+      - name: Seed twice
+        run: |
+          docker compose --profile seed run --rm seed
+          docker compose --profile seed run --rm seed
+      - name: Test PostgreSQL constraints
+        run: docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1 < database/tests/001_constraints.sql
+      - name: List tables
+        run: docker compose exec -T db psql -U med06 -d med06 -c "\dt"
+      - name: Show Docker logs on failure
+        if: failure()
+        run: docker compose logs --tail=100
