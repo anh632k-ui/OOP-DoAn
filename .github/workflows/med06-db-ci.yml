@@ -49,7 +49,7 @@ jobs:
           PY
       - name: Smoke test Next.js
         run: |
-          curl --fail --silent --show-error --retry 15 --retry-delay 3 --retry-connrefused http://127.0.0.1:3000/ > /tmp/med06.html
+          curl --fail --silent --show-error --retry 20 --retry-delay 2 --retry-all-errors --retry-connrefused http://127.0.0.1:3000/ > /tmp/med06.html
           grep -q 'Trien lam Di san' /tmp/med06.html
           echo 'PASS: Next.js renders seeded event data'
       - name: Show Docker logs on failure
