@@ -45,9 +45,7 @@ export class EventsService {
       throw new BadRequestException('featureId phải là UUID hợp lệ');
     }
     const normalized = q?.trim();
-    const pattern = normalized
-      ? '%' + normalized.replace(/[\\%_]/g, '\\  async listPublished(): Promise<{ items: EventSummary[] }> {
-    const items = await this.database.queryRows<EventSummary>(') + '%' : null;
+    const pattern = normalized ? '%' + normalized.replace(/[\\%_]/g, '\\$&') + '%' : null;
     const items = await this.database.queryRows<EventSummary>(
       `
       SELECT e.ma_su_kien AS id,
