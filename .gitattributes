@@ -1,0 +1,2 @@
+# MED-06 shell scripts run inside Linux containers; Windows Git must keep LF endings.
+*.sh text eol=lf
