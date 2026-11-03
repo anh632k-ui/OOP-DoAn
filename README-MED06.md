@@ -1,224 +1,118 @@
-# MED-06 – Cổng quản lý sự kiện văn hóa và vé miễn phí
+# MED-06 — Cổng quản lý sự kiện văn hóa và vé miễn phí
 
-**Nhánh code duy nhất trong giai đoạn này:** `med06-code`. Không sửa `main`, `dev`, `TV`, các file `.drawio` và thư mục `PTTK` cũ.
+**Công nghệ:** NestJS 11 (TypeScript), Next.js 16, PostgreSQL 16, Docker Compose và S3-compatible object storage (SeaweedFS).
 
-## Đã hoàn thành
+**Nhánh:** med06-code. Không sửa nhánh main/dev/TV hoặc file PTTK/.drawio đã thiết kế trước.
 
-- **Giai đoạn 1:** NestJS, Next.js, PostgreSQL 16, Docker Compose, API `GET /api/health` kiểm tra DB thật.
-- **Giai đoạn 2:** Migration 16 bảng nghiệp vụ + bảng `schema_migrations`, seed dữ liệu minh họa, kiểm thử ràng buộc, API sự kiện/suất và trang Next.js.
-- **Giai đoạn 3:** Đăng ký, đăng nhập, JWT, kiểm tra trạng thái và vai trò theo PostgreSQL, trang đăng ký/đăng nhập/tài khoản, cookie HttpOnly.
+## Tiến độ giai đoạn 1–10
 
-**Chưa có:** giao diện quản trị, CRUD sự kiện/suất, cấp vai trò quản trị viên, đăng ký vé, FCFS/Lottery, danh sách chờ, check-in, object storage và bộ tìm kiếm riêng.
+| Giai đoạn | Nội dung | Kiểm chứng |
+|---|---|---|
+| 1 | Khởi tạo NestJS, Next.js, PostgreSQL, Docker | CI |
+| 2 | Migration, 16 bảng nghiệp vụ, seed và ràng buộc | CI |
+| 3 | Đăng ký, đăng nhập JWT, phân quyền, cookie HttpOnly | CI |
+| 4 | Quản lý sự kiện, địa điểm, suất và accessibility | CI |
+| 5 | FCFS, Lottery, danh sách chờ, hủy và đôn chờ | CI |
+| 6 | Vé QR, check-in chống quét trùng, thống kê | CI |
+| 7 | Unit test, SQL, kiểm thử tích hợp và giới hạn tốc độ cơ bản | CI |
+| 8 | Tìm kiếm/lọc và ảnh bìa trên S3-compatible storage | CI |
+| 9 | Script Windows khởi động, dừng, kiểm tra và sao lưu DB | Cần thử trên máy Windows |
+| 10 | Testcase, đối chiếu PTTK và kịch bản demo | Tài liệu bàn giao |
 
-## Các thư mục
+CI là môi trường tạm của GitHub. Máy Windows của người dùng vẫn cần kiểm tra sau khi pull.
 
-| Đường dẫn | Vai trò |
-|---|---|
-| `backend/` | NestJS API và kết nối PostgreSQL bằng pg |
-| `frontend/` | Next.js hiển thị sự kiện đã công bố và suất |
-| `database/migrations/` | DDL PostgreSQL theo phiên bản (chạy một lần) |
-| `database/seed/` | Dữ liệu giả để demo; chỉ chạy thủ công |
-| `database/tests/` | SQL test ràng buộc, rollback sau kiểm thử |
-| `docker-compose.yml` | PostgreSQL, migrate, seed (profile), backend, frontend |
+## Bắt đầu trên Windows PowerShell 5.1
 
-## Chạy Giai đoạn 2 trên máy Windows (CMD)
+Mở Docker Desktop, sau đó trong PowerShell:
 
-Máy đã có Docker Desktop và `.env` với `POSTGRES_PORT=55432`. **Không xóa hoặc chép đè `.env`** vì cổng 5432 từng bị lỗi trên Windows.
-
-Trong **CMD**:
-
-```cmd
-cd /d D:\k1\T6\OOP-DoAn
+~~~powershell
+cd "D:\k1\T6\OOP-DoAn"
 git status
 git switch med06-code
 git pull --ff-only origin med06-code
-docker compose up --build -d
-docker compose ps
-```
+.\scripts\med06-start.ps1
+.\scripts\med06-test.ps1
+~~~
 
-Nếu `git status` cho thấy có file đã sửa mà chưa commit, hãy lưu/commit hoặc xử lý những thay đổi đó trước khi pull. Không sử dụng `git reset --hard`.
-
-`migrate` chạy tự động sau khi `db` healthy và trước khi `backend` khởi động. Nếu bảng đã được tạo, chương trình bỏ qua migration đã áp dụng. CSDL hiện tại và volume Docker vẫn được giữ nguyên.
-
-### Nạp dữ liệu mẫu
-
-```cmd
-docker compose --profile seed run --rm seed
-docker compose exec -T db psql -U med06 -d med06 -c "\dt"
-docker compose exec -T db psql -U med06 -d med06 -c "SELECT ten_su_kien, trang_thai FROM su_kien;"
-```
-
-Seed tạo 2 sự kiện và 3 suất minh họa, cùng dữ liệu địa điểm, vai trò, người dùng mẫu **không có mật khẩu đăng nhập**. Có thể chạy lại seed mà không tạo bản sao trùng. Các thông tin tiện ích tiếp cận chưa được xác nhận sẽ không được tự công bố.
-
-### Kiểm tra các ràng buộc trong CSDL
-
-```cmd
-docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1 < database\tests\001_constraints.sql
-```
-
-Kiểm thử không để lại các đăng ký/vé tạm vì toàn bộ dữ liệu kiểm thử được `ROLLBACK`.
-
-### Kiểm tra API và website
+Nếu git status báo thay đổi chưa commit, xử lý các file đó trước khi pull. KHÔNG dùng reset --hard hoặc xóa volume PostgreSQL.
 
 - Website: http://localhost:3000
-- Kiểm tra PostgreSQL: http://localhost:3001/api/health
-- Danh sách sự kiện đã công bố: http://localhost:3001/api/events
-- Chi tiết một sự kiện: `GET /api/events/:id`
-- Danh sách suất của sự kiện: `GET /api/events/:id/sessions`
+- Backend: http://localhost:3001/api/health
+- pgAdmin 4 (không bắt buộc): 127.0.0.1:55432, database med06, user med06, password theo .env.
 
-Các API hiện tại chỉ đọc dữ liệu đã công bố; chưa có chức năng gửi đăng ký.
+Giữ nguyên .env của máy bạn, nhất là POSTGRES_PORT=55432 và JWT_SECRET. Có thể thêm OBJECT_STORAGE_ACCESS_KEY, OBJECT_STORAGE_SECRET_KEY và OBJECT_STORAGE_PORT theo .env.example. Không gửi .env hay token lên GitHub. Mật khẩu storage mặc định trong Compose chỉ dành cho local demo.
 
-### pgAdmin 4 có bắt buộc không?
+Nạp dữ liệu mẫu khi cần:
 
-Không. Nếu muốn xem bảng bằng giao diện pgAdmin, thông số mặc định trên máy sau khi sửa `.env` là: Host `127.0.0.1`, Port `55432`, Database `med06`, User `med06`. Mật khẩu lấy từ `POSTGRES_PASSWORD` trong `.env`, không lưu password thật vào repository.
+~~~powershell
+docker compose --profile seed run --rm seed
+docker compose exec -T db psql -U med06 -d med06 -c "\dt"
+Get-Content -Raw .\database\tests\001_constraints.sql | docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1
+~~~
 
-### Xem log khi gặp lỗi
+17 bảng trong pgAdmin = 16 bảng nghiệp vụ + bảng kỹ thuật schema_migrations. Migration bổ sung index/cột không tạo thêm bảng nghiệp vụ.
 
-```cmd
-docker compose logs --tail=100 migrate
-docker compose logs --tail=100 db
-docker compose logs --tail=100 backend
-docker compose logs --tail=100 frontend
-```
+## Các trang chính
 
-Không dùng `docker compose down -v` nếu muốn giữ dữ liệu! Muốn dừng container nhưng giữ dữ liệu: `docker compose down`.
+| Trang | Mục đích |
+|---|---|
+| / | Danh sách, tìm kiếm và lọc sự kiện |
+| /account/register, /account/login | Đăng ký, đăng nhập |
+| /account | Xem tài khoản và vai trò |
+| /organizer | Quản lý sự kiện, suất, chính sách, accessibility, ảnh bìa, Lottery |
+| /registrations | Xem và hủy đăng ký |
+| /tickets | Vé QR và trạng thái vé |
+| /checkin | Nhân viên quét mã / nhập tay / xem thống kê |
 
-## Quy tắc nghiệp vụ đã được bảo vệ ở PostgreSQL
+Phân quyền: Guest xem công khai; ATTENDEE đăng ký/xem vé; ORGANIZER quản lý sự kiện của mình; CHECKIN kiểm tra vé; ADMIN quản trị chung. Người tự đăng ký chỉ được ATTENDEE.
 
-- Mỗi (người tham dự, suất) chỉ có một đăng ký còn hiệu lực.
-- Một đăng ký chỉ có tối đa một vé; ticket phải thuộc đúng suất của đăng ký.
-- Trigger khóa suất trước khi cấp vé, chặn cấp quá sức chứa ngay cả khi có nhiều yêu cầu đồng thời ở mức `READ COMMITTED`.
-- Check-in thành công chỉ xảy ra tối đa một lần/ vé, đồng thời chuyển vé sang `DA_SU_DUNG`.
-- Một suất có tối đa một chính sách phân bổ `FCFS` hoặc `LOTTERY`.
-- Chưa hoàn thiện quy tắc xử lý FCFS/Lottery từ API: đây là bảo vệ nền tảng dữ liệu, không đồng nghĩa thuật toán đã hoạt động.
+**Cấp thử ORGANIZER/CHECKIN trong CSDL demo bạn có quyền quản trị:** thay email trong câu lệnh sau; không triển khai câu lệnh này thành chức năng công khai.
 
-## CI
-
-GitHub Actions dùng hai workflow: `med06-ci.yml` kiểm tra TypeScript/build/unit tests; `med06-db-ci.yml` chạy PostgreSQL thật, migration hai lượt, seed hai lượt và SQL tests. Docker chưa được chạy trực tiếp từ ChatGPT; môi trường Windows của bạn là nơi cần kiểm tra việc khởi động cuối cùng.
-
-## Bước tiếp theo
-
-Triển khai xác thực và RBAC, sau đó CRUD sự kiện/suất với kiểm tra nghiệp vụ, rồi phân bổ FCFS/Lottery, danh sách chờ và check-in.
-
-## Giai đoạn 3 – Tài khoản, JWT và phân quyền
-
-Backend đã có API: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` (Bearer token), `GET /api/auth/organizer-check` (chỉ ADMIN/ORGANIZER).
-
-- Đăng ký công khai chỉ được cấp `ATTENDEE`, không thể tự chọn ADMIN/ORGANIZER/CHECKIN.
-- Mật khẩu được băm với `scrypt` và salt ngẫu nhiên, không lưu mật khẩu gốc.
-- JWT HS256 có hạn một giờ; guard luôn kiểm tra trạng thái tài khoản và vai trò từ PostgreSQL khi truy cập.
-- Đăng ký/đăng nhập giới hạn số lần gọi từ một địa chỉ IP bằng ThrottlerGuard.
-- Tài khoản demo seed không có mật khẩu nên không thể dùng để đăng nhập; hãy đăng ký tài khoản riêng.
-- Đã có giao diện `http://localhost:3000/account/register` và `/account/login` cùng `/account` (thông tin người dùng). JWT nằm trong cookie HttpOnly của Next.js, không lưu vào localStorage.
-- Chưa triển khai API tạo quản trị viên, làm mới token, khôi phục mật khẩu hoặc quy trình quên mật khẩu.
-
-### Thiết lập khóa JWT trên Windows PowerShell 5.1
-
-**Bắt buộc tạo khóa bí mật trước khi chạy backend mới. Không gửi khóa cho người khác hoặc commit lên GitHub.**
-
-```powershell
-cd 'D:\k1\T6\OOP-DoAn'
-$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$bytes = New-Object byte[] 32
-$rng.GetBytes($bytes)
-$rng.Dispose()
-$jwtSecret = ([BitConverter]::ToString($bytes)).Replace('-','').ToLowerInvariant()
-Add-Content -Path .env -Value "JWT_SECRET=$jwtSecret"
-```
-
-Nếu `.env` đã có dòng `JWT_SECRET=`, chỉ sửa giá trị dòng đó, không thêm dòng trùng. Giữ nguyên `POSTGRES_PORT=55432`.
-
-```powershell
-git switch med06-code
-git pull --ff-only origin med06-code
-docker compose up --build -d
-docker compose ps
-```
-
-### Thử đăng ký, đăng nhập trong PowerShell (password thử nghiệm, không phải mật khẩu CSDL)
-
-```powershell
-$newAccount = @{email='demo-stage3@example.invalid';name='Demo User';password='TestSecure98765'} | ConvertTo-Json
-$registered = Invoke-RestMethod 'http://localhost:3001/api/auth/register' -Method Post -ContentType 'application/json' -Body $newAccount
-$token = $registered.accessToken
-Invoke-RestMethod 'http://localhost:3001/api/auth/me' -Headers @{Authorization="Bearer $token"}
-```
-
-Vai trò cần hiện `ATTENDEE`. Truy cập `/api/auth/organizer-check` bằng token này phải trả HTTP 403; không có token truy cập `/api/auth/me` phải trả HTTP 401.
-
-### Kiểm tra bằng trình duyệt
-
-1. Mở `http://localhost:3000/account/register`; nhập tên, email và mật khẩu thử nghiệm riêng từ 10 ký tự có chữ và số.
-2. Sau khi đăng ký, website mở `/account`; phải thấy tài khoản mới và vai trò `ATTENDEE`.
-3. Chọn **Đăng xuất**, mở `/account/login` và dùng tài khoản vừa tạo đăng nhập lại.
-4. Trang `/account` là vùng cần xác thực; không có phiên sẽ chuyển về `/account/login`.
-
-Khóa JWT **chỉ dùng cho việc ký token**, không phải mật khẩu PostgreSQL. Đổi khóa làm token cũ mất hiệu lực. Không được đưa khóa vào Git.
-
-### Các giới hạn của giai đoạn 3
-
-- Đã chứng minh bảo vệ vai trò `ORGANIZER`/`ADMIN` tại `/api/auth/organizer-check`; API CRUD quản lý chưa được xây dựng.
-- Các tài khoản seed không đăng nhập được vì chưa có mật khẩu; dùng giao diện đăng ký để tạo tài khoản người tham dự.
-- Khi khai thác ngoài môi trường demo cần bổ sung chính sách cookie phù hợp tên miền, bảo vệ đăng nhập, giám sát bảo mật, quên mật khẩu và làm mới token.
-
-## Giai đoạn 4 – Ban tổ chức quản lý sự kiện (bản đầu tiên)
-
-Phần quản lý sử dụng vai trò `ORGANIZER` hoặc `ADMIN`. Đường dẫn website `http://localhost:3000/organizer`. Một người đăng ký tự do chỉ có vai trò `ATTENDEE`, **không thể tự chọn quyền ban tổ chức**.
-
-### Cấp quyền ORGANIZER cho tài khoản thử nghiệm trên máy local
-
-1. Đăng ký/đăng nhập tài khoản thử nghiệm thật trên website trước.
-2. Trong PowerShell tại thư mục gốc dự án, dùng câu SQL dưới đây và **thay `your-test-email@example.com` bằng email tài khoản vừa tạo**. Chỉ dùng trên PostgreSQL demo của bạn, không triển khai thao tác này thành API công khai.
-
-```powershell
+~~~powershell
 $sql = @'
-INSERT INTO nguoi_dung_vai_tro(ma_nguoi_dung, ma_vai_tro)
-SELECT n.ma_nguoi_dung, v.ma_vai_tro
-FROM nguoi_dung n JOIN vai_tro v ON v.ten_vai_tro='ORGANIZER'
-WHERE lower(n.email)=lower('your-test-email@example.com')
+INSERT INTO nguoi_dung_vai_tro(ma_nguoi_dung,ma_vai_tro)
+SELECT n.ma_nguoi_dung,r.ma_vai_tro FROM nguoi_dung n CROSS JOIN vai_tro r
+WHERE lower(n.email)=lower('YOUR_EMAIL@example.com')
+  AND r.ten_vai_tro IN ('ORGANIZER','CHECKIN')
 ON CONFLICT DO NOTHING;
 '@
 $sql | docker compose exec -T db psql -U med06 -d med06 -v ON_ERROR_STOP=1
-```
+~~~
 
-Chỉ thực hiện bước này với **tài khoản bạn được phép quản trị**. Sau đó mở lại `http://localhost:3000/organizer`. Token đăng nhập cũ vẫn hoạt động vì backend lấy quyền trực tiếp từ PostgreSQL theo mỗi yêu cầu.
+## Quy trình nghiệp vụ
 
-### Chức năng quản lý đã có
+**FCFS:** khi suất đã công bố và đang mở đăng ký, hệ thống khóa dòng suất trong transaction; còn chỗ và không có hàng đợi thì cấp vé ngay, nếu hết chỗ vào danh sách chờ. Hủy vé chưa dùng trước khi suất bắt đầu sẽ vô hiệu vé và đôn người chờ đầu tiên.
 
-- Tạo sự kiện nháp, sửa tên/mô tả qua API, xem sự kiện do mình sở hữu (ADMIN xem toàn bộ).
-- Tạo địa điểm; thêm suất với mốc thời gian ISO 8601, sức chứa và thời gian đăng ký.
-- Chọn một phương thức `FCFS` **hoặc** `LOTTERY` cho mỗi suất; chưa hỗ trợ tách số lượng vé FCFS/Lottery trong *cùng* một suất.
-- Chỉ công bố sau khi có suất tương lai và chính sách phân bổ. Hủy sự kiện đã có đăng ký hiện bị chặn, chờ xử lý nghiệp vụ hoàn vé/đăng ký.
-- Lưu thuộc tính accessibility **chỉ sau khi người tổ chức xác nhận đã kiểm tra thực tế**.
-- Tài khoản `ATTENDEE` bị chặn ở API bằng JWT và RBAC; quyền sở hữu sự kiện kiểm tra ở PostgreSQL.
+**Lottery:** người dùng ghi nhận CHO_PHAN_BO. Sau khi đóng đăng ký, ban tổ chức bốc thăm một lần. Seed ngẫu nhiên + HMAC-SHA256 quyết định thứ tự; có thể lấy seed và dữ liệu kiểm chứng tại API báo cáo của ban tổ chức. Người trúng được cấp vé; người còn lại chờ. Một suất chỉ có một chính sách FCFS HOẶC LOTTERY (không hỗ trợ chia tỷ lệ hai thuật toán trong cùng suất).
 
-### API quản lý (cần Bearer JWT và vai trò phù hợp)
+**Vé và check-in:** trang /tickets chứa mã QR ngẫu nhiên của vé. Nhân viên CHECKIN/ADMIN chọn mã suất và quét QR hoặc nhập mã thủ công. Check-in mở từ 30 phút trước giờ bắt đầu tới lúc suất kết thúc. Check-in thành công chuyển vé DA_SU_DUNG, quét lần 2 bị từ chối. Trình duyệt không hỗ trợ BarcodeDetector vẫn có thể nhập thủ công.
 
-| Phương thức | Đường dẫn | Mục đích |
-|---|---|---|
-| GET/POST | `/api/manage/events` | Danh sách / tạo nháp |
-| PATCH | `/api/manage/events/:id` | Sửa bản nháp |
-| POST | `/api/manage/events/:id/publish` | Công bố |
-| POST | `/api/manage/events/:id/cancel` | Hủy khi chưa có đăng ký |
-| GET/POST | `/api/manage/venues` | Xem / thêm địa điểm |
-| GET/POST | `/api/manage/events/:id/sessions` | Xem / thêm suất |
-| PUT | `/api/manage/sessions/:id/policy` | Cấu hình FCFS/LOTTERY |
-| GET | `/api/manage/accessibility/options` | Danh mục đặc tính tiếp cận |
-| PUT | `/api/manage/events/:id/accessibility` | Xác nhận đặc tính tiếp cận |
+**Tìm kiếm và ảnh:** tìm tên/mô tả, lọc accessibility đã xác nhận. Ban tổ chức tải PNG/JPEG/WebP tối đa 2 MB vào S3-compatible object storage; PostgreSQL chỉ lưu khóa ảnh.
 
-Website Next.js chuyển tiếp các yêu cầu quản lý qua `/api/manage/...` bằng cookie `HttpOnly`, không đưa JWT vào JavaScript phía trình duyệt.
+## Vận hành và sao lưu
 
-### Cập nhật máy Windows
+~~~powershell
+.\scripts\med06-stop.ps1
+.\scripts\med06-start.ps1
+.\scripts\med06-test.ps1
+.\scripts\med06-backup.ps1
+~~~
 
-```powershell
-cd 'D:\k1\T6\OOP-DoAn'
-git status
-git switch med06-code
-git pull --ff-only origin med06-code
-docker compose up --build -d
-docker compose ps
-```
+Không chạy docker compose down -v vì sẽ xóa dữ liệu trong volume. Sao lưu pg_dump thành backups/*.dump chỉ gồm PostgreSQL; ảnh trong volume object storage cần sao lưu riêng.
 
-Không chép đè `.env` và phải giữ `JWT_SECRET`, `POSTGRES_PORT=55432` của máy bạn. Không dùng `docker compose down -v` vì sẽ xóa volume CSDL.
+## Kiểm thử và tài liệu
 
-**Lưu ý:** Giai đoạn 4 tập trung quản lý cấu hình sự kiện. FCFS/Lottery hiện mới là cấu hình, chưa chạy thuật toán cấp vé hoặc danh sách chờ (giai đoạn 5).
+- GitHub Actions: MED-06 scaffold CI (typecheck/build/unit tests).
+- MED-06 database CI: chạy PostgreSQL thực, migration + seed lặp, FCFS đồng thời, Lottery, check-in, phân quyền, object storage.
+- Testcase và bằng chứng: docs/MED06_TEST_CASES.md
+- Kịch bản thuyết trình: docs/MED06_DEMO.md
+- Đối chiếu PTTK và cấu trúc CSDL: docs/MED06_PTTK_TRACE.md
+
+## Giới hạn cần ghi rõ trong báo cáo
+
+- Chống bot cơ bản mới có rate limit/đăng ký không trùng; chưa có CAPTCHA hoặc email verification.
+- Lottery lưu seed để kiểm chứng sau draw, chưa pre-commit seed trước khi đăng ký đóng; không tuyên bố tuyệt đối công bằng chống gian lận bởi chính đơn vị tổ chức.
+- Nhân viên CHECKIN hiện có quyền kiểm tra toàn hệ thống, chưa phân công riêng theo suất.
+- Không có đăng ký nhiều vé trong một đăng ký; mỗi người mỗi suất tối đa một đăng ký còn hiệu lực.
+- Camera phụ thuộc hỗ trợ trình duyệt; không có fallback scanner library ngoài nhập tay.
+- Chưa triển khai đầy đủ giám sát tập trung, khôi phục toàn bộ object storage, cấu hình production public HTTPS/hardening, email khôi phục mật khẩu hoặc quy trình hoàn vé khi hủy sự kiện đã có đăng ký.
