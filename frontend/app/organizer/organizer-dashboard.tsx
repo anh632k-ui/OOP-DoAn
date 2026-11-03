@@ -45,7 +45,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       body: JSON.stringify(body ?? {}),
     });
     const result = (await response.json()) as {
-      message?: string | string[]; id?: string;
+      message?: string | string[]; id?: string; roundId?: string;
     };
     if (!response.ok) {
       throw new Error(Array.isArray(result.message)
