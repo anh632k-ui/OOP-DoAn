@@ -6,13 +6,93 @@ const UUID = '[0-9a-fA-F-]{36}';
 const paths: Record<string, RegExp[]> = {
   GET: [
     /^events$/, /^venues$/, /^accessibility\/options$/,
-    new RegExp(`^events/${UUID}/sessions$`),
+    new RegExp(`^events/${UUID}/sessionsimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+),
+    new RegExp(`^sessions/${UUID}/drawimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+),
   ],
   POST: [
     /^events$/, /^venues$/,
     new RegExp(`^events/${UUID}/sessions$`),
     new RegExp(`^events/${UUID}/publish$`),
-    new RegExp(`^events/${UUID}/cancel$`),
+    new RegExp(`^events/${UUID}/cancelimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+    new RegExp(`^events/${UUID}/sessionsimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+),
+    new RegExp(`^sessions/${UUID}/drawimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+),
+  ],
+  POST: [
+    /^events$/, /^venues$/,
+    new RegExp(`^events/${UUID}/sessions$`),
+    new RegExp(`^events/${UUID}/publish$`),
+),
+    new RegExp(`^sessions/${UUID}/drawimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+    new RegExp(`^events/${UUID}/sessionsimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+),
+    new RegExp(`^sessions/${UUID}/drawimport { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
+const UUID = '[0-9a-fA-F-]{36}';
+const paths: Record<string, RegExp[]> = {
+  GET: [
+    /^events$/, /^venues$/, /^accessibility\/options$/,
+),
+  ],
+  POST: [
+    /^events$/, /^venues$/,
+    new RegExp(`^events/${UUID}/sessions$`),
+    new RegExp(`^events/${UUID}/publish$`),
+),
   ],
   PATCH: [new RegExp(`^events/${UUID}$`)],
   PUT: [

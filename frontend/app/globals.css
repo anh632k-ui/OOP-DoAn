@@ -66,3 +66,5 @@ button:disabled { opacity: .5; cursor: wait; }
 .action-panel { padding-top: 10px; }
 .ticket-card img { display: block; margin: 20px 0; max-width: 100%; }
 .ticket-code { display: block; overflow-wrap: anywhere; background: #f3f4f6; padding: 10px; border-radius: 6px; }
+
+.scan-video { width: 100%; max-width: 500px; max-height: 350px; border-radius: 8px; background: #111; }

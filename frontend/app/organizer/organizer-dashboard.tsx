@@ -8,7 +8,7 @@ import type {
 
 type Session = {
   id: string; startsAt: string; endsAt: string; capacity: number;
-  status: string; method: string | null;
+  status: string; method: string | null; registrationClosesAt: string;
 };
 
 type Props = {
@@ -140,6 +140,14 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     });
   }
 
+  function runDraw(sessionId: string) {
+    if (!window.confirm('Bốc thăm một lần cho suất này? Không thể bốc thăm lại.')) return;
+    void perform(async () => {
+      const result = await request(`sessions/${sessionId}/draw`, 'POST');
+      window.alert('Đã bốc thăm. Lưu thông tin kiểm chứng từ API báo cáo bốc thăm. Mã đợt: ' + (result.roundId ?? ''));
+    });
+  }
+
   function setAccessibility(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!eventId) return;
@@ -229,6 +237,21 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         </form>
       </section>
 
+      {chosen && (
+        <section className="panel">
+          <h2>Các suất của sự kiện</h2>
+          {sessions.length ? <ul>{sessions.map(s => <li key={s.id}>
+            <code>{s.id}</code> · {new Date(s.startsAt).toLocaleString('vi-VN')}
+            {' '}· {s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
+            {s.method === 'LOTTERY' && new Date(s.registrationClosesAt).getTime() <= Date.now()
+              && s.status !== 'DONG_DANG_KY' && (
+                <button type="button" disabled={busy} onClick={() => runDraw(s.id)}>
+                  Bốc thăm Lottery
+                </button>
+              )}
+          </li>)}</ul> : <p>Chưa có suất.</p>}
+        </section>
+      )}
       {chosen && chosen.status === 'NHAP' && (
         <>
           <section className="panel">
