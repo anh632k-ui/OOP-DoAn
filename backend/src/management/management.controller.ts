@@ -6,12 +6,14 @@ import { AuthenticatedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ManagementService } from './management.service';
+import { AllocationsService } from '../allocations/allocations.service';
 
 @Controller('manage')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ORGANIZER', 'ADMIN')
 export class ManagementController {
-  constructor(private readonly management: ManagementService) {}
+  constructor(private readonly management: ManagementService,
+    private readonly allocations: AllocationsService) {}
 
   @Get('events')
   events(@Req() req: AuthenticatedRequest) {
@@ -52,6 +54,16 @@ export class ManagementController {
     @Param('id', ParseUUIDPipe) id: string, @Body() body: unknown) {
     return this.management.setPolicy(req.user!, id, body);
   }
+  @Post('sessions/:id/draw')
+  draw(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.allocations.draw(req.user!, id);
+  }
+
+  @Get('sessions/:id/draw')
+  drawReport(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.allocations.report(req.user!, id);
+  }
+
   @Get('accessibility/options')
   accessibilityOptions() { return this.management.accessibilityOptions(); }
   @Put('events/:id/accessibility')
