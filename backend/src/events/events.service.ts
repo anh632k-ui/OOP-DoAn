@@ -13,6 +13,7 @@ export type EventDetail = {
   id: string;
   title: string;
   description: string;
+  accessibility: Array<{ name: string; note: string }>;
 };
 
 export type SessionSummary = {
@@ -56,11 +57,19 @@ export class EventsService {
   async getPublished(id: string): Promise<EventDetail> {
     const [event] = await this.database.queryRows<EventDetail>(
       `
-      SELECT ma_su_kien AS id,
-             ten_su_kien AS title,
-             mo_ta AS description
-      FROM su_kien
-      WHERE ma_su_kien = $1 AND trang_thai = 'DA_CONG_BO'
+      SELECT e.ma_su_kien AS id,
+             e.ten_su_kien AS title,
+             e.mo_ta AS description,
+             COALESCE((
+               SELECT jsonb_agg(jsonb_build_object(
+                 'name', d.ten_dac_tinh, 'note', sd.ghi_chu
+               ) ORDER BY d.ten_dac_tinh)
+               FROM su_kien_dac_tinh sd
+               JOIN dac_tinh_tiep_can d ON d.ma_dac_tinh=sd.ma_dac_tinh
+               WHERE sd.ma_su_kien=e.ma_su_kien
+             ), '[]'::jsonb) AS accessibility
+      FROM su_kien e
+      WHERE e.ma_su_kien = $1 AND e.trang_thai = 'DA_CONG_BO'
       `,
       [id],
     );

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-type EventDetail = { id: string; title: string; description: string };
+type EventDetail = { id: string; title: string; description: string; accessibility: { name: string; note: string }[] };
 type Session = {
   id: string;
   startsAt: string;
@@ -72,6 +72,19 @@ export default async function EventPage({
         <h1>{event.title}</h1>
         <p>{event.description}</p>
       </header>
+
+      <section className="panel" aria-labelledby="accessibility-heading">
+        <h2 id="accessibility-heading">Khả năng tiếp cận</h2>
+        {event.accessibility?.length ? (
+          <ul>
+            {event.accessibility.map((item, index) => (
+              <li key={index}>{item.name}{item.note ? ` — ${item.note}` : ''}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="note">Chưa có đặc tính tiếp cận được xác nhận.</p>
+        )}
+      </section>
 
       <section className="panel" aria-labelledby="sessions-heading">
         <h2 id="sessions-heading">Các suất tổ chức</h2>

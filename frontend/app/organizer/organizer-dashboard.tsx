@@ -83,6 +83,24 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     });
   }
 
+  function updateEvent(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!eventId) return;
+    const data = new FormData(e.currentTarget);
+    void perform(async () => {
+      await request(`events/${eventId}`, 'PATCH', {
+        title: data.get('title'), description: data.get('description'),
+      });
+    });
+  }
+
+  function cancelEvent() {
+    if (!eventId || !window.confirm('Bạn muốn hủy sự kiện này?')) return;
+    void perform(async () => {
+      await request(`events/${eventId}/cancel`, 'POST');
+    });
+  }
+
   function createVenue(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget, data = new FormData(form);
@@ -176,6 +194,30 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         </label>
         {chosen && <p className="note">Đang chọn: {chosen.title} ({chosen.status})</p>}
       </section>
+
+      {chosen && chosen.status === 'NHAP' && (
+        <section className="panel">
+          <h2>Chỉnh sửa sự kiện nháp</h2>
+          <form className="auth-form" key={chosen.id} onSubmit={updateEvent}>
+            <label>Tên sự kiện
+              <input name="title" defaultValue={chosen.title} maxLength={200} required/>
+            </label>
+            <label>Mô tả
+              <textarea name="description" defaultValue={chosen.description} maxLength={4000}/>
+            </label>
+            <button type="submit" disabled={busy}>Lưu thay đổi</button>
+          </form>
+        </section>
+      )}
+      {chosen && chosen.status !== 'DA_HUY' && (
+        <section className="panel">
+          <h2>Hủy sự kiện</h2>
+          <p className="note">Chỉ được hủy khi sự kiện chưa có đăng ký.</p>
+          <button type="button" disabled={busy} onClick={cancelEvent}>
+            Hủy sự kiện
+          </button>
+        </section>
+      )}
 
       <section className="panel">
         <h2>Địa điểm</h2>
