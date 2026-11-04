@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:time": "node --experimental-strip-types --test tests/vietnam-time.test.mjs"
   },
   "dependencies": {
     "next": "^16.0.0",
