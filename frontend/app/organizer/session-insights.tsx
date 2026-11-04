@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { formatVietnamDate } from '../../lib/vietnam-time';
+import { labelStatus } from '../../lib/status-label';
 
 type SessionOverview = {
   session: {
@@ -173,10 +174,10 @@ export default function SessionInsights({ sessionId, refreshVersion }: {
             <tr key={item.id}>
               <td>{item.attendeeName}</td>
               <td>{formatVietnamDate(item.registeredAt,'short')}</td>
-              <td>{item.status}</td>
+              <td>{labelStatus(item.status)}</td>
               <td>{item.waitingStatus === 'DANG_CHO'
                 ? item.waitingPosition ?? '—' : '—'}</td>
-              <td>{item.ticketStatus ?? '—'}</td>
+              <td>{item.ticketStatus ? labelStatus(item.ticketStatus) : '—'}</td>
             </tr>)}</tbody>
         </table>
       </div>}
