@@ -230,6 +230,21 @@ def main():
     assert self_status == 409, self_status
     print("PASS: per-session staff assignment, revocation, account lock/unlock")
 
+    # Daily anti-spam quota uses per-account audit history (not shared IP only).
+    sql("INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet) "
+        "SELECT n.ma_nguoi_dung,'DANG_KY_CHO_LOTTERY','{}'::jsonb "
+        "FROM nguoi_dung n CROSS JOIN generate_series(1,20) "
+        "WHERE n.email='stage56-user1@example.invalid';")
+    _, quota_session = event_and_session(
+        organizer, "Stage56 anti-spam quota", "FCFS",
+    )
+    limited, _ = api("POST", f"/registrations/sessions/{quota_session}", {}, users[0])
+    assert limited == 429, limited
+    other = must("POST", f"/registrations/sessions/{quota_session}",
+                 {}, users[1], status=201)
+    assert other["status"] == "DA_XAC_NHAN", other
+    print("PASS: per-user quota without restricting unrelated user on the same IP")
+
     print("PASS: stage 5 and 6 integration tests")
 
 
