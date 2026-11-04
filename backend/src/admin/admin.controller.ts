@@ -12,6 +12,11 @@ import { AdminService } from './admin.service';
 export class AdminController {
   constructor(private readonly service: AdminService) {}
 
+  @Get('audit')
+  audit(@Query('page') page?: string, @Query('action') action?: string) {
+    return this.service.listAudit(page, action);
+  }
+
   @Get('users')
   users(@Query('page') page?: string, @Query('q') q?: string) {
     return this.service.listUsers(page, q);

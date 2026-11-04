@@ -105,3 +105,10 @@ button:disabled { opacity: .5; cursor: wait; }
 .admin-role-editor label { display: flex; gap: 6px; align-items: center; }
 .admin-role-editor input { width: auto; }
 .admin-role-editor small { color: #555; }
+
+.audit-list { padding-left: 24px; }
+.audit-list li { padding: 12px 0; border-bottom: 1px solid #ddd; }
+.audit-list pre {
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  padding: 12px; background: #f4f4f4; border-radius: 6px;
+}

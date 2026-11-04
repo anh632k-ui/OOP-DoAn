@@ -71,6 +71,39 @@ export class AdminService {
     };
   }
 
+  async listAudit(page?: unknown, action?: unknown) {
+    const requestedPage = pagination(page);
+    const filter = action === undefined ? 'ALL' : action;
+    if (typeof filter !== 'string' || (
+      filter !== 'ALL' && !/^[A-Z_]{3,80}$/.test(filter)
+    )) {
+      throw new BadRequestException('Bộ lọc nhật ký không hợp lệ');
+    }
+    const [count] = await this.db.queryRows<{ total: number }>(
+      `SELECT count(*)::int AS total FROM nhat_ky_he_thong
+        WHERE ($1::text='ALL' OR hanh_dong=$1)`, [filter],
+    );
+    const pageSize = 50;
+    const items = await this.db.queryRows<{
+      id: string; action: string; createdAt: Date;
+      details: Record<string, unknown>; actorName: string | null;
+    }>(
+      `SELECT a.ma_nhat_ky AS id,a.hanh_dong AS action,
+         a.thoi_gian AS "createdAt",a.chi_tiet AS details,
+         n.ho_ten AS "actorName"
+       FROM nhat_ky_he_thong a
+       LEFT JOIN nguoi_dung n ON n.ma_nguoi_dung=a.ma_nguoi_dung
+       WHERE ($1::text='ALL' OR a.hanh_dong=$1)
+       ORDER BY a.thoi_gian DESC,a.ma_nhat_ky DESC
+       LIMIT $2 OFFSET $3`,
+      [filter,pageSize,(requestedPage-1)*pageSize],
+    );
+    return {
+      items, total: count.total, page: requestedPage, pageSize,
+      pages: Math.ceil(count.total/pageSize), action: filter,
+    };
+  }
+
   async updateRoles(actor: PublicUser, userId: string, value: unknown) {
     const desired = parseRoles(value);
     if (userId === actor.id) {

@@ -8,7 +8,7 @@ async function handle(request: NextRequest, {
 }: { params: Promise<{ segments: string[] }> }) {
   const { segments } = await params;
   const path = segments.join('/');
-  const allowed = request.method === 'GET' && path === 'users'
+  const allowed = request.method === 'GET' && (path === 'users' || path === 'audit')
     || request.method === 'PUT'
       && new RegExp('^users/' + UUID + '/roles$').test(path);
   return forwardProtectedApi(request, 'admin/' + path, allowed);
