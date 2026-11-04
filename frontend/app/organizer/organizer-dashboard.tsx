@@ -28,6 +28,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [inspectedSession, setInspectedSession] = useState('');
   const [reload, setReload] = useState(0);
+  const [activeTab, setActiveTab] = useState<'sessions' | 'people' | 'settings' | 'create'>('sessions');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -214,15 +215,6 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       {error && <p role="alert" className="form-error">{error}</p>}
 
       <section className="panel">
-        <h2>Tạo sự kiện (bản nháp)</h2>
-        <form className="auth-form" onSubmit={createEvent}>
-          <label>Tên sự kiện <input name="title" maxLength={200} required /></label>
-          <label>Mô tả <textarea name="description" maxLength={4000} rows={3}/></label>
-          <button type="submit" disabled={busy}>Tạo sự kiện</button>
-        </form>
-      </section>
-
-      <section className="panel">
         <h2>Danh sách sự kiện của bạn</h2>
         {events.length === 0 ? <p>Chưa có sự kiện.</p> : (
           <ul className="event-list">{events.map(event => (
@@ -246,6 +238,98 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         {chosen && <p className="note">Đang chọn: {chosen.title} ({labelStatus(chosen.status)})</p>}
       </section>
 
+      <nav className="organizer-tabs" aria-label="Chức năng quản lý sự kiện">
+        {([
+          ['sessions', 'Danh sách suất'],
+          ['people', 'Đăng ký & check-in'],
+          ['settings', 'Thiết lập & địa điểm'],
+          ['create', 'Tạo sự kiện mới'],
+        ] as const).map(([value,label]) => (
+          <button key={value} type="button"
+            className={activeTab === value ? 'organizer-tab current' : 'organizer-tab'}
+            aria-pressed={activeTab === value} onClick={() => setActiveTab(value)}>
+            {label}
+          </button>
+        ))}
+      </nav>
+      <p className="note">Mọi ngày giờ trong hệ thống theo giờ Hà Nội (UTC+7).</p>
+
+      {activeTab === 'create' && (
+        <>
+      <section className="panel">
+        <h2>Tạo sự kiện (bản nháp)</h2>
+        <form className="auth-form" onSubmit={createEvent}>
+          <label>Tên sự kiện <input name="title" maxLength={200} required /></label>
+          <label>Mô tả <textarea name="description" maxLength={4000} rows={3}/></label>
+          <button type="submit" disabled={busy}>Tạo sự kiện</button>
+        </form>
+      </section>
+
+        </>
+      )}
+      {activeTab === 'sessions' && (
+        <>
+      {chosen && (
+        <section className="panel">
+          <h2>Các suất của sự kiện</h2>
+          {sessions.length ? <ul>{sessions.map(s => <li key={s.id}>
+            <code>{s.id}</code> · {formatVietnamDate(s.startsAt, 'short')}
+            {' '}· {s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
+            {' '}· {labelStatus(s.status)}
+            {s.status !== 'DA_HUY' && new Date(s.startsAt).getTime() >
+              Date.now() + 30 * 60 * 1000 && chosen.status !== 'DA_HUY' && (
+                <button type="button" disabled={busy}
+                  onClick={() => cancelSession(s.id)}>Hủy suất</button>
+              )}
+            {s.status !== 'DA_HUY' && s.status !== 'HOAN_TAT'
+              && new Date(s.endsAt).getTime() <= Date.now()
+              && chosen.status === 'DA_CONG_BO' && (
+                <button type="button" disabled={busy}
+                  onClick={() => completeSession(s.id)}>Hoàn tất suất</button>
+              )}
+            {s.method === 'LOTTERY' && new Date(s.registrationClosesAt).getTime() <= Date.now()
+              && s.status !== 'DONG_DANG_KY' && s.status !== 'DA_HUY'
+              && s.status !== 'HOAN_TAT' && chosen.status === 'DA_CONG_BO' && (
+                <button type="button" disabled={busy} onClick={() => runDraw(s.id)}>
+                  Bốc thăm Lottery
+                </button>
+              )}
+          </li>)}</ul> : <p>Chưa có suất.</p>}
+        </section>
+      )}
+        </>
+      )}
+      {activeTab === 'people' && (
+        <>
+      {chosen && sessions.length > 0 && (
+        <section className="panel">
+          <h2>Thống kê và danh sách đăng ký theo suất</h2>
+          <label className="management-label">Chọn suất
+            <select value={inspectedSession} onChange={e => setInspectedSession(e.target.value)}>
+              {sessions.map(s => <option key={s.id} value={s.id}>
+                {formatVietnamDate(s.startsAt, 'short')} · {s.method ?? 'Chưa cấu hình'}
+              </option>)}
+            </select>
+          </label>
+          {inspectedSession && <SessionInsights sessionId={inspectedSession} refreshVersion={reload}/>}
+          {inspectedSession && chosen.status !== 'DA_HUY' &&
+            <SessionStaff sessionId={inspectedSession} revision={reload}/>}
+          {selectedSession && chosen.status !== 'DA_HUY'
+            && !['HOAN_TAT','DA_HUY'].includes(selectedSession.status)
+            && new Date(selectedSession.startsAt).getTime() > Date.now()+30*60*1000
+            && <SessionReschedule
+              key={selectedSession.id + ':' + selectedSession.startsAt}
+              sessionId={selectedSession.id} startsAt={selectedSession.startsAt}
+              endsAt={selectedSession.endsAt}
+              onSaved={() => setReload(v => v+1)}
+            />}
+
+        </section>
+      )}
+        </>
+      )}
+      {activeTab === 'settings' && (
+        <>
       {chosen && chosen.status === 'NHAP' && (
         <section className="panel">
           <h2>Chỉnh sửa sự kiện nháp</h2>
@@ -292,59 +376,6 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         </form>
       </section>
 
-      {chosen && (
-        <section className="panel">
-          <h2>Các suất của sự kiện</h2>
-          {sessions.length ? <ul>{sessions.map(s => <li key={s.id}>
-            <code>{s.id}</code> · {formatVietnamDate(s.startsAt, 'short')}
-            {' '}· {s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
-            {' '}· {labelStatus(s.status)}
-            {s.status !== 'DA_HUY' && new Date(s.startsAt).getTime() >
-              Date.now() + 30 * 60 * 1000 && chosen.status !== 'DA_HUY' && (
-                <button type="button" disabled={busy}
-                  onClick={() => cancelSession(s.id)}>Hủy suất</button>
-              )}
-            {s.status !== 'DA_HUY' && s.status !== 'HOAN_TAT'
-              && new Date(s.endsAt).getTime() <= Date.now()
-              && chosen.status === 'DA_CONG_BO' && (
-                <button type="button" disabled={busy}
-                  onClick={() => completeSession(s.id)}>Hoàn tất suất</button>
-              )}
-            {s.method === 'LOTTERY' && new Date(s.registrationClosesAt).getTime() <= Date.now()
-              && s.status !== 'DONG_DANG_KY' && s.status !== 'DA_HUY'
-              && s.status !== 'HOAN_TAT' && chosen.status === 'DA_CONG_BO' && (
-                <button type="button" disabled={busy} onClick={() => runDraw(s.id)}>
-                  Bốc thăm Lottery
-                </button>
-              )}
-          </li>)}</ul> : <p>Chưa có suất.</p>}
-        </section>
-      )}
-      {chosen && sessions.length > 0 && (
-        <section className="panel">
-          <h2>Thống kê và danh sách đăng ký theo suất</h2>
-          <label className="management-label">Chọn suất
-            <select value={inspectedSession} onChange={e => setInspectedSession(e.target.value)}>
-              {sessions.map(s => <option key={s.id} value={s.id}>
-                {formatVietnamDate(s.startsAt, 'short')} · {s.method ?? 'Chưa cấu hình'}
-              </option>)}
-            </select>
-          </label>
-          {inspectedSession && <SessionInsights sessionId={inspectedSession} refreshVersion={reload}/>}
-          {inspectedSession && chosen.status !== 'DA_HUY' &&
-            <SessionStaff sessionId={inspectedSession} revision={reload}/>}
-          {selectedSession && chosen.status !== 'DA_HUY'
-            && !['HOAN_TAT','DA_HUY'].includes(selectedSession.status)
-            && new Date(selectedSession.startsAt).getTime() > Date.now()+30*60*1000
-            && <SessionReschedule
-              key={selectedSession.id + ':' + selectedSession.startsAt}
-              sessionId={selectedSession.id} startsAt={selectedSession.startsAt}
-              endsAt={selectedSession.endsAt}
-              onSaved={() => setReload(v => v+1)}
-            />}
-
-        </section>
-      )}
       {chosen && chosen.status === 'NHAP' && (
         <>
           <section className="panel">
@@ -423,6 +454,8 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
               Công bố sự kiện
             </button>
           </section>
+        </>
+      )}
         </>
       )}
     </div>
