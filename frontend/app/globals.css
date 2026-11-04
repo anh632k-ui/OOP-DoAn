@@ -899,6 +899,15 @@ input, select, textarea {
 
 
 /* ===== MED-06 UI alignment: role-based admin workspace ===== */
+body:has(.admin-workspace) { background: #f4f7f4; }
+body:has(.admin-workspace) .site-header,
+body:has(.admin-workspace) .site-footer { display: none; }
+.admin-workspace-nav a[aria-current="page"] {
+  background: var(--teal);
+  color: white;
+}
+.admin-workspace-nav a[aria-current="page"]:hover { color: white; }
+
 .admin-workspace {
   display: grid;
   grid-template-columns: minmax(215px, 255px) minmax(0, 1fr);
@@ -910,7 +919,7 @@ input, select, textarea {
 }
 .admin-workspace-sidebar {
   position: sticky;
-  top: 100px;
+  top: 26px;
   align-self: start;
   display: flex;
   flex-direction: column;
