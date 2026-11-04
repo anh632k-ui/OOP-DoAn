@@ -50,3 +50,10 @@ schema_migrations là bảng kỹ thuật thứ 17, không thuộc ERD nghiệp 
 | Ảnh ngoài DB | MediaService và su_kien.anh_bia_key |
 
 Composition trong Class Diagram không đồng nghĩa mọi khóa ngoại trong DB đều phải ON DELETE CASCADE. Hệ thống ưu tiên từ chối xóa khi còn dữ liệu đăng ký/vé để tránh mất lịch sử.
+
+
+## Đối chiếu tính năng bổ sung
+
+Thống kê suất dùng suat_su_kien, dang_ky, nguoi_dung, ve, ban_ghi_check_in, muc_danh_sach_cho.
+Hủy/hoàn tất dùng trạng thái hiện có và giữ lại lịch sử vé; phân quyền sử dụng nguoi_dung_vai_tro, vai_tro.
+Nhật ký lưu trong nhat_ky_he_thong. Không thêm bảng nghiệp vụ mới so với ERD.

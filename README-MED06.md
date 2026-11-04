@@ -116,3 +116,35 @@ Không chạy docker compose down -v vì sẽ xóa dữ liệu trong volume. Sao
 - Không có đăng ký nhiều vé trong một đăng ký; mỗi người mỗi suất tối đa một đăng ký còn hiệu lực.
 - Camera phụ thuộc hỗ trợ trình duyệt; không có fallback scanner library ngoài nhập tay.
 - Chưa triển khai đầy đủ giám sát tập trung, khôi phục toàn bộ object storage, cấu hình production public HTTPS/hardening, email khôi phục mật khẩu hoặc quy trình hoàn vé khi hủy sự kiện đã có đăng ký.
+
+
+## Phần mở rộng sau Giai đoạn 10 (đang phát triển)
+
+- /organizer: thống kê từng suất, danh sách người đăng ký có phân trang/lọc trạng thái, xem biên bản Lottery và seed sau khi bốc thăm.
+- Hủy suất/sự kiện có đăng ký trước khung giờ check-in và khi chưa có vé đã dùng: vô hiệu vé chưa dùng, hủy đăng ký, đóng danh sách chờ trong transaction.
+- Hoàn tất suất sau giờ kết thúc: xử lý đăng ký còn chờ thành TU_CHOI, đóng hàng đợi, giữ lịch sử đã cấp vé.
+- /admin: ADMIN quản lý tài khoản và vai trò ORGANIZER/CHECKIN, không tự chỉnh vai trò hoặc tự gán ADMIN qua API.
+- /admin/audit: nhật ký đăng ký, phân bổ, hủy, check-in, cấp quyền, hoàn tất. Nhật ký không lưu mật khẩu, JWT hoặc mã QR.
+
+### Cấp ADMIN đầu tiên trên CSDL demo do bạn quản trị
+
+Đăng ký tài khoản mới trên website trước. Mở PowerShell và chạy:
+
+~~~powershell
+cd "D:\k1\T6\OOP-DoAn"
+.\scripts\med06-bootstrap-admin.ps1 -Email "tai-khoan-vua-dang-ky@example.com"
+~~~
+
+Script yêu cầu nhập GRANT-ADMIN để xác nhận; không tạo tài khoản hoặc đổi mật khẩu. Không dùng trên production. Sau đó ADMIN mở http://localhost:3000/admin để cấp ORGANIZER/CHECKIN cho tài khoản demo khác.
+
+### Endpoint mở rộng
+
+- GET /api/manage/sessions/:id/overview?page=1&status=ALL
+- POST /api/manage/sessions/:id/cancel
+- POST /api/manage/sessions/:id/complete
+- POST /api/manage/events/:id/cancel
+- GET /api/admin/users?page=1&q=...
+- PUT /api/admin/users/:id/roles
+- GET /api/admin/audit?page=1&action=ALL
+
+Các phần này chưa được nghiệm thu thủ công trên Windows. Code chỉ push nhánh med06-code; không sửa file PTTK/.drawio cũ.
