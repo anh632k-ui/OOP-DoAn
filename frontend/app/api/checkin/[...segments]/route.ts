@@ -7,15 +7,10 @@ async function handle(request: NextRequest, { params }: {
   const { segments } = await params;
   const path = segments.join('/');
   const allowed = (request.method === 'POST' && path === 'scan')
-    || (request.method === 'GET'
-      && (path === 'sessions' || new RegExp('^sessions/[0-9a-fA-F-]{36}/stats);
-  return forwardProtectedApi(request, `checkin/${path}`, allowed);
-}
-
-export const GET = handle;
-export const POST = handle;
-).test(path)));
-  return forwardProtectedApi(request, `checkin/${path}`, allowed);
+    || (request.method === 'GET' && (
+      path === 'sessions' || /^sessions\/[0-9a-fA-F-]{36}\/stats$/.test(path)
+    ));
+  return forwardProtectedApi(request, 'checkin/' + path, allowed);
 }
 
 export const GET = handle;
