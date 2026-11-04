@@ -230,6 +230,38 @@ def main():
     assert self_status == 409, self_status
     print("PASS: per-session staff assignment, revocation, account lock/unlock")
 
+    # Published schedule changes propagate to attendees without changing their ticket.
+    reschedule_event, reschedule_session = event_and_session(
+        organizer, "Stage56 schedule change demo", "FCFS",
+    )
+    previous = must("GET", f"/events/{reschedule_event}/sessions")["items"][0]["startsAt"]
+    changed = must("PATCH", f"/manage/sessions/{reschedule_session}/schedule", {
+        "startsAt": time_at(240), "endsAt": time_at(350),
+        "reason": "Venue opening has been rescheduled",
+    }, organizer)
+    assert changed["affectedRegistrations"] == 0
+    public_schedule = must("GET", f"/events/{reschedule_event}/sessions")["items"][0]
+    assert public_schedule["previousStartsAt"] == previous
+    assert public_schedule["scheduleChangeReason"] == "Venue opening has been rescheduled"
+    registered = must("POST", f"/registrations/sessions/{reschedule_session}", {},
+                      users[1], status=201)
+    assert registered["status"] == "DA_XAC_NHAN"
+    too_soon, _ = api("PATCH", f"/manage/sessions/{reschedule_session}/schedule", {
+        "startsAt": time_at(400), "endsAt": time_at(520),
+        "reason": "Delay with less than 24 hours notice",
+    }, organizer)
+    assert too_soon == 409, too_soon
+    valid_change = must("PATCH", f"/manage/sessions/{reschedule_session}/schedule", {
+        "startsAt": time_at(26*60), "endsAt": time_at(28*60),
+        "reason": "Rescheduled with at least a full day notice",
+    }, organizer)
+    assert valid_change["affectedRegistrations"] == 1
+    attendee = must("GET", "/registrations/mine", token=users[1])["items"]
+    assert any(item["sessionId"] == reschedule_session
+               and item["scheduleChangedAt"]
+               and item["scheduleChangeReason"] for item in attendee)
+    print("PASS: reschedule warnings and advance-notice enforcement")
+
     # Daily anti-spam quota uses per-account audit history (not shared IP only).
     sql("INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet) "
         "SELECT n.ma_nguoi_dung,'DANG_KY_CHO_LOTTERY','{}'::jsonb "
