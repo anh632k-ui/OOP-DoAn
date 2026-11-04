@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import ScheduleNotice from '../components/schedule-notice';
 import { getAuthenticated } from '../../lib/backend';
 import { formatVietnamDate } from '../../lib/vietnam-time';
+import { labelStatus } from '../../lib/status-label';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ export default async function TicketsPage() {
         <ScheduleNotice previousStartsAt={ticket.previousStartsAt}
           scheduleChangedAt={ticket.scheduleChangedAt}
           scheduleChangeReason={ticket.scheduleChangeReason}/>
-        <p>Trạng thái: <strong>{ticket.status}</strong></p>
+        <p>Trạng thái: <strong>{labelStatus(ticket.status)}</strong></p>
         {ticket.qr && <div>
           <img src={ticket.qr} alt="Mã QR vé điện tử để nhân viên quét" width={240} height={240} />
           <p className="note">Mã dự phòng (chỉ cung cấp cho nhân viên check-in):</p>
