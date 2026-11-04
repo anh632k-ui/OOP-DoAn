@@ -4,6 +4,7 @@ import {
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseService } from '../database/database.service';
 import { PublicUser } from '../auth/auth.types';
+import { appendAudit } from '../audit/audit';
 import { RegistrationsService } from '../registrations/registrations.service';
 import { lotteryOrder } from './lottery';
 
@@ -109,6 +110,10 @@ export class AllocationsService {
         `UPDATE suat_su_kien SET trang_thai='DONG_DANG_KY'
           WHERE ma_suat=$1`, [sessionId],
       );
+      await appendAudit(client,user.id,'PHAN_BO_LOTTERY',{
+        sessionId,roundId,applicants:order.length,winners,
+        waiting:order.length-winners,seedSha256:sha256,
+      });
       return {
         roundId, sessionId, method: 'LOTTERY', applicantCount: order.length,
         winners, waitlisted: order.length-winners, seedSha256: sha256, auditSeed: seed,

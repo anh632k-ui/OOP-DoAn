@@ -1,9 +1,9 @@
 import {
   Body, Controller, Get, Param, ParseUUIDPipe,
-  Post, UseGuards,
+  Post, Req, UseGuards,
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthenticatedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { CheckinService } from './checkin.service';
@@ -17,7 +17,9 @@ export class CheckinController {
   @Post('scan')
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
-  scan(@Body() body: unknown) { return this.checkin.scan(body); }
+  scan(@Req() req: AuthenticatedRequest, @Body() body: unknown) {
+    return this.checkin.scan(body, req.user!);
+  }
 
   @Get('sessions/:id/stats')
   stats(@Param('id', ParseUUIDPipe) id: string) {

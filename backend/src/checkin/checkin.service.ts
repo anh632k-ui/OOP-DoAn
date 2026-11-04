@@ -2,6 +2,8 @@ import {
   BadRequestException, Injectable, NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { PublicUser } from '../auth/auth.types';
+import { appendAudit } from '../audit/audit';
 
 type CheckinBody = { sessionId: string; code: string };
 type Session = { startsAt: Date; endsAt: Date; status: string; eventStatus: string };
@@ -27,7 +29,7 @@ function validateBody(body: unknown): CheckinBody {
 export class CheckinService {
   constructor(private readonly db: DatabaseService) {}
 
-  async scan(value: unknown) {
+  async scan(value: unknown, operator: PublicUser) {
     const { sessionId, code } = validateBody(value);
     return this.db.transaction(async client => {
       const s = await client.query<Session>(
@@ -67,6 +69,9 @@ export class CheckinService {
             VALUES($1,$2,'TU_CHOI',$3)`,
           [ticket?.id ?? null,sessionId,reason],
         );
+        await appendAudit(client,operator.id,'CHECKIN_TU_CHOI',{
+          sessionId,ticketId:ticket?.id ?? null,reason,
+        });
         return { accepted: false, message: reason, sessionId };
       }
       // A DB trigger and unique index atomically consume this ticket once.
@@ -75,6 +80,9 @@ export class CheckinService {
           VALUES($1,$2,'THANH_CONG')`,
         [ticket!.id,sessionId],
       );
+      await appendAudit(client,operator.id,'CHECKIN_THANH_CONG',{
+        sessionId,ticketId:ticket!.id,
+      });
       return { accepted: true, message: 'Check-in thành công', ticketId: ticket!.id, sessionId };
     });
   }

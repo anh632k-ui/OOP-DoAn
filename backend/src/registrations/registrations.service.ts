@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service';
 import { PublicUser } from '../auth/auth.types';
+import { appendAudit } from '../audit/audit';
 
 type Session = {
   id: string;
@@ -84,6 +85,7 @@ export class RegistrationsService {
       );
       const id = inserted.rows[0].id;
       if (s.method === 'LOTTERY') {
+        await appendAudit(client,user.id,'DANG_KY_CHO_LOTTERY',{ registrationId:id,sessionId });
         return { id, sessionId, status: 'CHO_PHAN_BO', method: s.method };
       }
 
@@ -100,6 +102,9 @@ export class RegistrationsService {
       );
       if (count.rows[0].seats < s.capacity && pending.rows[0].count === 0) {
         const ticketId = await this.issueTicket(client, id, sessionId);
+        await appendAudit(client,user.id,'DANG_KY_FCFS_DUOC_VE',{
+          registrationId:id,sessionId,ticketId,
+        });
         return { id, sessionId, status: 'DA_XAC_NHAN', method: s.method, ticketId };
       }
       const maxPosition = await client.query<{ last: number }>(
@@ -116,6 +121,9 @@ export class RegistrationsService {
         `INSERT INTO muc_danh_sach_cho(ma_dang_ky,thu_tu)
           VALUES($1,$2)`, [id, waitingPosition],
       );
+      await appendAudit(client,user.id,'DANG_KY_VAO_DANH_SACH_CHO',{
+        registrationId:id,sessionId,waitingPosition,
+      });
       return { id, sessionId, status: 'DANH_SACH_CHO', method: s.method, waitingPosition };
     });
   }
@@ -157,7 +165,7 @@ export class RegistrationsService {
     return { items };
   }
 
-  private async promoteNext(client: PoolClient, sessionId: string): Promise<void> {
+  private async promoteNext(client: PoolClient, sessionId: string): Promise<boolean> {
     const waiting = await client.query<{ id: string; waitId: string }>(
       `SELECT d.ma_dang_ky AS id,w.ma_muc_cho AS "waitId"
        FROM muc_danh_sach_cho w
@@ -167,7 +175,7 @@ export class RegistrationsService {
        ORDER BY w.thu_tu,w.ma_muc_cho
        LIMIT 1 FOR UPDATE OF d,w`, [sessionId],
     );
-    if (!waiting.rowCount) return;
+    if (!waiting.rowCount) return false;
     const chosen = waiting.rows[0];
     await this.issueTicket(client, chosen.id, sessionId);
     await client.query(
@@ -178,6 +186,7 @@ export class RegistrationsService {
       `UPDATE muc_danh_sach_cho SET trang_thai='DA_DON_LEN'
         WHERE ma_muc_cho=$1`, [chosen.waitId],
     );
+    return true;
   }
 
   async cancel(user: PublicUser, id: string) {
@@ -218,9 +227,11 @@ export class RegistrationsService {
         `UPDATE muc_danh_sach_cho SET trang_thai='DA_RUT'
           WHERE ma_dang_ky=$1 AND trang_thai='DANG_CHO'`, [id],
       );
-      if (ticket.rows[0]?.status === 'CHUA_SU_DUNG') {
-        await this.promoteNext(client, sessionId);
-      }
+      const promoted = ticket.rows[0]?.status === 'CHUA_SU_DUNG'
+        ? await this.promoteNext(client,sessionId) : false;
+      await appendAudit(client,user.id,'HUY_DANG_KY',{
+        registrationId:id,sessionId,promoted,
+      });
       return { id, status: 'DA_HUY' };
     });
   }
