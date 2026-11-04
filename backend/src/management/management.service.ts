@@ -234,6 +234,58 @@ export class ManagementService {
     });
   }
 
+  async completeSession(user: PublicUser, sessionId: string) {
+    return this.db.transaction(async client => {
+      const parent = await client.query<{ eventId: string }>(
+        `SELECT ma_su_kien AS "eventId" FROM suat_su_kien
+           WHERE ma_suat=$1`, [sessionId],
+      );
+      if (!parent.rows[0]) throw new NotFoundException('Không tìm thấy suất');
+      const event = await this.lockEvent(client,user,parent.rows[0].eventId,false);
+      if (event.status !== 'DA_CONG_BO') {
+        throw new ConflictException('Chỉ hoàn tất suất của sự kiện đã công bố');
+      }
+      const [session] = (await client.query<{ status: string; endsAt: Date }>(
+        `SELECT trang_thai AS status,ket_thuc AS "endsAt"
+          FROM suat_su_kien WHERE ma_suat=$1 FOR UPDATE`, [sessionId],
+      )).rows;
+      if (!session || session.status === 'DA_HUY' || session.status === 'HOAN_TAT') {
+        throw new ConflictException('Suất đã hoàn tất hoặc đã hủy');
+      }
+      if (Date.now() < session.endsAt.getTime()) {
+        throw new ConflictException('Chưa đến giờ kết thúc suất');
+      }
+      const waiting = await client.query(
+        `UPDATE dang_ky SET trang_thai='TU_CHOI'
+           WHERE ma_suat=$1 AND trang_thai IN ('CHO_PHAN_BO','DANH_SACH_CHO')`,
+        [sessionId],
+      );
+      const queue = await client.query(
+        `UPDATE muc_danh_sach_cho w SET trang_thai='DA_RUT'
+          FROM dang_ky d WHERE w.ma_dang_ky=d.ma_dang_ky
+          AND d.ma_suat=$1 AND w.trang_thai='DANG_CHO'`,
+        [sessionId],
+      );
+      await client.query(
+        `UPDATE suat_su_kien SET trang_thai='HOAN_TAT'
+          WHERE ma_suat=$1`, [sessionId],
+      );
+      const expiredRegistrations = waiting.rowCount ?? 0;
+      const closedWaitingPositions = queue.rowCount ?? 0;
+      await client.query(
+        `INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet)
+           VALUES($1,'HOAN_TAT_SUAT',$2::jsonb)`,
+        [user.id,JSON.stringify({
+          eventId:event.id,sessionId,expiredRegistrations,closedWaitingPositions,
+        })],
+      );
+      return {
+        id:sessionId,status:'HOAN_TAT',
+        expiredRegistrations,closedWaitingPositions,
+      };
+    });
+  }
+
   async listVenues(): Promise<{ items: Venue[] }> {
     return { items: await this.db.queryRows<Venue>(
       `SELECT ma_dia_diem AS id,ten_dia_diem AS name,

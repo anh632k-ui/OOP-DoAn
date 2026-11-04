@@ -114,6 +114,13 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     });
   }
 
+  function completeSession(sessionId: string) {
+    if (!window.confirm('Hoàn tất suất? Đăng ký chờ còn lại sẽ chuyển sang từ chối.')) return;
+    void perform(async () => {
+      await request('sessions/' + sessionId + '/complete', 'POST');
+    });
+  }
+
   function uploadCover(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!eventId) return;
@@ -292,8 +299,15 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
                 <button type="button" disabled={busy}
                   onClick={() => cancelSession(s.id)}>Hủy suất</button>
               )}
+            {s.status !== 'DA_HUY' && s.status !== 'HOAN_TAT'
+              && new Date(s.endsAt).getTime() <= Date.now()
+              && chosen.status === 'DA_CONG_BO' && (
+                <button type="button" disabled={busy}
+                  onClick={() => completeSession(s.id)}>Hoàn tất suất</button>
+              )}
             {s.method === 'LOTTERY' && new Date(s.registrationClosesAt).getTime() <= Date.now()
-              && s.status !== 'DONG_DANG_KY' && (
+              && s.status !== 'DONG_DANG_KY' && s.status !== 'DA_HUY'
+              && s.status !== 'HOAN_TAT' && chosen.status === 'DA_CONG_BO' && (
                 <button type="button" disabled={busy} onClick={() => runDraw(s.id)}>
                   Bốc thăm Lottery
                 </button>

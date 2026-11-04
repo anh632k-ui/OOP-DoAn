@@ -44,6 +44,12 @@ export class ManagementController {
     return this.management.cancelSession(req.user!, id);
   }
 
+  @Post('sessions/:id/complete')
+  completeSession(@Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string) {
+    return this.management.completeSession(req.user!, id);
+  }
+
   @Get('venues')
   venues() { return this.management.listVenues(); }
   @Post('venues')
