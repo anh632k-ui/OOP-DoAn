@@ -9,6 +9,7 @@ import {
   allocationMethod, asObject, description, optionalPatch,
   requiredText, sessionInput, verifiedAccessibility,
 } from './management.validation';
+import { rescheduleInput } from './reschedule.validation';
 
 type EventRow = {
   id: string; title: string; description: string;
@@ -231,6 +232,78 @@ export class ManagementService {
         client, user, 'HUY_SUAT', event.id, [sessionId], affected,
       );
       return { id: sessionId, status: 'DA_HUY', ...affected };
+    });
+  }
+
+  async rescheduleSession(user: PublicUser, sessionId: string, body: unknown) {
+    const input = rescheduleInput(body);
+    return this.db.transaction(async client => {
+      const parent = await client.query<{ eventId: string }>(
+        `SELECT ma_su_kien AS "eventId" FROM suat_su_kien WHERE ma_suat=$1`,
+        [sessionId],
+      );
+      if (!parent.rows[0]) throw new NotFoundException('Không tìm thấy suất');
+      const event = await this.lockEvent(client,user,parent.rows[0].eventId,false);
+      if (event.status !== 'NHAP' && event.status !== 'DA_CONG_BO') {
+        throw new ConflictException('Sự kiện đã bị hủy');
+      }
+      const [session] = (await client.query<{
+        status: string; startsAt: Date; endsAt: Date; closesAt: Date;
+      }>(
+        `SELECT trang_thai AS status,bat_dau AS "startsAt",
+          ket_thuc AS "endsAt",dong_dang_ky AS "closesAt"
+         FROM suat_su_kien WHERE ma_suat=$1 FOR UPDATE`, [sessionId],
+      )).rows;
+      if (!session || ['DA_HUY','HOAN_TAT'].includes(session.status)) {
+        throw new ConflictException('Suất không còn cho phép đổi lịch');
+      }
+      const now = Date.now();
+      if (session.startsAt.getTime() <= now + 30*60*1000) {
+        throw new ConflictException('Không đổi lịch khi đã vào khung giờ check-in');
+      }
+      if (input.startsAt <= session.closesAt) {
+        throw new BadRequestException('Giờ bắt đầu mới phải sau giờ đóng đăng ký hiện tại');
+      }
+      if (input.startsAt.getTime() === session.startsAt.getTime()
+          && input.endsAt.getTime() === session.endsAt.getTime()) {
+        throw new ConflictException('Lịch mới trùng lịch hiện tại');
+      }
+      const [participation] = (await client.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM dang_ky
+          WHERE ma_suat=$1 AND trang_thai NOT IN ('DA_HUY','TU_CHOI')`,
+        [sessionId],
+      )).rows;
+      const advance = participation.count > 0 ? 24*60*60*1000 : 60*60*1000;
+      if (input.startsAt.getTime() <= now + advance) {
+        throw new ConflictException(participation.count > 0
+          ? 'Có người đăng ký: cần thông báo trước ít nhất 24 giờ'
+          : 'Suất mới cần bắt đầu sau ít nhất 60 phút');
+      }
+      const result = await client.query<{
+        id: string; startsAt: Date; endsAt: Date; scheduleChangedAt: Date;
+      }>(
+        `UPDATE suat_su_kien
+        SET bat_dau_cu=bat_dau,ket_thuc_cu=ket_thuc,
+            bat_dau=$2,ket_thuc=$3,doi_lich_luc=now(),ly_do_doi_lich=$4
+        WHERE ma_suat=$1
+        RETURNING ma_suat AS id,bat_dau AS "startsAt",
+          ket_thuc AS "endsAt",doi_lich_luc AS "scheduleChangedAt"`,
+        [sessionId,input.startsAt,input.endsAt,input.reason],
+      );
+      await client.query(
+        `INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet)
+          VALUES($1,'THAY_DOI_LICH_SUAT',$2::jsonb)`,
+        [user.id,JSON.stringify({
+          eventId:event.id,sessionId,
+          previousStartsAt:session.startsAt,previousEndsAt:session.endsAt,
+          nextStartsAt:input.startsAt,nextEndsAt:input.endsAt,
+          reason:input.reason,affectedRegistrations:participation.count,
+        })],
+      );
+      return {
+        ...result.rows[0],reason:input.reason,
+        affectedRegistrations:participation.count,
+      };
     });
   }
 
