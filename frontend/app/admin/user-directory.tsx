@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import AccountStatusButton from './user-status-button';
 
 type User = {
   id: string; name: string; email: string;
@@ -112,6 +113,11 @@ export default function UserDirectory({ currentUserId }: { currentUserId: string
             <h3>{user.name}</h3>
             <p>{user.email} · {user.status}</p>
             <p>Vai trò hiện tại: {user.roles.join(', ') || 'Chưa có'}</p>
+            <AccountStatusButton
+              id={user.id} name={user.name} status={user.status}
+              isSelf={user.id === currentUserId} isAdmin={user.roles.includes('ADMIN')}
+              onSaved={() => setRevision(v => v+1)}
+            />
             <RoleEditor
               key={user.id + ':' + user.roles.join('-')}
               user={user}
