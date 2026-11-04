@@ -138,6 +138,17 @@ def main():
         "WHERE n.email='stage3-test@example.invalid' AND r.ten_vai_tro='CHECKIN' "
         "ON CONFLICT DO NOTHING;"
     )
+    # Global CHECKIN role is insufficient without a per-session assignment.
+    denied_status, _ = api("POST", "/checkin/scan", {
+        "sessionId": fcfs_session, "code": current_ticket["code"],
+    }, organizer)
+    assert denied_status == 403, denied_status
+    staff = must("POST", f"/manage/sessions/{fcfs_session}/staff",
+                 {"email": "stage3-test@example.invalid"}, organizer, status=201)
+    assert UUID.fullmatch(staff["staffId"])
+    assigned = must("GET", f"/checkin/sessions", token=organizer)["items"]
+    assert any(s["id"] == fcfs_session for s in assigned)
+
     first = must("POST", "/checkin/scan", {
         "sessionId": fcfs_session, "code": current_ticket["code"],
     }, organizer, status=201)
@@ -148,6 +159,12 @@ def main():
     assert second["accepted"] is False
     stats = must("GET", f"/checkin/sessions/{fcfs_session}/stats", token=organizer)
     assert stats["used"] == 1 and stats["rejected"] >= 1, stats
+    # Removing an assignment immediately revokes scan/stat privileges.
+    must("DELETE", f"/manage/sessions/{fcfs_session}/staff/{staff['staffId']}",
+         token=organizer)
+    status_after, _ = api("GET", f"/checkin/sessions/{fcfs_session}/stats", token=organizer)
+    assert status_after == 403, status_after
+
     print("PASS: parallel FCFS, duplicate protection, waitlist promotion and single-use check-in")
 
     lottery_event, lottery_session = event_and_session(
@@ -189,6 +206,30 @@ def main():
                t["status"] == "CHUA_SU_DUNG" for t in tickets), tickets
     assert must("GET", f"/events/{lottery_event}/sessions")["items"][0]["issuedSeats"] == 1
     print("PASS: lottery seeded audit, no redraw, and waitlist promotion after cancellation")
+    # Admin account management: locked users lose access with previously issued JWT.
+    sql("INSERT INTO nguoi_dung_vai_tro(ma_nguoi_dung,ma_vai_tro) "
+        "SELECT n.ma_nguoi_dung,r.ma_vai_tro FROM nguoi_dung n CROSS JOIN vai_tro r "
+        "WHERE n.email='stage3-test@example.invalid' AND r.ten_vai_tro='ADMIN' "
+        "ON CONFLICT DO NOTHING;")
+    mine = must("GET", "/auth/me", token=users[0])
+    staff_lock = must("PATCH", f"/admin/users/{mine['id']}/status",
+                      {"locked": True}, organizer)
+    assert staff_lock["status"] == "KHOA"
+    blocked, _ = api("GET", "/auth/me", token=users[0])
+    assert blocked == 401, blocked
+    blocked_login, _ = api("POST", "/auth/login", {
+        "email": "stage56-user1@example.invalid", "password": "TestStrongPassword123",
+    })
+    assert blocked_login == 401, blocked_login
+    unlocked = must("PATCH", f"/admin/users/{mine['id']}/status",
+                    {"locked": False}, organizer)
+    assert unlocked["status"] == "HOAT_DONG"
+    must("GET", "/auth/me", token=users[0])
+    self_status, _ = api("PATCH", f"/admin/users/{staff['staffId']}/status",
+                         {"locked": True}, organizer)
+    assert self_status == 409, self_status
+    print("PASS: per-session staff assignment, revocation, account lock/unlock")
+
     print("PASS: stage 5 and 6 integration tests")
 
 
