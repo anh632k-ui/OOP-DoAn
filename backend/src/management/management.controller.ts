@@ -46,6 +46,12 @@ export class ManagementController {
     return this.management.cancelSession(req.user!, id);
   }
 
+  @Patch('sessions/:id/schedule')
+  changeSchedule(@Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string, @Body() body: unknown) {
+    return this.management.rescheduleSession(req.user!, id, body);
+  }
+
   @Post('sessions/:id/complete')
   completeSession(@Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string) {
