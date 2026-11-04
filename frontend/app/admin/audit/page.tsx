@@ -10,13 +10,13 @@ export default async function AuditPage() {
   const current = await getAuthenticated<User>('auth/me');
   if (!current) redirect('/account/login');
   if (!current.roles.includes('ADMIN')) {
-    return <main className="container">
+    return <main id="main-content" className="container">
       <Link href="/account">← Tài khoản</Link>
       <h1>Không có quyền xem nhật ký</h1>
       <p role="alert">Chỉ ADMIN được xem nhật ký hệ thống.</p>
     </main>;
   }
-  return <main className="container">
+  return <main id="main-content" className="container">
     <Link href="/admin">← Quản trị người dùng</Link>
     <header>
       <p className="eyebrow">MED-06 · NHẬT KÝ HỆ THỐNG</p>

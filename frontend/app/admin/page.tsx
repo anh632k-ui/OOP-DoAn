@@ -10,7 +10,7 @@ export default async function AdminPage() {
   const user = await getAuthenticated<CurrentUser>('auth/me');
   if (!user) redirect('/account/login');
   if (!user.roles.includes('ADMIN')) {
-    return <main className="container">
+    return <main id="main-content" className="container">
       <Link href="/account">← Tài khoản</Link>
       <h1>Không có quyền quản trị</h1>
       <p role="alert">Chỉ tài khoản ADMIN được quản lý vai trò người dùng.</p>

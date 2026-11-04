@@ -38,7 +38,7 @@ export default async function OrganizerPage() {
 
   if (!user.roles.some(r => r === 'ORGANIZER' || r === 'ADMIN')) {
     return (
-      <main className="container">
+      <main id="main-content" className="container">
         <Link href="/account">← Tài khoản</Link>
         <h1>Chưa được cấp quyền tổ chức</h1>
         <p role="status">Tài khoản hiện có vai trò {user.roles.map(labelRole).join(', ')}.
@@ -54,12 +54,12 @@ export default async function OrganizerPage() {
     getJson<{ items: AccessibilityFeature[] }>('manage/accessibility/options', token),
   ]);
   if (!events || !venues || !accessibility) {
-    return <main className="container"><h1>Chưa tải được dữ liệu quản lý</h1>
+    return <main id="main-content" className="container"><h1>Chưa tải được dữ liệu quản lý</h1>
       <p>Kiểm tra NestJS và PostgreSQL.</p></main>;
   }
 
   return (
-    <main className="container">
+    <main id="main-content" className="container">
       <Link href="/">← Trang sự kiện</Link>
       <header>
         <p className="eyebrow">MED-06 · QUẢN LÝ SỰ KIỆN</p>

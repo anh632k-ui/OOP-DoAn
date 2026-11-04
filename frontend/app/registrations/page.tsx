@@ -22,7 +22,7 @@ export default async function RegistrationsPage() {
   const result = await getAuthenticated<Response>('registrations/mine');
   if (!result) redirect('/account/login');
 
-  return <main className="container">
+  return <main id="main-content" className="container">
     <Link href="/account">← Tài khoản</Link>
     <header><p className="eyebrow">MED-06 · ĐĂNG KÝ</p>
       <h1>Đăng ký suất của tôi</h1></header>
