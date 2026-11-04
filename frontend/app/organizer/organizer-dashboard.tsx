@@ -9,6 +9,7 @@ import SessionInsights from './session-insights';
 import SessionStaff from './session-staff';
 import SessionReschedule from './session-reschedule';
 import { formatVietnamDate, hanoiInputToIso } from '../../lib/vietnam-time';
+import { labelStatus } from '../../lib/status-label';
 
 type Session = {
   id: string; startsAt: string; endsAt: string; capacity: number;
@@ -226,7 +227,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         {events.length === 0 ? <p>Chưa có sự kiện.</p> : (
           <ul className="event-list">{events.map(event => (
             <li key={event.id} className="event-item">
-              <strong>{event.title}</strong> — {event.status}
+              <strong>{event.title}</strong> — {labelStatus(event.status)}
             </li>
           ))}</ul>
         )}
@@ -238,11 +239,11 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           }}>
             <option value="">-- Chọn --</option>
             {events.map(event => <option key={event.id} value={event.id}>
-              {event.title} — {event.status}
+              {event.title} — {labelStatus(event.status)}
             </option>)}
           </select>
         </label>
-        {chosen && <p className="note">Đang chọn: {chosen.title} ({chosen.status})</p>}
+        {chosen && <p className="note">Đang chọn: {chosen.title} ({labelStatus(chosen.status)})</p>}
       </section>
 
       {chosen && chosen.status === 'NHAP' && (
@@ -297,7 +298,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           {sessions.length ? <ul>{sessions.map(s => <li key={s.id}>
             <code>{s.id}</code> · {formatVietnamDate(s.startsAt, 'short')}
             {' '}· {s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
-            {' '}· {s.status}
+            {' '}· {labelStatus(s.status)}
             {s.status !== 'DA_HUY' && new Date(s.startsAt).getTime() >
               Date.now() + 30 * 60 * 1000 && chosen.status !== 'DA_HUY' && (
                 <button type="button" disabled={busy}
