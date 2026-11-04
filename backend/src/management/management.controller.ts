@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Get, Param, ParseUUIDPipe,
+  Body, Controller, Delete, Get, Param, ParseUUIDPipe,
   Patch, Post, Put, Query, Req, UseGuards,
 } from '@nestjs/common';
 import { AuthenticatedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -8,6 +8,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { ManagementService } from './management.service';
 import { OrganizerInsightsService } from './organizer-insights.service';
 import { AllocationsService } from '../allocations/allocations.service';
+import { StaffService } from '../staff/staff.service';
 
 @Controller('manage')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -15,7 +16,8 @@ import { AllocationsService } from '../allocations/allocations.service';
 export class ManagementController {
   constructor(private readonly management: ManagementService,
     private readonly allocations: AllocationsService,
-    private readonly insights: OrganizerInsightsService) {}
+    private readonly insights: OrganizerInsightsService,
+    private readonly staff: StaffService) {}
 
   @Get('events')
   events(@Req() req: AuthenticatedRequest) {
@@ -48,6 +50,23 @@ export class ManagementController {
   completeSession(@Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string) {
     return this.management.completeSession(req.user!, id);
+  }
+
+  @Get('sessions/:id/staff')
+  assignedStaff(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.staff.assigned(req.user!, id);
+  }
+
+  @Post('sessions/:id/staff')
+  assignStaff(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: unknown) {
+    return this.staff.assign(req.user!, id, body);
+  }
+
+  @Delete('sessions/:id/staff/:staffId')
+  revokeStaff(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string,
+    @Param('staffId', ParseUUIDPipe) staffId: string) {
+    return this.staff.revoke(req.user!, id, staffId);
   }
 
   @Get('venues')

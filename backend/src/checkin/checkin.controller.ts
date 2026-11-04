@@ -21,8 +21,13 @@ export class CheckinController {
     return this.checkin.scan(body, req.user!);
   }
 
+  @Get('sessions')
+  assigned(@Req() req: AuthenticatedRequest) {
+    return this.checkin.mySessions(req.user!);
+  }
+
   @Get('sessions/:id/stats')
-  stats(@Param('id', ParseUUIDPipe) id: string) {
-    return this.checkin.stats(id);
+  stats(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.checkin.stats(req.user!,id);
   }
 }
