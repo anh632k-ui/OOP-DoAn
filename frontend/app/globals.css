@@ -119,3 +119,18 @@ button:disabled { opacity: .5; cursor: wait; }
 }
 .schedule-notice p { margin: 6px 0; }
 .reschedule-form { border-top: 1px solid #ccc; margin-top: 24px; padding-top: 12px; }
+
+/* Organizer: shorter workflows, clear active section, responsive navigation. */
+.organizer-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+.organizer-tab { background: #fff; border: 1px solid #aaa; color: #222; }
+.organizer-tab:hover { background: #f4f4f5; }
+.organizer-tab.current { background: #222; color: #fff; border-color: #222; }
+.organizer-tabs + .note { margin: 10px 0 0; font-size: 14px; }
+.management-area .event-list { max-height: 220px; overflow: auto; }
+.management-area .panel > ul { padding-left: 20px; }
+.management-area .panel li button { margin: 6px 0 6px 10px; }
+@media (max-width: 600px) {
+  .organizer-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .organizer-tabs .organizer-tab { padding: 10px 6px; font-size: 14px; }
+  .container { padding: 28px 16px; }
+}
