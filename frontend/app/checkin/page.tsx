@@ -11,7 +11,7 @@ export default async function CheckinPage() {
   const user = await getAuthenticated<PublicUser>('auth/me');
   if (!user) redirect('/account/login');
   if (!user.roles.some(role => role === 'CHECKIN' || role === 'ADMIN')) {
-    return <main className="container">
+    return <main id="main-content" className="container checkin-page">
       <Link href="/account">← Tài khoản</Link>
       <h1>Không có quyền kiểm tra vé</h1>
       <p>Chỉ nhân viên CHECKIN hoặc ADMIN được sử dụng chức năng này.</p>
