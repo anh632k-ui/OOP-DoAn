@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 export default function SessionRegisterButton({
-  sessionId, method, available,
-}: { sessionId: string; method: string | null; available: boolean }) {
+  sessionId, available,
+}: { sessionId: string; available: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export default function SessionRegisterButton({
       const states: Record<string, string> = {
         DA_XAC_NHAN: 'Đăng ký thành công! Vé đã được cấp.',
         DANH_SACH_CHO: 'Đã thêm vào danh sách chờ.',
-        CHO_PHAN_BO: 'Đã ghi nhận đăng ký bốc thăm. Vui lòng theo dõi kết quả.',
+        CHO_PHAN_BO: 'Đã tiếp nhận đăng ký. Kết quả cấp vé sẽ được thông báo sau khi hết hạn đăng ký.',
       };
       setResult(states[body.status ?? ''] ?? 'Đã ghi nhận đăng ký.');
     } catch {
@@ -48,8 +48,7 @@ export default function SessionRegisterButton({
     <div className="action-panel">
       {available && !result && (
         <button type="button" onClick={register} disabled={busy}>
-          {busy ? 'Đang gửi...' : method === 'LOTTERY'
-            ? 'Đăng ký tham gia bốc thăm' : 'Đăng ký suất miễn phí'}
+          {busy ? 'Đang gửi...' : 'Đăng ký tham dự miễn phí'}
         </button>
       )}
       {!available && <p className="note">Suất hiện chưa mở đăng ký.</p>}
