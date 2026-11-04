@@ -272,10 +272,12 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       {chosen && (
         <section className="panel">
           <h2>Các suất của sự kiện</h2>
-          {sessions.length ? <ul>{sessions.map(s => <li key={s.id}>
-            <code>{s.id}</code> · {formatVietnamDate(s.startsAt, 'short')}
-            {' '}· {s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
-            {' '}· {labelStatus(s.status)}
+          {sessions.length ? <ul className="session-management-list">{sessions.map(s =>
+            <li key={s.id} className="session-management-item">
+              <strong>{formatVietnamDate(s.startsAt, 'short')}</strong>
+              <p>{s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
+                {' '}· {labelStatus(s.status)}</p>
+              <p className="note">Mã suất: <code>{s.id}</code></p>
             {s.status !== 'DA_HUY' && new Date(s.startsAt).getTime() >
               Date.now() + 30 * 60 * 1000 && chosen.status !== 'DA_HUY' && (
                 <button type="button" disabled={busy}
