@@ -51,6 +51,7 @@ export default async function AccountPage() {
         <Link href="/tickets">Vé điện tử</Link>
         <Link href="/organizer">Quản lý sự kiện</Link>
         <Link href="/checkin">Kiểm tra vé</Link>
+        {user.roles.includes('ADMIN') && <Link href="/admin">Quản trị tài khoản</Link>}
       </nav>
     </main>
   );

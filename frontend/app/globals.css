@@ -96,3 +96,12 @@ button:disabled { opacity: .5; cursor: wait; }
 .insights-pager { display: flex; gap: 10px; margin-top: 12px; }
 .report-panel { margin: 20px 0; }
 .report-panel details { margin: 10px 0; }
+
+.admin-user-list { display: grid; gap: 16px; }
+.admin-user { border-top: 1px solid #ddd; padding-top: 16px; }
+.admin-role-editor {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+}
+.admin-role-editor label { display: flex; gap: 6px; align-items: center; }
+.admin-role-editor input { width: auto; }
+.admin-role-editor small { color: #555; }
