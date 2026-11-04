@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import SessionRegisterButton from './session-register-button';
 import ScheduleNotice from '../../components/schedule-notice';
 import { formatVietnamDate } from '../../../lib/vietnam-time';
+import { labelStatus } from '../../../lib/status-label';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,7 +105,7 @@ export default async function EventPage({
                   Sức chứa: {session.capacity} · Đã cấp: {session.issuedSeats}
                   {' '}· Phân bổ: {session.allocationMethod ?? 'Chưa cấu hình'}
                 </p>
-                <p className="note">Trạng thái: {session.status}</p>
+                <p className="note">Trạng thái: {labelStatus(session.status)}</p>
                 <ScheduleNotice
                   previousStartsAt={session.previousStartsAt}
                   scheduleChangedAt={session.scheduleChangedAt}
