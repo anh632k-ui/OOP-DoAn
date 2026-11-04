@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { labelRole } from '../../lib/status-label';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ export default async function AccountPage() {
         <h2>Thông tin người dùng</h2>
         <p><strong>Họ tên:</strong> {user.name}</p>
         <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>Vai trò:</strong> {user.roles.join(', ') || 'Chưa có'}</p>
+        <p><strong>Vai trò:</strong> {user.roles.map(labelRole).join(', ') || 'Chưa có'}</p>
         <form method="POST" action="/api/auth/logout">
           <button type="submit">Đăng xuất</button>
         </form>
