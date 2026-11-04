@@ -4,6 +4,7 @@ import {
 import { DatabaseService } from '../database/database.service';
 import { PublicUser } from '../auth/auth.types';
 import { appendAudit } from '../audit/audit';
+import { StaffService } from '../staff/staff.service';
 
 type CheckinBody = { sessionId: string; code: string };
 type Session = { startsAt: Date; endsAt: Date; status: string; eventStatus: string };
@@ -27,7 +28,8 @@ function validateBody(body: unknown): CheckinBody {
 
 @Injectable()
 export class CheckinService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService,
+    private readonly staff: StaffService) {}
 
   async scan(value: unknown, operator: PublicUser) {
     const { sessionId, code } = validateBody(value);
@@ -39,6 +41,7 @@ export class CheckinService {
         WHERE s.ma_suat=$1 FOR SHARE OF s`, [sessionId],
       );
       if (!s.rows[0]) throw new NotFoundException('Không tìm thấy suất');
+      await this.staff.assertCheckinScope(client,operator,sessionId);
       const now = new Date();
       const timeOk = now.getTime() >= s.rows[0].startsAt.getTime()-30*60*1000
         && now <= s.rows[0].endsAt;
@@ -87,23 +90,29 @@ export class CheckinService {
     });
   }
 
-  async stats(id: string) {
-    const [session] = await this.db.queryRows<{ id: string; capacity: number; startsAt: Date }>(
-      `SELECT ma_suat AS id,suc_chua AS capacity,bat_dau AS "startsAt"
-        FROM suat_su_kien WHERE ma_suat=$1`, [id],
-    );
-    if (!session) throw new NotFoundException('Không tìm thấy suất');
-    const [stats] = await this.db.queryRows<{
-      tickets: number; used: number; rejected: number;
-    }>(
-      `SELECT
-        (SELECT count(*)::int FROM ve WHERE ma_suat=$1
-           AND trang_thai IN ('CHUA_SU_DUNG','DA_SU_DUNG')) AS tickets,
-        (SELECT count(*)::int FROM ban_ghi_check_in WHERE ma_suat=$1
-           AND ket_qua='THANH_CONG') AS used,
-        (SELECT count(*)::int FROM ban_ghi_check_in WHERE ma_suat=$1
-           AND ket_qua='TU_CHOI') AS rejected`, [id],
-    );
-    return { ...session, ...stats };
+  async mySessions(operator: PublicUser) {
+    return this.staff.mySessions(operator);
+  }
+
+  async stats(operator: PublicUser, id: string) {
+    return this.db.transaction(async client => {
+      const found = await client.query<{ id: string; capacity: number; startsAt: Date }>(
+        `SELECT ma_suat AS id,suc_chua AS capacity,bat_dau AS "startsAt"
+          FROM suat_su_kien WHERE ma_suat=$1 FOR SHARE`, [id],
+      );
+      const session = found.rows[0];
+      if (!session) throw new NotFoundException('Không tìm thấy suất');
+      await this.staff.assertCheckinScope(client,operator,id);
+      const stats = await client.query<{ tickets: number; used: number; rejected: number }>(
+        `SELECT
+          (SELECT count(*)::int FROM ve WHERE ma_suat=$1
+            AND trang_thai IN ('CHUA_SU_DUNG','DA_SU_DUNG')) AS tickets,
+          (SELECT count(*)::int FROM ban_ghi_check_in
+            WHERE ma_suat=$1 AND ket_qua='THANH_CONG') AS used,
+          (SELECT count(*)::int FROM ban_ghi_check_in
+            WHERE ma_suat=$1 AND ket_qua='TU_CHOI') AS rejected`, [id],
+      );
+      return { ...session, ...stats.rows[0] };
+    });
   }
 }
