@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import OrganizerDashboard from './organizer-dashboard';
+import { labelRole } from '../../lib/status-label';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ export default async function OrganizerPage() {
       <main className="container">
         <Link href="/account">← Tài khoản</Link>
         <h1>Chưa được cấp quyền tổ chức</h1>
-        <p role="status">Tài khoản hiện có vai trò {user.roles.join(', ')}.
+        <p role="status">Tài khoản hiện có vai trò {user.roles.map(labelRole).join(', ')}.
           Chỉ ORGANIZER hoặc ADMIN được quản lý sự kiện.</p>
         <p className="note">Việc cấp quyền phải do quản trị viên thực hiện, không được tự cấp trên giao diện.</p>
       </main>
@@ -63,7 +64,7 @@ export default async function OrganizerPage() {
       <header>
         <p className="eyebrow">MED-06 · QUẢN LÝ SỰ KIỆN</p>
         <h1>Quản lý sự kiện</h1>
-        <p>Đang đăng nhập: {user.name} · {user.roles.join(', ')}</p>
+        <p>Đang đăng nhập: {user.name} · {user.roles.map(labelRole).join(', ')}</p>
       </header>
       <OrganizerDashboard
         events={events.items}
