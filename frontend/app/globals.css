@@ -134,3 +134,13 @@ button:disabled { opacity: .5; cursor: wait; }
   .organizer-tabs .organizer-tab { padding: 10px 6px; font-size: 14px; }
   .container { padding: 28px 16px; }
 }
+
+.session-management-list { list-style: none; margin: 0; padding: 0 !important; }
+.session-management-item {
+  border-top: 1px solid #e5e5e5;
+  padding: 14px 0; overflow-wrap: anywhere;
+}
+.session-management-item:first-child { border-top: 0; }
+.session-management-item p { margin: 4px 0; }
+.session-management-item code { font-size: 12px; }
+.session-management-item button { margin: 8px 8px 0 0 !important; }
