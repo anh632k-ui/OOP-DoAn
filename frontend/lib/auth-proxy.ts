@@ -40,7 +40,11 @@ export async function forwardProtectedApi(
     headers['Content-Type'] = 'application/json';
   }
   try {
-    const response = await fetch(`${api}/api/${backendPath}`, {
+    const query = request.method === 'GET' ? request.nextUrl.search : '';
+    if (query.length > 256) {
+      return NextResponse.json({ message: 'Bộ lọc quá dài' }, { status: 400 });
+    }
+    const response = await fetch(`${api}/api/${backendPath}${query}`, {
       method: request.method,
       headers, body, cache: 'no-store', signal: AbortSignal.timeout(12000),
     });

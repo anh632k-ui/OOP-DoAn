@@ -1,11 +1,12 @@
 import {
   Body, Controller, Get, Param, ParseUUIDPipe,
-  Patch, Post, Put, Req, UseGuards,
+  Patch, Post, Put, Query, Req, UseGuards,
 } from '@nestjs/common';
 import { AuthenticatedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ManagementService } from './management.service';
+import { OrganizerInsightsService } from './organizer-insights.service';
 import { AllocationsService } from '../allocations/allocations.service';
 
 @Controller('manage')
@@ -13,7 +14,8 @@ import { AllocationsService } from '../allocations/allocations.service';
 @Roles('ORGANIZER', 'ADMIN')
 export class ManagementController {
   constructor(private readonly management: ManagementService,
-    private readonly allocations: AllocationsService) {}
+    private readonly allocations: AllocationsService,
+    private readonly insights: OrganizerInsightsService) {}
 
   @Get('events')
   events(@Req() req: AuthenticatedRequest) {
@@ -54,6 +56,14 @@ export class ManagementController {
     @Param('id', ParseUUIDPipe) id: string, @Body() body: unknown) {
     return this.management.setPolicy(req.user!, id, body);
   }
+  @Get('sessions/:id/overview')
+  overview(@Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('page') page?: string,
+    @Query('status') status?: string) {
+    return this.insights.overview(req.user!, id, page, status);
+  }
+
   @Post('sessions/:id/draw')
   draw(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.allocations.draw(req.user!, id);
