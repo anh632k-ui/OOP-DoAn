@@ -10,9 +10,12 @@ async function handle(request: NextRequest, {
   const path = segments.join('/');
   const allowed = request.method === 'GET' && (path === 'users' || path === 'audit')
     || request.method === 'PUT'
-      && new RegExp('^users/' + UUID + '/roles$').test(path);
+      && new RegExp('^users/' + UUID + '/roles$').test(path)
+    || request.method === 'PATCH'
+      && new RegExp('^users/' + UUID + '/status$').test(path);
   return forwardProtectedApi(request, 'admin/' + path, allowed);
 }
 
 export const GET = handle;
 export const PUT = handle;
+export const PATCH = handle;

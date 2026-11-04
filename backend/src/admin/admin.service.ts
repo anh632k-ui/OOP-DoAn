@@ -104,6 +104,48 @@ export class AdminService {
     };
   }
 
+  async setAccountLocked(actor: PublicUser, userId: string, body: unknown) {
+    if (userId === actor.id) {
+      throw new ConflictException('Không được khóa tài khoản của chính mình');
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)
+        || typeof (body as Record<string, unknown>).locked !== 'boolean'
+        || Object.keys(body).some(k => k !== 'locked')) {
+      throw new BadRequestException('Chỉ nhận locked dạng boolean');
+    }
+    const locked = (body as {locked: boolean}).locked;
+    return this.db.transaction(async client => {
+      const target = await client.query<{ id: string; status: string }>(
+        `SELECT ma_nguoi_dung AS id,trang_thai AS status
+          FROM nguoi_dung WHERE ma_nguoi_dung=$1 FOR UPDATE`, [userId],
+      );
+      if (!target.rows[0]) throw new NotFoundException('Không tìm thấy tài khoản');
+      const isAdmin = await client.query(
+        `SELECT 1 FROM nguoi_dung_vai_tro nv
+         JOIN vai_tro r ON r.ma_vai_tro=nv.ma_vai_tro
+         WHERE nv.ma_nguoi_dung=$1 AND r.ten_vai_tro='ADMIN' LIMIT 1`,
+        [userId],
+      );
+      if (isAdmin.rowCount) {
+        throw new ConflictException('Không khóa/mở khóa ADMIN qua giao diện này');
+      }
+      const nextStatus = locked ? 'KHOA' : 'HOAT_DONG';
+      if (nextStatus === target.rows[0].status) {
+        return { id:userId,status:nextStatus,changed:false };
+      }
+      await client.query(
+        `UPDATE nguoi_dung SET trang_thai=$2 WHERE ma_nguoi_dung=$1`,
+        [userId,nextStatus],
+      );
+      await client.query(
+        `INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet)
+          VALUES($1,'CAP_NHAT_TRANG_THAI_TAI_KHOAN',$2::jsonb)`,
+        [actor.id,JSON.stringify({targetUserId:userId,from:target.rows[0].status,to:nextStatus})],
+      );
+      return { id:userId,status:nextStatus,changed:true };
+    });
+  }
+
   async updateRoles(actor: PublicUser, userId: string, value: unknown) {
     const desired = parseRoles(value);
     if (userId === actor.id) {

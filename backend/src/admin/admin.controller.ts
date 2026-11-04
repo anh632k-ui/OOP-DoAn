@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Get, Param, ParseUUIDPipe, Put, Query, Req, UseGuards,
+  Body, Controller, Get, Param, ParseUUIDPipe, Patch, Put, Query, Req, UseGuards,
 } from '@nestjs/common';
 import { AuthenticatedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -20,6 +20,12 @@ export class AdminController {
   @Get('users')
   users(@Query('page') page?: string, @Query('q') q?: string) {
     return this.service.listUsers(page, q);
+  }
+
+  @Patch('users/:id/status')
+  setStatus(@Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string, @Body() body: unknown) {
+    return this.service.setAccountLocked(req.user!, id, body);
   }
 
   @Put('users/:id/roles')
