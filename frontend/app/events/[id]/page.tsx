@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SessionRegisterButton from './session-register-button';
+import ScheduleNotice from '../../components/schedule-notice';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,9 @@ type Session = {
   status: string;
   registrationOpensAt: string;
   registrationClosesAt: string;
+  previousStartsAt: string | null;
+  scheduleChangedAt: string | null;
+  scheduleChangeReason: string | null;
   allocationMethod: string | null;
   venue: string;
   address: string;
@@ -106,6 +110,11 @@ export default async function EventPage({
                   {' '}· Phân bổ: {session.allocationMethod ?? 'Chưa cấu hình'}
                 </p>
                 <p className="note">Trạng thái: {session.status}</p>
+                <ScheduleNotice
+                  previousStartsAt={session.previousStartsAt}
+                  scheduleChangedAt={session.scheduleChangedAt}
+                  scheduleChangeReason={session.scheduleChangeReason}
+                />
                 <p className="note">Đăng ký từ {formatDate(session.registrationOpensAt)}
                   {' '}đến {formatDate(session.registrationClosesAt)}</p>
                 <SessionRegisterButton

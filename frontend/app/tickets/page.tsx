@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import QRCode from 'qrcode';
+import ScheduleNotice from '../components/schedule-notice';
 import { getAuthenticated } from '../../lib/backend';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +9,9 @@ export const dynamic = 'force-dynamic';
 type Ticket = {
   id: string; sessionId: string; code: string; status: string;
   eventTitle: string; startsAt: string; venue: string; address: string;
+  previousStartsAt: string | null;
+  scheduleChangedAt: string | null;
+  scheduleChangeReason: string | null;
 };
 type Response = { items: Ticket[] };
 
@@ -35,6 +39,9 @@ export default async function TicketsPage() {
           timeZone: 'Asia/Ho_Chi_Minh',
         })}</p>
         <p>{ticket.venue} · {ticket.address}</p>
+        <ScheduleNotice previousStartsAt={ticket.previousStartsAt}
+          scheduleChangedAt={ticket.scheduleChangedAt}
+          scheduleChangeReason={ticket.scheduleChangeReason}/>
         <p>Trạng thái: <strong>{ticket.status}</strong></p>
         {ticket.qr && <div>
           <img src={ticket.qr} alt="Mã QR vé điện tử để nhân viên quét" width={240} height={240} />

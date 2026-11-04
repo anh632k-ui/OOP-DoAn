@@ -26,6 +26,9 @@ export type SessionSummary = {
   status: string;
   registrationOpensAt: Date;
   registrationClosesAt: Date;
+  previousStartsAt: Date | null;
+  scheduleChangedAt: Date | null;
+  scheduleChangeReason: string | null;
   allocationMethod: string | null;
   venue: string;
   address: string;

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getAuthenticated } from '../../lib/backend';
 import CancelButton from './cancel-button';
+import ScheduleNotice from '../components/schedule-notice';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,9 @@ type Registration = {
   id: string; sessionId: string; eventTitle: string;
   startsAt: string; status: string; waitingPosition: number | null;
   waitingStatus: string | null; ticketStatus: string | null;
+  previousStartsAt: string | null;
+  scheduleChangedAt: string | null;
+  scheduleChangeReason: string | null;
 };
 type Response = { items: Registration[] };
 
@@ -30,6 +34,9 @@ export default async function RegistrationsPage() {
               timeZone: 'Asia/Ho_Chi_Minh',
             })}</p>
             <p>Trạng thái: <strong>{item.status}</strong></p>
+            <ScheduleNotice previousStartsAt={item.previousStartsAt}
+              scheduleChangedAt={item.scheduleChangedAt}
+              scheduleChangeReason={item.scheduleChangeReason}/>
             {item.waitingStatus === 'DANG_CHO' && (
               <p>Thứ tự danh sách chờ: {item.waitingPosition}</p>
             )}
