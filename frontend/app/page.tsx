@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { formatVietnamDate } from '../lib/vietnam-time';
+import { getAuthenticated } from '../lib/backend';
 
 type EventSummary = {
   id: string;
@@ -10,6 +11,7 @@ type EventSummary = {
 };
 
 type HealthResponse = { status?: string; database?: string };
+type CurrentUser = { name: string; roles: string[] };
 type EventsResponse = { items: EventSummary[] };
 type FeaturesResponse = { items: { id: string; name: string }[] };
 
@@ -68,8 +70,8 @@ export default async function Home({
   const filters = await searchParams;
   const q = typeof filters.q === 'string' ? filters.q.trim().slice(0, 100) : '';
   const featureId = typeof filters.featureId === 'string' ? filters.featureId : '';
-  const [connected, events, features] = await Promise.all([
-    checkBackend(), loadEvents(q, featureId), getFeatures(),
+  const [connected, events, features, currentUser] = await Promise.all([
+    checkBackend(), loadEvents(q, featureId), getFeatures(), getAuthenticated<CurrentUser>('auth/me'),
   ]);
 
   return (
@@ -78,18 +80,25 @@ export default async function Home({
         <p className="eyebrow">MED-06 · CỔNG SỰ KIỆN VĂN HÓA</p>
         <h1>Cổng quản lý sự kiện văn hóa và vé miễn phí</h1>
         <p>Khám phá chương trình và những suất tổ chức miễn phí.</p>
-        <nav className="auth-nav" aria-label="Tài khoản">
-          <Link href="/account/login">Đăng nhập</Link>
-          <Link href="/account/register">Đăng ký</Link>
-          <Link href="/account">Tài khoản của tôi</Link>
-          <Link href="/organizer">Quản lý sự kiện</Link>
-          <Link href="/registrations">Đăng ký của tôi</Link>
-          <Link href="/tickets">Vé của tôi</Link>
-          <Link href="/checkin">Check-in</Link>
+        <p className="note">Lịch tổ chức và thời hạn đăng ký theo giờ Hà Nội (UTC+7).</p>
+        <nav className="auth-nav" aria-label="Điều hướng chức năng">
+          {!currentUser ? <>
+            <Link href="/account/login">Đăng nhập</Link>
+            <Link href="/account/register">Đăng ký tài khoản</Link>
+          </> : <>
+            <Link href="/account">Tài khoản của tôi</Link>
+            <Link href="/registrations">Đăng ký của tôi</Link>
+            <Link href="/tickets">Vé điện tử</Link>
+            {currentUser.roles.some(role => role === 'ADMIN' || role === 'ORGANIZER') &&
+              <Link href="/organizer">Quản lý sự kiện</Link>}
+            {currentUser.roles.some(role => role === 'ADMIN' || role === 'CHECKIN') &&
+              <Link href="/checkin">Kiểm tra vé</Link>}
+            {currentUser.roles.includes('ADMIN') && <Link href="/admin">Quản trị</Link>}
+          </>}
         </nav>
       </header>
 
-      <section className="panel" aria-labelledby="system-status">
+      {currentUser?.roles.includes('ADMIN') && <section className="panel" aria-labelledby="system-status">
         <h2 id="system-status">Trạng thái hệ thống</h2>
         <p>
           <span className={connected ? 'status ok' : 'status error'}>
@@ -97,7 +106,7 @@ export default async function Home({
           </span>
           {' '}NestJS API và PostgreSQL
         </p>
-      </section>
+      </section>}
 
       <section className="panel" aria-labelledby="event-list">
         <h2 id="event-list">Sự kiện đã công bố</h2>
