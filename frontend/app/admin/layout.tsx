@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getAuthenticated } from '../../lib/backend';
+import AdminNav from './admin-nav';
 
 type AdminUser = { name: string; roles: string[] };
 
@@ -17,13 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <small>TRUNG TÂM QUẢN TRỊ</small>
         </div>
         <p className="admin-workspace-caption">Điều hướng</p>
-        <nav className="admin-workspace-nav" aria-label="Điều hướng quản trị">
-          <Link href="/admin">Tổng quan</Link>
-          <Link href="/admin/users">Người dùng & phân quyền</Link>
-          <Link href="/admin/audit">Nhật ký hệ thống</Link>
-          <Link href="/organizer">Sự kiện & suất</Link>
-          <Link href="/checkin">Kiểm tra vé</Link>
-        </nav>
+        <AdminNav />
         <div className="admin-workspace-bottom">
           <span>Quản trị viên</span>
           <strong>{user.name}</strong>
