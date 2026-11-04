@@ -74,91 +74,133 @@ export default async function Home({
     checkBackend(), loadEvents(q, featureId), getFeatures(), getAuthenticated<CurrentUser>('auth/me'),
   ]);
 
-  return (
-    <main className="container">
-      <header>
-        <p className="eyebrow">MED-06 · CỔNG SỰ KIỆN VĂN HÓA</p>
-        <h1>Cổng quản lý sự kiện văn hóa và vé miễn phí</h1>
-        <p>Khám phá chương trình và những suất tổ chức miễn phí.</p>
-        <p className="note">Lịch tổ chức và thời hạn đăng ký theo giờ Hà Nội (UTC+7).</p>
-        <nav className="auth-nav" aria-label="Điều hướng chức năng">
-          {!currentUser ? <>
-            <Link href="/account/login">Đăng nhập</Link>
-            <Link href="/account/register">Đăng ký tài khoản</Link>
-          </> : <>
-            <Link href="/account">Tài khoản của tôi</Link>
-            <Link href="/registrations">Đăng ký của tôi</Link>
-            <Link href="/tickets">Vé điện tử</Link>
-            {currentUser.roles.some(role => role === 'ADMIN' || role === 'ORGANIZER') &&
-              <Link href="/organizer">Quản lý sự kiện</Link>}
-            {currentUser.roles.some(role => role === 'ADMIN' || role === 'CHECKIN') &&
-              <Link href="/checkin">Kiểm tra vé</Link>}
-            {currentUser.roles.includes('ADMIN') && <Link href="/admin">Quản trị</Link>}
-          </>}
-        </nav>
-      </header>
-
-      {currentUser?.roles.includes('ADMIN') && <section className="panel" aria-labelledby="system-status">
-        <h2 id="system-status">Trạng thái hệ thống</h2>
-        <p>
-          <span className={connected ? 'status ok' : 'status error'}>
-            {connected ? 'Đã kết nối' : 'Chưa kết nối'}
-          </span>
-          {' '}NestJS API và PostgreSQL
+  return <main id="main-content" className="home-page">
+    <section className="hero-section" aria-labelledby="home-title">
+      <div className="hero-content">
+        <p className="hero-kicker"><span className="hero-kicker-dot"/> CỔNG SỰ KIỆN VĂN HÓA · MED-06</p>
+        <h1 id="home-title">Chạm vào<br/><em>văn hóa.</em><br/>Kết nối mọi người.</h1>
+        <p className="hero-description">
+          Khám phá triển lãm, âm nhạc và những trải nghiệm văn hóa đặc sắc.
+          Đăng ký suất tham dự miễn phí, nhận vé điện tử ngay trên một nền tảng.
         </p>
-      </section>}
+        <div className="hero-actions">
+          <a href="#su-kien" className="button-primary">Khám phá sự kiện <span aria-hidden="true">↗</span></a>
+          <a href="#huong-dan" className="button-secondary">Cách tham gia <span aria-hidden="true">↓</span></a>
+        </div>
+        <div className="hero-details" aria-label="Thông tin sử dụng">
+          <span><strong>100%</strong> vé miễn phí</span>
+          <span className="hero-details-separator" aria-hidden="true"/>
+          <span><strong>QR</strong> check-in nhanh</span>
+          <span className="hero-details-separator" aria-hidden="true"/>
+          <span><strong>UTC+7</strong> giờ Hà Nội</span>
+        </div>
+      </div>
+      <div className="hero-art" aria-hidden="true">
+        <div className="hero-art-glow"/>
+        <div className="hero-art-top"><span>MED·06 / CULTURE</span><span>2026</span></div>
+        <div className="hero-art-figure">
+          <span className="hero-ring hero-ring-one"/><span className="hero-ring hero-ring-two"/>
+          <span className="hero-sun"/><span className="hero-wave hero-wave-one"/><span className="hero-wave hero-wave-two"/>
+        </div>
+        <div className="hero-art-bottom">
+          <span>THƯỞNG THỨC<br/>VĂN HÓA</span>
+          <span>FREE<br/>ENTRY</span>
+        </div>
+      </div>
+    </section>
 
-      <section className="panel" aria-labelledby="event-list">
-        <h2 id="event-list">Sự kiện đã công bố</h2>
-        <form method="GET" className="search-form" role="search">
-          <label>Tìm kiếm tên hoặc mô tả
-            <input type="search" name="q" defaultValue={q}
-              placeholder="Ví dụ: di sản, dân gian" maxLength={100}/>
-          </label>
-          <label>Đặc tính tiếp cận đã xác nhận
-            <select name="featureId" defaultValue={featureId}>
-              <option value="">Tất cả</option>
-              {features.items.map(feature => <option key={feature.id} value={feature.id}>
-                {feature.name}
-              </option>)}
-            </select>
-          </label>
-          <button type="submit">Tìm sự kiện</button>
-        </form>
-        {events === null ? (
-          <p role="status">Chưa tải được danh sách sự kiện. Kiểm tra backend.</p>
-        ) : events.length === 0 ? (
-          <p role="status">
-            Chưa có sự kiện. Có thể nạp dữ liệu minh họa bằng lệnh
-            {' '}<code>docker compose --profile seed run --rm seed</code>.
-          </p>
-        ) : (
-          <ul className="event-list">
-            {events.map((event) => (
-              <li key={event.id} className="event-item">
-                <h3>
-                  <Link href={`/events/${event.id}`}>
-                    {event.title}
-                  </Link>
-                </h3>
-                <p>{event.description}</p>
-                <p className="note">
-                  {event.sessionCount} suất · Suất đầu tiên: {formatDate(event.nextSessionAt)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+    <section id="su-kien" className="discover-section" aria-labelledby="event-list">
+      <div className="section-heading">
+        <div>
+          <p className="section-kicker">SỰ KIỆN ĐANG DIỄN RA & SẮP TỚI</p>
+          <h2 id="event-list">Khám phá <em>sự kiện</em></h2>
+          <p>Tìm một trải nghiệm phù hợp và dành chỗ cho mình.</p>
+        </div>
+        <span className="heading-ornament" aria-hidden="true">✳</span>
+      </div>
 
-      <section className="panel" aria-labelledby="how-it-works">
-        <h2 id="how-it-works">Cách tham gia sự kiện</h2>
-        <p>Chọn sự kiện, xem suất tổ chức và đăng ký vé miễn phí.
-          Với FCFS, vé được phân bổ theo thứ tự đăng ký;
-          với Lottery, kết quả được công bố sau đợt bốc thăm.</p>
-        <p>Vé điện tử có mã QR để nhân viên xác nhận khi vào cổng.
-          Mỗi vé chỉ được check-in một lần.</p>
-      </section>
-    </main>
-  );
+      <form method="GET" className="discover-search" role="search">
+        <label className="search-query">
+          <span>Tìm theo tên hoặc nội dung</span>
+          <input type="search" name="q" defaultValue={q}
+            placeholder="Nhập tên sự kiện, ví dụ: di sản..." maxLength={100}/>
+        </label>
+        <label className="search-accessibility">
+          <span>Đặc tính tiếp cận</span>
+          <select name="featureId" defaultValue={featureId}>
+            <option value="">Tất cả các sự kiện</option>
+            {features.items.map(feature =>
+              <option key={feature.id} value={feature.id}>{feature.name}</option>)}
+          </select>
+        </label>
+        <button type="submit" className="button-primary">Tìm sự kiện <span aria-hidden="true">→</span></button>
+      </form>
+
+      {events === null ? <div className="state-message" role="status">
+        <strong>Chưa thể tải danh sách sự kiện</strong>
+        <p>Vui lòng thử tải lại trang. Nếu tình trạng tiếp diễn, hãy kiểm tra kết nối máy chủ.</p>
+      </div> : events.length === 0 ? <div className="state-message" role="status">
+        <strong>Chưa tìm thấy sự kiện phù hợp</strong>
+        <p>Hãy thử một từ khóa khác hoặc chọn lại bộ lọc.</p>
+        <Link href="/#su-kien">Xem tất cả sự kiện</Link>
+      </div> : (
+        <ul className="discover-grid">
+          {events.map((event,index) => (
+            <li key={event.id} className="discover-card">
+              <Link href={'/events/' + event.id} className="discover-card-link"
+                aria-label={'Xem chi tiết ' + event.title}>
+                <div className={'discover-poster poster-' + (index % 4)}>
+                  <span className="discover-poster-label">MED · 06</span>
+                  <span className="poster-graphic" aria-hidden="true"/>
+                  <span className="discover-poster-bottom">SỰ KIỆN VĂN HÓA</span>
+                </div>
+                <div className="discover-card-body">
+                  <span className="event-category"><span aria-hidden="true">●</span> Vé miễn phí</span>
+                  <h3>{event.title}</h3>
+                  <p className="discover-description">{event.description}</p>
+                  <div className="discover-card-meta">
+                    <span>{event.sessionCount} suất tổ chức</span>
+                    <span>{formatDate(event.nextSessionAt)}</span>
+                  </div>
+                  <span className="discover-link">Xem chi tiết <span aria-hidden="true">↗</span></span>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+
+    <section id="huong-dan" className="steps-section" aria-labelledby="steps-title">
+      <div className="section-heading">
+        <div>
+          <p className="section-kicker">CHỈ VỚI 3 BƯỚC</p>
+          <h2 id="steps-title">Tham gia <em>thật dễ dàng</em></h2>
+        </div>
+      </div>
+      <div className="steps-grid">
+        <article><span className="step-number">01</span><h3>Khám phá</h3>
+          <p>Chọn sự kiện văn hóa và xem suất tổ chức, địa điểm, thời gian phù hợp.</p></article>
+        <article><span className="step-number">02</span><h3>Đăng ký miễn phí</h3>
+          <p>Đăng ký FCFS hoặc tham gia bốc thăm Lottery theo chính sách từng suất.</p></article>
+        <article><span className="step-number">03</span><h3>Nhận vé & check-in</h3>
+          <p>Khi được cấp vé, xuất trình QR tại cổng. Mỗi vé chỉ check-in một lần.</p></article>
+      </div>
+    </section>
+
+    <section className="join-section">
+      <div>
+        <p className="section-kicker">CÙNG THAM GIA</p>
+        <h2>Hẹn gặp bạn tại<br/><em>sự kiện tiếp theo.</em></h2>
+        <p>Vé miễn phí. Trải nghiệm văn hóa đáng nhớ.</p>
+      </div>
+      <Link href={currentUser ? '/account' : '/account/register'}
+        className="button-primary">{currentUser ? 'Tài khoản của tôi' : 'Tạo tài khoản miễn phí'} <span aria-hidden="true">↗</span></Link>
+    </section>
+    {currentUser?.roles.includes('ADMIN') && <details className="home-system-details">
+      <summary>Trạng thái kết nối hệ thống</summary>
+      <p><span className={connected ? 'status ok' : 'status error'}>
+        {connected ? 'Đã kết nối' : 'Chưa kết nối'}</span> NestJS API & PostgreSQL</p>
+    </details>}
+  </main>;
 }
