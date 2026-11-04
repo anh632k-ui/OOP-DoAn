@@ -115,25 +115,122 @@ export class ManagementService {
     });
   }
 
+  private async invalidateRegistrations(
+    client: PoolClient, sessionIds: string[],
+  ) {
+    if (sessionIds.length === 0) {
+      return { invalidatedTickets: 0, canceledRegistrations: 0, withdrawnWaiters: 0 };
+    }
+    const tickets = await client.query(
+      `UPDATE ve SET trang_thai='VO_HIEU'
+         WHERE ma_suat=ANY($1::uuid[]) AND trang_thai='CHUA_SU_DUNG'`,
+      [sessionIds],
+    );
+    const registrations = await client.query(
+      `UPDATE dang_ky SET trang_thai='DA_HUY'
+         WHERE ma_suat=ANY($1::uuid[])
+           AND trang_thai IN ('CHO_PHAN_BO','DANH_SACH_CHO','DA_XAC_NHAN')`,
+      [sessionIds],
+    );
+    const waiting = await client.query(
+      `UPDATE muc_danh_sach_cho w SET trang_thai='DA_RUT'
+         FROM dang_ky d
+         WHERE w.ma_dang_ky=d.ma_dang_ky
+           AND d.ma_suat=ANY($1::uuid[])
+           AND w.trang_thai='DANG_CHO'`,
+      [sessionIds],
+    );
+    return {
+      invalidatedTickets: tickets.rowCount ?? 0,
+      canceledRegistrations: registrations.rowCount ?? 0,
+      withdrawnWaiters: waiting.rowCount ?? 0,
+    };
+  }
+
+  private async assertCancelable(client: PoolClient, sessionIds: string[],
+    sessions: Array<{ startsAt: Date }>) {
+    if (sessions.some(s => s.startsAt.getTime() <= Date.now() + 30 * 60 * 1000)) {
+      throw new ConflictException(
+        'Không thể hủy khi còn dưới 30 phút đến giờ bắt đầu hoặc suất đã diễn ra',
+      );
+    }
+    if (sessionIds.length === 0) return;
+    const used = await client.query(
+      `SELECT 1 FROM ve WHERE ma_suat=ANY($1::uuid[])
+        AND trang_thai='DA_SU_DUNG' LIMIT 1`,
+      [sessionIds],
+    );
+    if (used.rowCount) {
+      throw new ConflictException('Đã có vé được sử dụng; không thể hủy');
+    }
+  }
+
+  private async writeCancellationAudit(
+    client: PoolClient, user: PublicUser, action: string,
+    eventId: string, sessionIds: string[],
+    affected: { invalidatedTickets: number; canceledRegistrations: number; withdrawnWaiters: number },
+  ) {
+    await client.query(
+      `INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet)
+        VALUES($1,$2,$3::jsonb)`,
+      [user.id, action, JSON.stringify({ eventId, sessionIds, ...affected })],
+    );
+  }
+
   async cancelEmptyEvent(user: PublicUser, id: string) {
     return this.db.transaction(async client => {
       const event = await this.lockEvent(client, user, id, false);
       if (event.status === 'DA_HUY') throw new ConflictException('Sự kiện đã hủy');
-      const used = await client.query<{ count: number }>(
-        `SELECT count(*)::int AS count FROM dang_ky d
-           JOIN suat_su_kien s ON s.ma_suat=d.ma_suat WHERE s.ma_su_kien=$1`,
+      const allSessions = await client.query<{ id: string; startsAt: Date; status: string }>(
+        `SELECT ma_suat AS id,bat_dau AS "startsAt",trang_thai AS status
+          FROM suat_su_kien WHERE ma_su_kien=$1 ORDER BY ma_suat FOR UPDATE`,
         [id],
       );
-      if (used.rows[0]?.count) {
-        throw new ConflictException('Sự kiện đã có đăng ký; xử lý hoàn vé ở giai đoạn sau');
-      }
+      const active = allSessions.rows.filter(s => s.status !== 'DA_HUY');
+      const sessionIds = active.map(s => s.id);
+      await this.assertCancelable(client, sessionIds, active);
+      const affected = await this.invalidateRegistrations(client, sessionIds);
       await client.query(
-        `UPDATE suat_su_kien SET trang_thai='DA_HUY' WHERE ma_su_kien=$1`, [id],
+        `UPDATE suat_su_kien SET trang_thai='DA_HUY'
+           WHERE ma_su_kien=$1 AND trang_thai<>'DA_HUY'`, [id],
       );
       await client.query(
         `UPDATE su_kien SET trang_thai='DA_HUY' WHERE ma_su_kien=$1`, [id],
       );
-      return { id, status: 'DA_HUY' };
+      await this.writeCancellationAudit(
+        client, user, 'HUY_SU_KIEN', id, sessionIds, affected,
+      );
+      return { id, status: 'DA_HUY', ...affected };
+    });
+  }
+
+  async cancelSession(user: PublicUser, sessionId: string) {
+    return this.db.transaction(async client => {
+      const parent = await client.query<{ eventId: string }>(
+        `SELECT ma_su_kien AS "eventId" FROM suat_su_kien WHERE ma_suat=$1`,
+        [sessionId],
+      );
+      if (!parent.rows[0]) throw new NotFoundException('Không tìm thấy suất');
+      const event = await this.lockEvent(client, user, parent.rows[0].eventId, false);
+      if (event.status === 'DA_HUY') throw new ConflictException('Sự kiện đã hủy');
+      const locked = await client.query<{ status: string; startsAt: Date }>(
+        `SELECT trang_thai AS status,bat_dau AS "startsAt"
+          FROM suat_su_kien WHERE ma_suat=$1 FOR UPDATE`,
+        [sessionId],
+      );
+      if (locked.rows[0].status === 'DA_HUY') {
+        throw new ConflictException('Suất này đã hủy');
+      }
+      await this.assertCancelable(client, [sessionId], [locked.rows[0]]);
+      const affected = await this.invalidateRegistrations(client, [sessionId]);
+      await client.query(
+        `UPDATE suat_su_kien SET trang_thai='DA_HUY' WHERE ma_suat=$1`,
+        [sessionId],
+      );
+      await this.writeCancellationAudit(
+        client, user, 'HUY_SUAT', event.id, [sessionId], affected,
+      );
+      return { id: sessionId, status: 'DA_HUY', ...affected };
     });
   }
 

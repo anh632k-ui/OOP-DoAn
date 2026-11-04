@@ -101,9 +101,16 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
   }
 
   function cancelEvent() {
-    if (!eventId || !window.confirm('Bạn muốn hủy sự kiện này?')) return;
+    if (!eventId || !window.confirm('Hủy sự kiện và toàn bộ đăng ký chưa diễn ra? Vé chưa dùng sẽ bị vô hiệu, thao tác không thể hoàn tác.')) return;
     void perform(async () => {
       await request(`events/${eventId}/cancel`, 'POST');
+    });
+  }
+
+  function cancelSession(sessionId: string) {
+    if (!window.confirm('Hủy suất này? Đăng ký bị hủy, vé chưa dùng sẽ bị vô hiệu.')) return;
+    void perform(async () => {
+      await request('sessions/' + sessionId + '/cancel', 'POST');
     });
   }
 
@@ -256,7 +263,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       {chosen && chosen.status !== 'DA_HUY' && (
         <section className="panel">
           <h2>Hủy sự kiện</h2>
-          <p className="note">Chỉ được hủy khi sự kiện chưa có đăng ký.</p>
+          <p className="note">Hủy sự kiện sẽ vô hiệu vé chưa dùng và hủy các đăng ký liên quan. Không thể hủy trong 30 phút trước giờ diễn ra hoặc sau khi có vé check-in.</p>
           <button type="button" disabled={busy} onClick={cancelEvent}>
             Hủy sự kiện
           </button>
@@ -279,6 +286,12 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           {sessions.length ? <ul>{sessions.map(s => <li key={s.id}>
             <code>{s.id}</code> · {new Date(s.startsAt).toLocaleString('vi-VN')}
             {' '}· {s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
+            {' '}· {s.status}
+            {s.status !== 'DA_HUY' && new Date(s.startsAt).getTime() >
+              Date.now() + 30 * 60 * 1000 && chosen.status !== 'DA_HUY' && (
+                <button type="button" disabled={busy}
+                  onClick={() => cancelSession(s.id)}>Hủy suất</button>
+              )}
             {s.method === 'LOTTERY' && new Date(s.registrationClosesAt).getTime() <= Date.now()
               && s.status !== 'DONG_DANG_KY' && (
                 <button type="button" disabled={busy} onClick={() => runDraw(s.id)}>

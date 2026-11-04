@@ -38,6 +38,12 @@ export class ManagementController {
   cancel(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.management.cancelEmptyEvent(req.user!, id);
   }
+  @Post('sessions/:id/cancel')
+  cancelSession(@Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string) {
+    return this.management.cancelSession(req.user!, id);
+  }
+
   @Get('venues')
   venues() { return this.management.listVenues(); }
   @Post('venues')

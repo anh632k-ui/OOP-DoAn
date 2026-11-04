@@ -34,7 +34,7 @@ export class CheckinService {
         `SELECT s.bat_dau AS "startsAt",s.ket_thuc AS "endsAt",
            s.trang_thai AS status,e.trang_thai AS "eventStatus"
         FROM suat_su_kien s JOIN su_kien e ON e.ma_su_kien=s.ma_su_kien
-        WHERE s.ma_suat=$1`, [sessionId],
+        WHERE s.ma_suat=$1 FOR SHARE OF s`, [sessionId],
       );
       if (!s.rows[0]) throw new NotFoundException('Không tìm thấy suất');
       const now = new Date();
