@@ -153,6 +153,9 @@ export class RegistrationsService {
     const items = await this.db.queryRows(
       `SELECT d.ma_dang_ky AS id,d.ma_suat AS "sessionId",
          e.ten_su_kien AS "eventTitle",s.bat_dau AS "startsAt",
+         s.bat_dau_cu AS "previousStartsAt",
+         s.doi_lich_luc AS "scheduleChangedAt",
+         s.ly_do_doi_lich AS "scheduleChangeReason",
          d.trang_thai AS status,d.thoi_gian_dang_ky AS "registeredAt",
          w.thu_tu AS "waitingPosition",w.trang_thai AS "waitingStatus",
          v.ma_ve AS "ticketId",v.trang_thai AS "ticketStatus"
@@ -174,6 +177,9 @@ export class RegistrationsService {
         v.ma_xac_thuc AS code,v.trang_thai AS status,
         v.ngay_cap AS "issuedAt",s.bat_dau AS "startsAt",
         s.ket_thuc AS "endsAt",e.ten_su_kien AS "eventTitle",
+        s.bat_dau_cu AS "previousStartsAt",
+        s.doi_lich_luc AS "scheduleChangedAt",
+        s.ly_do_doi_lich AS "scheduleChangeReason",
         dd.ten_dia_diem AS venue,dd.dia_chi AS address
       FROM ve v
       JOIN dang_ky d ON d.ma_dang_ky=v.ma_dang_ky
