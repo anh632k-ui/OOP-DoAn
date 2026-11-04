@@ -75,7 +75,7 @@ export default async function Home({
   return (
     <main className="container">
       <header>
-        <p className="eyebrow">MED-06 · GIAI ĐOẠN 3</p>
+        <p className="eyebrow">MED-06 · CỔNG SỰ KIỆN VĂN HÓA</p>
         <h1>Cổng quản lý sự kiện văn hóa và vé miễn phí</h1>
         <p>Khám phá chương trình và những suất tổ chức miễn phí.</p>
         <nav className="auth-nav" aria-label="Tài khoản">
@@ -142,9 +142,13 @@ export default async function Home({
         )}
       </section>
 
-      <section className="panel" aria-labelledby="next-steps">
-        <h2 id="next-steps">Chức năng tiếp theo</h2>
-        <p>Tiếp theo: quản lý sự kiện, đăng ký suất, FCFS/Lottery và check-in.</p>
+      <section className="panel" aria-labelledby="how-it-works">
+        <h2 id="how-it-works">Cách tham gia sự kiện</h2>
+        <p>Chọn sự kiện, xem suất tổ chức và đăng ký vé miễn phí.
+          Với FCFS, vé được phân bổ theo thứ tự đăng ký;
+          với Lottery, kết quả được công bố sau đợt bốc thăm.</p>
+        <p>Vé điện tử có mã QR để nhân viên xác nhận khi vào cổng.
+          Mỗi vé chỉ được check-in một lần.</p>
       </section>
     </main>
   );
