@@ -17,35 +17,107 @@ type Registration = {
   scheduleChangeReason: string | null;
 };
 type Response = { items: Registration[] };
+type Tab = 'confirmed' | 'pending' | 'history';
 
-export default async function RegistrationsPage() {
-  const result = await getAuthenticated<Response>('registrations/mine');
-  if (!result) redirect('/account/login');
+function groupOf(item: Registration): Tab {
+  if (item.status === 'DA_XAC_NHAN') {
+    return item.ticketStatus === 'DA_SU_DUNG' || item.ticketStatus === 'VO_HIEU'
+      ? 'history' : 'confirmed';
+  }
+  if (item.status === 'CHO_PHAN_BO' || item.status === 'DANH_SACH_CHO') return 'pending';
+  return 'history';
+}
 
-  return <main id="main-content" className="container">
-    <Link href="/account">← Tài khoản</Link>
-    <header><p className="eyebrow">MED-06 · ĐĂNG KÝ</p>
-      <h1>Đăng ký suất của tôi</h1></header>
-    <section className="panel">
-      {!result.items.length ? <p>Chưa có đăng ký nào.
-        {' '}<Link href="/">Khám phá sự kiện</Link></p>
-        : <ul className="event-list">{result.items.map(item =>
-          <li className="event-item" key={item.id}>
-            <h2>{item.eventTitle}</h2>
-            <p>{formatVietnamDate(item.startsAt, 'short')}</p>
-            <p>Trạng thái: <strong>{labelStatus(item.status)}</strong></p>
-            <ScheduleNotice previousStartsAt={item.previousStartsAt}
-              scheduleChangedAt={item.scheduleChangedAt}
-              scheduleChangeReason={item.scheduleChangeReason}/>
-            {item.waitingStatus === 'DANG_CHO' && (
-              <p>Thứ tự danh sách chờ: {item.waitingPosition}</p>
-            )}
-            {item.ticketStatus && <p>Trạng thái vé: {labelStatus(item.ticketStatus)}
-              {' · '}<Link href="/tickets">Xem vé điện tử</Link></p>}
-            {!['DA_HUY','TU_CHOI'].includes(item.status)
-              && <CancelButton id={item.id}/>}
-          </li>
-        )}</ul>}
-    </section>
-  </main>;
+export default async function RegistrationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const response = await getAuthenticated<Response>('registrations/mine');
+  if (!response) redirect('/account/login');
+  const params = await searchParams;
+
+  const groups: Record<Tab, Registration[]> = {
+    confirmed: [], pending: [], history: [],
+  };
+  for (const item of response.items) groups[groupOf(item)].push(item);
+  const tabs: { key: Tab; title: string }[] = [
+    { key: 'confirmed', title: 'Đã xác nhận' },
+    { key: 'pending', title: 'Đang chờ' },
+    { key: 'history', title: 'Lịch sử' },
+  ];
+  const requested = params.tab;
+  const active: Tab = requested === 'confirmed' || requested === 'pending' || requested === 'history'
+    ? requested : groups.confirmed.length ? 'confirmed' : groups.pending.length ? 'pending' : 'history';
+  const content = groups[active];
+
+  return (
+    <main id="main-content" className="container registrations-page">
+      <Link href="/account" className="back-link">← Tài khoản</Link>
+      <header>
+        <p className="eyebrow">MED-06 · HOẠT ĐỘNG CỦA TÔI</p>
+        <h1>Đăng ký của tôi</h1>
+        <p>Theo dõi kết quả, vị trí chờ và những lượt đăng ký đã kết thúc.</p>
+      </header>
+
+      <nav className="wallet-tabs" aria-label="Lọc đăng ký theo trạng thái">
+        {tabs.map(tab => (
+          <Link key={tab.key} href={`/registrations?tab=${tab.key}`}
+            className={active === tab.key ? 'wallet-tab active' : 'wallet-tab'}
+            aria-current={active === tab.key ? 'page' : undefined}>
+            {tab.title} <span>{groups[tab.key].length}</span>
+          </Link>
+        ))}
+      </nav>
+
+      <section className="panel wallet-panel" aria-live="polite">
+        {content.length === 0 ? (
+          <div className="wallet-empty">
+            <h2>Chưa có đăng ký trong mục này</h2>
+            <p>{active === 'pending'
+              ? 'Khi một đăng ký đang chờ kết quả hoặc danh sách chờ, thông tin sẽ hiển thị ở đây.'
+              : active === 'confirmed'
+                ? 'Khi nhận được vé, lượt đăng ký sẽ được hiển thị tại đây.'
+                : 'Các lượt đã hủy, không được cấp vé hoặc đã hoàn tất sẽ xuất hiện tại đây.'}</p>
+            <Link href="/#su-kien">Khám phá sự kiện <span aria-hidden="true">↗</span></Link>
+          </div>
+        ) : (
+          <ul className="registration-cards">
+            {content.map(item => (
+              <li className="registration-card" key={item.id}>
+                <div className="registration-card-top">
+                  <div>
+                    <h2>{item.eventTitle}</h2>
+                    <p>{formatVietnamDate(item.startsAt, 'short')} · Giờ Hà Nội (UTC+7)</p>
+                  </div>
+                  <span className="registration-card-status">{labelStatus(item.status)}</span>
+                </div>
+                <ScheduleNotice previousStartsAt={item.previousStartsAt}
+                  scheduleChangedAt={item.scheduleChangedAt}
+                  scheduleChangeReason={item.scheduleChangeReason}/>
+                {item.waitingStatus === 'DANG_CHO' && item.waitingPosition != null && (
+                  <p className="registration-wait">Vị trí trong danh sách chờ: <strong>{item.waitingPosition}</strong></p>
+                )}
+                {item.status === 'CHO_PHAN_BO' && (
+                  <p className="note">Yêu cầu đã được tiếp nhận. Kết quả cấp vé sẽ có sau khi kết thúc đăng ký.</p>
+                )}
+                {item.ticketStatus && (
+                  <p className="note">Vé: <strong>{labelStatus(item.ticketStatus)}</strong></p>
+                )}
+                <div className="registration-card-actions">
+                  {item.ticketStatus === 'CHUA_SU_DUNG' && (
+                    <Link className="button-secondary" href="/tickets">Xem vé của tôi <span aria-hidden="true">↗</span></Link>
+                  )}
+                  {!['DA_HUY', 'TU_CHOI'].includes(item.status)
+                    && item.ticketStatus !== 'DA_SU_DUNG'
+                    && new Date(item.startsAt).getTime() > Date.now()
+                    && <CancelButton id={item.id}/>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
 }

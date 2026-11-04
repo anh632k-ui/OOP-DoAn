@@ -81,7 +81,7 @@ export default async function Home({
         <h1 id="home-title">Chạm vào<br/><em>văn hóa.</em><br/>Kết nối mọi người.</h1>
         <p className="hero-description">
           Khám phá triển lãm, âm nhạc và những trải nghiệm văn hóa đặc sắc.
-          Đăng ký suất tham dự miễn phí, nhận vé điện tử ngay trên một nền tảng.
+          Gửi yêu cầu tham dự miễn phí và nhận vé điện tử khi được xác nhận.
         </p>
         <div className="hero-actions">
           <a href="#su-kien" className="button-primary">Khám phá sự kiện <span aria-hidden="true">↗</span></a>
@@ -182,7 +182,7 @@ export default async function Home({
         <article><span className="step-number">01</span><h3>Khám phá</h3>
           <p>Chọn sự kiện văn hóa và xem suất tổ chức, địa điểm, thời gian phù hợp.</p></article>
         <article><span className="step-number">02</span><h3>Đăng ký miễn phí</h3>
-          <p>Đăng ký FCFS hoặc tham gia bốc thăm Lottery theo chính sách từng suất.</p></article>
+          <p>Chọn thời gian phù hợp và gửi đăng ký. Kết quả được xác nhận ngay hoặc sau hạn đăng ký tùy từng suất.</p></article>
         <article><span className="step-number">03</span><h3>Nhận vé & check-in</h3>
           <p>Khi được cấp vé, xuất trình QR tại cổng. Mỗi vé chỉ check-in một lần.</p></article>
       </div>
