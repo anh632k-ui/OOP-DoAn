@@ -6,6 +6,7 @@ import type {
   ManagedEvent, ManagedVenue, AccessibilityFeature,
 } from './page';
 import SessionInsights from './session-insights';
+import SessionStaff from './session-staff';
 
 type Session = {
   id: string; startsAt: string; endsAt: string; capacity: number;
@@ -326,6 +327,9 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
             </select>
           </label>
           {inspectedSession && <SessionInsights sessionId={inspectedSession} refreshVersion={reload}/>}
+          {inspectedSession && chosen.status !== 'DA_HUY' &&
+            <SessionStaff sessionId={inspectedSession} revision={reload}/>}
+
         </section>
       )}
       {chosen && chosen.status === 'NHAP' && (
