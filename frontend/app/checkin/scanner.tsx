@@ -127,8 +127,8 @@ export default function CheckinScanner() {
     } catch { setStats(null); }
   }
 
-  return <section className="panel">
-    <form className="auth-form" onSubmit={submit}>
+  return <section className="panel scan-panel">
+    <form className="auth-form scan-form" onSubmit={submit}>
       <label>Suất được phân công
         <select value={sessionId} onChange={e => {
           setSessionId(e.target.value); setStats(null); setResult(null);
@@ -154,8 +154,13 @@ export default function CheckinScanner() {
           {busy ? 'Đang kiểm tra...' : 'Xác nhận check-in'}
         </button>
       </div>
-      <video ref={videoRef} muted playsInline className="scan-video"
-        aria-label="Hình ảnh camera dùng để nhận diện QR"/>
+      <div className={scanning ? 'camera-stage camera-live' : 'camera-stage camera-idle'}>
+        <video ref={videoRef} muted playsInline className="scan-video"
+          aria-label="Hình ảnh camera dùng để nhận diện QR"/>
+        {!scanning && <p className="camera-help">Camera đang tắt.
+          <span>Chọn “Mở camera quét QR” hoặc nhập mã vé thủ công.</span>
+        </p>}
+      </div>
       {cameraError && <p role="alert" className="form-error">{cameraError}</p>}
       {result && <p role="status" className={result.accepted ? 'success-note' : 'form-error'}>
         {result.accepted ? 'ĐƯỢC VÀO CỔNG' : 'TỪ CHỐI'} — {result.message}
@@ -165,7 +170,10 @@ export default function CheckinScanner() {
     <button type="button" onClick={() => void loadStats()}>
       Cập nhật thống kê suất
     </button>
-    {stats && <p>Đã cấp: {stats.tickets}/{stats.capacity} vé · Đã check-in:
-      {' '}{stats.used} · Lượt từ chối: {stats.rejected}</p>}
+    {stats && <dl className="scan-stats">
+      <div><dt>Vé đã cấp</dt><dd>{stats.tickets}/{stats.capacity}</dd></div>
+      <div><dt>Đã check-in</dt><dd>{stats.used}</dd></div>
+      <div><dt>Lượt từ chối</dt><dd>{stats.rejected}</dd></div>
+    </dl>}
   </section>;
 }
