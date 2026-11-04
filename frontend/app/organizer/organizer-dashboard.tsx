@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type {
   ManagedEvent, ManagedVenue, AccessibilityFeature,
 } from './page';
+import SessionInsights from './session-insights';
 
 type Session = {
   id: string; startsAt: string; endsAt: string; capacity: number;
@@ -21,20 +22,25 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
   const router = useRouter();
   const [eventId, setEventId] = useState(events[0]?.id ?? '');
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [inspectedSession, setInspectedSession] = useState('');
   const [reload, setReload] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!eventId) { setSessions([]); return; }
+    if (!eventId) { setSessions([]); setInspectedSession(''); return; }
     let cancelled = false;
     fetch(`/api/manage/events/${eventId}/sessions`, { cache: 'no-store' })
       .then(async r => {
         if (!r.ok) throw new Error('Không tải được các suất của sự kiện');
         return (await r.json()) as { items: Session[] };
       })
-      .then(data => { if (!cancelled) setSessions(data.items); })
+      .then(data => { if (!cancelled) {
+        setSessions(data.items);
+        setInspectedSession(previous => data.items.some(s => s.id === previous)
+          ? previous : (data.items[0]?.id ?? ''));
+      } })
       .catch(() => { if (!cancelled) setSessions([]); });
     return () => { cancelled = true; };
   }, [eventId, reload]);
@@ -207,7 +213,11 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           ))}</ul>
         )}
         <label className="management-label">Chọn sự kiện để quản lý
-          <select value={eventId} onChange={e => setEventId(e.target.value)}>
+          <select value={eventId} onChange={e => {
+            setEventId(e.target.value);
+            setSessions([]);
+            setInspectedSession('');
+          }}>
             <option value="">-- Chọn --</option>
             {events.map(event => <option key={event.id} value={event.id}>
               {event.title} — {event.status}
@@ -276,6 +286,19 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
                 </button>
               )}
           </li>)}</ul> : <p>Chưa có suất.</p>}
+        </section>
+      )}
+      {chosen && sessions.length > 0 && (
+        <section className="panel">
+          <h2>Thống kê và danh sách đăng ký theo suất</h2>
+          <label className="management-label">Chọn suất
+            <select value={inspectedSession} onChange={e => setInspectedSession(e.target.value)}>
+              {sessions.map(s => <option key={s.id} value={s.id}>
+                {new Date(s.startsAt).toLocaleString('vi-VN')} · {s.method ?? 'Chưa cấu hình'}
+              </option>)}
+            </select>
+          </label>
+          {inspectedSession && <SessionInsights sessionId={inspectedSession} refreshVersion={reload}/>}
         </section>
       )}
       {chosen && chosen.status === 'NHAP' && (

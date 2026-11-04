@@ -61,7 +61,7 @@ export default async function OrganizerPage() {
     <main className="container">
       <Link href="/">← Trang sự kiện</Link>
       <header>
-        <p className="eyebrow">MED-06 · GIAI ĐOẠN 4</p>
+        <p className="eyebrow">MED-06 · QUẢN LÝ SỰ KIỆN</p>
         <h1>Quản lý sự kiện</h1>
         <p>Đang đăng nhập: {user.name} · {user.roles.join(', ')}</p>
       </header>
