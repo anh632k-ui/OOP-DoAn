@@ -8,6 +8,7 @@ import { ManagementModule } from './management/management.module';
 import { RegistrationsModule } from './registrations/registrations.module';
 import { CheckinModule } from './checkin/checkin.module';
 import { MediaModule } from './media/media.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MediaModule } from './media/media.module';
     RegistrationsModule,
     CheckinModule,
     MediaModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
