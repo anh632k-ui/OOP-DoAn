@@ -1,5 +1,5 @@
 import {
-  ConflictException, Injectable, NotFoundException,
+  ConflictException, HttpException, HttpStatus, Injectable, NotFoundException, ForbiddenException,
 } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { PoolClient } from 'pg';
@@ -61,6 +61,27 @@ export class RegistrationsService {
 
   async register(user: PublicUser, sessionId: string): Promise<RegisterResult> {
     return this.db.transaction(async client => {
+      // Lock the attendee first: two concurrent registrations for different
+      // sessions cannot evade a per-account daily quota.
+      const account = await client.query(
+        `SELECT 1 FROM nguoi_dung
+           WHERE ma_nguoi_dung=$1 AND trang_thai='HOAT_DONG' FOR UPDATE`,
+        [user.id],
+      );
+      if (!account.rowCount) throw new ForbiddenException('Tài khoản không hoạt động');
+      const [daily] = (await client.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM nhat_ky_he_thong
+           WHERE ma_nguoi_dung=$1 AND thoi_gian>now()-interval '24 hours'
+             AND hanh_dong IN ('DANG_KY_CHO_LOTTERY',
+               'DANG_KY_FCFS_DUOC_VE','DANG_KY_VAO_DANH_SACH_CHO')`,
+        [user.id],
+      )).rows;
+      if (daily.count >= 20) {
+        throw new HttpException(
+          'Đã đạt giới hạn 20 lượt đăng ký trong 24 giờ, vui lòng thử lại sau',
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
       const s = await this.lockSession(client, sessionId);
       const now = new Date();
       if (s.eventStatus !== 'DA_CONG_BO'
