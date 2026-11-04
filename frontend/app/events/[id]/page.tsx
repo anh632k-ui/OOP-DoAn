@@ -117,9 +117,11 @@ export default async function EventPage({
                 <div className="detail-session-metadata">
                   <p><strong>Địa điểm</strong><span>{session.venue} · {session.address}</span></p>
                   <p><strong>Sức chứa</strong><span>{session.capacity} chỗ · Đã cấp {session.issuedSeats} vé</span></p>
-                  <p><strong>Phân bổ vé</strong><span>{session.allocationMethod === 'FCFS'
-                    ? 'Theo thứ tự đăng ký (FCFS)' : session.allocationMethod === 'LOTTERY'
-                    ? 'Bốc thăm công bằng (Lottery)' : 'Chưa cấu hình'}</span></p>
+                  <p><strong>Xác nhận vé</strong><span>{session.allocationMethod === 'LOTTERY'
+                    ? 'Nhận kết quả sau khi hết hạn đăng ký'
+                    : session.allocationMethod === 'FCFS'
+                      ? 'Xác nhận theo số chỗ còn lại'
+                      : 'Thông tin đang cập nhật'}</span></p>
                 </div>
                 <ScheduleNotice
                   previousStartsAt={session.previousStartsAt}
@@ -130,7 +132,7 @@ export default async function EventPage({
                   {' '}– {formatDate(session.registrationClosesAt)}
                 </p>
                 <div className="detail-session-actions">
-                  <SessionRegisterButton sessionId={session.id} method={session.allocationMethod}
+                  <SessionRegisterButton sessionId={session.id}
                     available={Date.now() >= new Date(session.registrationOpensAt).getTime()
                       && Date.now() < new Date(session.registrationClosesAt).getTime()
                       && new Date(session.startsAt).getTime() > Date.now()
