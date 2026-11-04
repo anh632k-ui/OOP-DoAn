@@ -1,13 +1,14 @@
 'use client';
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { formatVietnamDate } from '../../lib/vietnam-time';
 
 type QRDetector = {
   detect(video: HTMLVideoElement): Promise<{ rawValue: string }[]>;
 };
 type DetectorCtor = new (options: { formats: string[] }) => QRDetector;
 type ScanResult = { accepted: boolean; message: string; ticketId?: string };
- type Stats = { tickets: number; used: number; rejected: number; capacity: number };
+type Stats = { tickets: number; used: number; rejected: number; capacity: number };
 type AssignedSession = { id: string; title: string; venue: string; startsAt: string; status: string };
 
 export default function CheckinScanner() {
@@ -134,7 +135,7 @@ export default function CheckinScanner() {
         }} required>
           <option value="">-- Chọn suất --</option>
           {assignedSessions.map(s => <option key={s.id} value={s.id}>
-            {s.title} · {s.venue} · {new Date(s.startsAt).toLocaleString('vi-VN')}
+            {s.title} · {s.venue} · {formatVietnamDate(s.startsAt,'short')}
           </option>)}
         </select>
       </label>

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getAuthenticated } from '../../lib/backend';
 import CancelButton from './cancel-button';
 import ScheduleNotice from '../components/schedule-notice';
+import { formatVietnamDate } from '../../lib/vietnam-time';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +31,7 @@ export default async function RegistrationsPage() {
         : <ul className="event-list">{result.items.map(item =>
           <li className="event-item" key={item.id}>
             <h2>{item.eventTitle}</h2>
-            <p>{new Date(item.startsAt).toLocaleString('vi-VN', {
-              timeZone: 'Asia/Ho_Chi_Minh',
-            })}</p>
+            <p>{formatVietnamDate(item.startsAt, 'short')}</p>
             <p>Trạng thái: <strong>{item.status}</strong></p>
             <ScheduleNotice previousStartsAt={item.previousStartsAt}
               scheduleChangedAt={item.scheduleChangedAt}

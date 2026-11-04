@@ -1,18 +1,13 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-
-function toLocalInput(iso: string): string {
-  const d = new Date(iso);
-  const value = new Date(d.getTime() - d.getTimezoneOffset()*60000);
-  return value.toISOString().slice(0,16);
-}
+import { toHanoiInput, hanoiInputToIso } from '../../lib/vietnam-time';
 
 export default function SessionReschedule({
   sessionId, startsAt, endsAt, onSaved,
 }: {sessionId:string; startsAt:string; endsAt:string; onSaved:()=>void}) {
-  const [start, setStart] = useState(() => toLocalInput(startsAt));
-  const [end, setEnd] = useState(() => toLocalInput(endsAt));
+  const [start, setStart] = useState(() => toHanoiInput(startsAt));
+  const [end, setEnd] = useState(() => toHanoiInput(endsAt));
   const [reason,setReason] = useState('');
   const [busy,setBusy] = useState(false);
   const [message,setMessage] = useState('');
@@ -26,8 +21,8 @@ export default function SessionReschedule({
       const response = await fetch('/api/manage/sessions/' + sessionId + '/schedule',{
         method:'PATCH',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          startsAt:new Date(start).toISOString(),
-          endsAt:new Date(end).toISOString(),reason,
+          startsAt:hanoiInputToIso(start),
+          endsAt:hanoiInputToIso(end),reason,
         }),
       });
       const body = (await response.json()) as {message?:string|string[];affectedRegistrations?:number};
@@ -46,6 +41,7 @@ export default function SessionReschedule({
     <p className="note">Đổi trước khung giờ check-in. Nếu đã có người đăng ký,
       giờ mới phải cách hiện tại hơn 24 giờ. Thời hạn đăng ký được giữ nguyên.</p>
     <form className="auth-form" onSubmit={submit}>
+      <p className="note">Ngày giờ được nhập theo giờ Hà Nội (UTC+7).</p>
       <label>Bắt đầu mới
         <input type="datetime-local" required value={start}
           onChange={e => setStart(e.target.value)}/>

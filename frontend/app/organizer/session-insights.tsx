@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatVietnamDate } from '../../lib/vietnam-time';
 
 type SessionOverview = {
   session: {
@@ -34,9 +35,6 @@ const FILTERS = [
   { value: 'DA_HUY', label: 'Đã hủy' },
   { value: 'TU_CHOI', label: 'Từ chối' },
 ];
-const DATE_FORMAT = new Intl.DateTimeFormat('vi-VN', {
-  dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh',
-});
 
 function messageFrom(data: ApiError): string {
   return Array.isArray(data.message) ? data.message.join(', ')
@@ -108,7 +106,7 @@ export default function SessionInsights({ sessionId, refreshVersion }: {
       <p className="note">
         {overview.session.method ?? 'Chưa chọn phương thức'}
         {' · '}Sức chứa: {overview.session.capacity}
-        {' · '}Suất: {DATE_FORMAT.format(new Date(overview.session.startsAt))}
+        {' · '}Suất: {formatVietnamDate(overview.session.startsAt,'short')}
       </p>
       <dl className="insight-metrics">
         {([
@@ -174,7 +172,7 @@ export default function SessionInsights({ sessionId, refreshVersion }: {
           <tbody>{overview.registrations.items.map(item =>
             <tr key={item.id}>
               <td>{item.attendeeName}</td>
-              <td>{DATE_FORMAT.format(new Date(item.registeredAt))}</td>
+              <td>{formatVietnamDate(item.registeredAt,'short')}</td>
               <td>{item.status}</td>
               <td>{item.waitingStatus === 'DANG_CHO'
                 ? item.waitingPosition ?? '—' : '—'}</td>

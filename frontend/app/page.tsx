@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { formatVietnamDate } from '../lib/vietnam-time';
 
 type EventSummary = {
   id: string;
@@ -57,14 +58,7 @@ async function getFeatures(): Promise<FeaturesResponse> {
   return { items: [] };
 }
 
-function formatDate(value: string | null): string {
-  if (!value) return 'Chưa có lịch';
-  return new Intl.DateTimeFormat('vi-VN', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(new Date(value));
-}
+const formatDate = (value: string | null) => formatVietnamDate(value);
 
 export default async function Home({
   searchParams,

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SessionRegisterButton from './session-register-button';
 import ScheduleNotice from '../../components/schedule-notice';
+import { formatVietnamDate } from '../../../lib/vietnam-time';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,13 +53,7 @@ async function loadSessions(id: string): Promise<Session[]> {
   }
 }
 
-function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('vi-VN', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(new Date(date));
-}
+const formatDate = (date: string) => formatVietnamDate(date, 'full');
 
 export default async function EventPage({
   params,

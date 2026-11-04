@@ -8,6 +8,7 @@ import type {
 import SessionInsights from './session-insights';
 import SessionStaff from './session-staff';
 import SessionReschedule from './session-reschedule';
+import { formatVietnamDate, hanoiInputToIso } from '../../lib/vietnam-time';
 
 type Session = {
   id: string; startsAt: string; endsAt: string; capacity: number;
@@ -153,7 +154,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     e.preventDefault();
     if (!eventId) return;
     const form = e.currentTarget, data = new FormData(form);
-    const toIso = (key: string) => new Date(String(data.get(key))).toISOString();
+    const toIso = (key: string) => hanoiInputToIso(String(data.get(key)));
     void perform(async () => {
       await request(`events/${eventId}/sessions`, 'POST', {
         venueId: data.get('venueId'), capacity: Number(data.get('capacity')),
@@ -294,7 +295,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         <section className="panel">
           <h2>Các suất của sự kiện</h2>
           {sessions.length ? <ul>{sessions.map(s => <li key={s.id}>
-            <code>{s.id}</code> · {new Date(s.startsAt).toLocaleString('vi-VN')}
+            <code>{s.id}</code> · {formatVietnamDate(s.startsAt, 'short')}
             {' '}· {s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
             {' '}· {s.status}
             {s.status !== 'DA_HUY' && new Date(s.startsAt).getTime() >
@@ -324,7 +325,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           <label className="management-label">Chọn suất
             <select value={inspectedSession} onChange={e => setInspectedSession(e.target.value)}>
               {sessions.map(s => <option key={s.id} value={s.id}>
-                {new Date(s.startsAt).toLocaleString('vi-VN')} · {s.method ?? 'Chưa cấu hình'}
+                {formatVietnamDate(s.startsAt, 'short')} · {s.method ?? 'Chưa cấu hình'}
               </option>)}
             </select>
           </label>
@@ -347,7 +348,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         <>
           <section className="panel">
             <h2>Thêm suất tổ chức</h2>
-            <p className="note">Thời gian theo múi giờ máy tính của bạn. Suất phải ở tương lai.</p>
+            <p className="note">Nhập giờ Hà Nội (UTC+7), không phụ thuộc múi giờ trên máy tính. Suất phải ở tương lai.</p>
             <form className="auth-form" onSubmit={createSession}>
               <label>Địa điểm
                 <select name="venueId" required defaultValue="">
@@ -370,7 +371,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
             <h2>Chính sách phân bổ</h2>
             {sessions.length ? (
               <ul>{sessions.map(s => <li key={s.id}>
-                {new Date(s.startsAt).toLocaleString('vi-VN')} ·
+                {formatVietnamDate(s.startsAt, 'short')} ·
                 {' '}{s.capacity} vé · {s.method ?? 'Chưa cấu hình'}
               </li>)}</ul>
             ) : <p>Chưa có suất.</p>}
@@ -379,7 +380,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
                 <select name="sessionId" required defaultValue="">
                   <option value="" disabled>Chọn suất</option>
                   {sessions.map(s => <option key={s.id} value={s.id}>
-                    {new Date(s.startsAt).toLocaleString('vi-VN')}
+                    {formatVietnamDate(s.startsAt, 'short')}
                   </option>)}
                 </select>
               </label>

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import QRCode from 'qrcode';
 import ScheduleNotice from '../components/schedule-notice';
 import { getAuthenticated } from '../../lib/backend';
+import { formatVietnamDate } from '../../lib/vietnam-time';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,9 +36,7 @@ export default async function TicketsPage() {
     ) : tickets.map(ticket => (
       <section className="panel ticket-card" key={ticket.id}>
         <h2>{ticket.eventTitle}</h2>
-        <p>{new Date(ticket.startsAt).toLocaleString('vi-VN', {
-          timeZone: 'Asia/Ho_Chi_Minh',
-        })}</p>
+        <p>{formatVietnamDate(ticket.startsAt, 'short')}</p>
         <p>{ticket.venue} · {ticket.address}</p>
         <ScheduleNotice previousStartsAt={ticket.previousStartsAt}
           scheduleChangedAt={ticket.scheduleChangedAt}
