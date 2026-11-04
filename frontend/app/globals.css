@@ -112,3 +112,10 @@ button:disabled { opacity: .5; cursor: wait; }
   white-space: pre-wrap; overflow-wrap: anywhere;
   padding: 12px; background: #f4f4f4; border-radius: 6px;
 }
+
+.schedule-notice {
+  padding: 12px 16px; margin: 12px 0; border: 2px solid #a16207;
+  border-radius: 8px; background: #fffbeb; color: #713f12;
+}
+.schedule-notice p { margin: 6px 0; }
+.reschedule-form { border-top: 1px solid #ccc; margin-top: 24px; padding-top: 12px; }

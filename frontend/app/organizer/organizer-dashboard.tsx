@@ -7,6 +7,7 @@ import type {
 } from './page';
 import SessionInsights from './session-insights';
 import SessionStaff from './session-staff';
+import SessionReschedule from './session-reschedule';
 
 type Session = {
   id: string; startsAt: string; endsAt: string; capacity: number;
@@ -204,6 +205,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
   }
 
   const chosen = events.find(e => e.id === eventId);
+  const selectedSession = sessions.find(s => s.id === inspectedSession);
   return (
     <div className="management-area">
       {message && <p role="status" className="success-note">{message}</p>}
@@ -329,6 +331,15 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           {inspectedSession && <SessionInsights sessionId={inspectedSession} refreshVersion={reload}/>}
           {inspectedSession && chosen.status !== 'DA_HUY' &&
             <SessionStaff sessionId={inspectedSession} revision={reload}/>}
+          {selectedSession && chosen.status !== 'DA_HUY'
+            && !['HOAN_TAT','DA_HUY'].includes(selectedSession.status)
+            && new Date(selectedSession.startsAt).getTime() > Date.now()+30*60*1000
+            && <SessionReschedule
+              key={selectedSession.id + ':' + selectedSession.startsAt}
+              sessionId={selectedSession.id} startsAt={selectedSession.startsAt}
+              endsAt={selectedSession.endsAt}
+              onSaved={() => setReload(v => v+1)}
+            />}
 
         </section>
       )}
