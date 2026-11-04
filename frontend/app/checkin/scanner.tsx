@@ -7,10 +7,13 @@ type QRDetector = {
 };
 type DetectorCtor = new (options: { formats: string[] }) => QRDetector;
 type ScanResult = { accepted: boolean; message: string; ticketId?: string };
-type Stats = { tickets: number; used: number; rejected: number; capacity: number };
+ type Stats = { tickets: number; used: number; rejected: number; capacity: number };
+type AssignedSession = { id: string; title: string; venue: string; startsAt: string; status: string };
 
 export default function CheckinScanner() {
   const [sessionId, setSessionId] = useState('');
+  const [assignedSessions, setAssignedSessions] = useState<AssignedSession[]>([]);
+  const [listError, setListError] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [cameraError, setCameraError] = useState('');
@@ -38,6 +41,23 @@ export default function CheckinScanner() {
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/checkin/sessions', {cache:'no-store'})
+      .then(async response => {
+        const payload = (await response.json()) as {items?: AssignedSession[]; message?: string};
+        if (!response.ok || !payload.items) throw new Error(payload.message ?? 'Không thể tải suất được giao');
+        return payload.items;
+      })
+      .then(items => { if (active) {
+        setAssignedSessions(items);
+        setSessionId(previous => items.some(s => s.id === previous)
+          ? previous : (items[0]?.id ?? ''));
+      }})
+      .catch(e => { if (active) setListError(e instanceof Error ? e.message : 'Lỗi tải suất'); });
+    return () => { active = false; };
   }, []);
 
   async function startCamera() {
@@ -108,10 +128,19 @@ export default function CheckinScanner() {
 
   return <section className="panel">
     <form className="auth-form" onSubmit={submit}>
-      <label>Mã suất tổ chức (UUID)
-        <input value={sessionId} onChange={e => setSessionId(e.target.value)}
-          placeholder="Mã suất cần check-in" required />
+      <label>Suất được phân công
+        <select value={sessionId} onChange={e => {
+          setSessionId(e.target.value); setStats(null); setResult(null);
+        }} required>
+          <option value="">-- Chọn suất --</option>
+          {assignedSessions.map(s => <option key={s.id} value={s.id}>
+            {s.title} · {s.venue} · {new Date(s.startsAt).toLocaleString('vi-VN')}
+          </option>)}
+        </select>
       </label>
+      {listError && <p role="alert" className="form-error">{listError}</p>}
+      {!assignedSessions.length && !listError &&
+        <p className="note">Chưa có suất được phân công. Liên hệ ban tổ chức.</p>}
       <label>Mã vé (quét QR hoặc nhập thủ công)
         <input value={code} onChange={e => setCode(e.target.value)}
           placeholder="Mã vé điện tử" autoComplete="off" required />
@@ -120,7 +149,7 @@ export default function CheckinScanner() {
         <button type="button" onClick={scanning ? stopCamera : startCamera} disabled={busy}>
           {scanning ? 'Dừng camera' : 'Mở camera quét QR'}
         </button>
-        <button type="submit" disabled={busy}>
+        <button type="submit" disabled={busy || !sessionId}>
           {busy ? 'Đang kiểm tra...' : 'Xác nhận check-in'}
         </button>
       </div>
