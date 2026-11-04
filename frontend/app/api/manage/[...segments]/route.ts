@@ -21,7 +21,8 @@ const paths: Record<string, RegExp[]> = {
     new RegExp('^sessions/' + UUID + '/staff$'),
   ],
   DELETE: [new RegExp('^sessions/' + UUID + '/staff/' + UUID + '$')],
-  PATCH: [new RegExp('^events/' + UUID + '$')],
+  PATCH: [new RegExp('^events/' + UUID + '$'),
+    new RegExp('^sessions/' + UUID + '/schedule$')],
   PUT: [
     new RegExp('^sessions/' + UUID + '/policy$'),
     new RegExp('^events/' + UUID + '/accessibility$'),
