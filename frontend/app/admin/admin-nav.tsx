@@ -7,8 +7,8 @@ const sections = [
   { href: '/admin', label: 'Tổng quan' },
   { href: '/admin/users', label: 'Người dùng & phân quyền' },
   { href: '/admin/audit', label: 'Nhật ký hệ thống' },
-  { href: '/organizer', label: 'Sự kiện & suất' },
-  { href: '/checkin', label: 'Kiểm tra vé' },
+  { href: '/admin/organizer', label: 'Sự kiện & suất' },
+  { href: '/admin/checkin', label: 'Kiểm tra vé' },
 ];
 
 export default function AdminNav() {
