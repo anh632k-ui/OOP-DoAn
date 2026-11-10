@@ -66,6 +66,28 @@ jobs:
               f.write(f'Các trang đã render để rà: {",".join(str(i+1) for i in indices if i<len(p))}\n')
           print('Rendered pages:',len(p))
           PY
+      - name: Fill true rendered page numbers in automatic indexes
+        run: |
+          python reports/finalize_index.py
+          rm -f reports/_render/MED06_BaoCao_DoAn.pdf
+          libreoffice -env:UserInstallation=file:///tmp/lo_med06_second --headless --convert-to pdf --outdir reports/_render reports/MED06_BaoCao_DoAn.docx
+          python - <<'PY'
+          from pathlib import Path
+          import fitz
+          path=Path('reports/_render/MED06_BaoCao_DoAn.pdf')
+          p=fitz.open(path)
+          out=Path('reports/qa_preview')
+          for f in out.glob('page_*.png'):
+              f.unlink()
+          indices=sorted(set([0,1,2,3,4,5,6,10,20,30,40,len(p)//2,len(p)-1]))
+          for i in indices:
+              if i>=len(p): continue
+              pix=p[i].get_pixmap(matrix=fitz.Matrix(.9,.9),alpha=False)
+              pix.save(out/f'page_{i+1:03d}.png')
+          with Path('reports/QA_SUMMARY.txt').open('a',encoding='utf-8') as f:
+              f.write(f'Chỉ mục đã đối chiếu số trang thực tế: {len(p)} trang.\n')
+          print('Final rendered page count:',len(p))
+          PY
       - name: Commit finished Word and QA previews
         run: |
           git config user.name "github-actions[bot]"
