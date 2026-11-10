@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import QRCode from 'qrcode';
+import BackupCode from './backup-code';
 import ScheduleNotice from '../components/schedule-notice';
 import { getAuthenticated } from '../../lib/backend';
 import { formatVietnamDate } from '../../lib/vietnam-time';
@@ -126,12 +127,7 @@ export default async function TicketsPage({
                   )}
                 </div>
               </div>
-              {ticket.qr && (
-                <details className="ticket-backup">
-                  <summary>Hiển thị mã dự phòng cho nhân viên check-in</summary>
-                  <code className="ticket-code">{ticket.code}</code>
-                </details>
-              )}
+              {ticket.qr && <BackupCode code={ticket.code}/>}
               <div className="ticket-pass-footer">
                 <span>Vé điện tử · MED-06</span><span>Giờ Hà Nội (UTC+7)</span>
               </div>
