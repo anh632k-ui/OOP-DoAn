@@ -86,7 +86,9 @@ export default async function RegistrationsPage({
           <ul className="registration-cards">
             {content.map(item => (
               <li className="registration-card" key={item.id}>
-                <div className="registration-card-top">
+                <div className="registration-card-thumbnail" aria-hidden="true">MED·06</div>
+                <div className="registration-card-body">
+                <div className="registration-card-top"
                   <div>
                     <h2>{item.eventTitle}</h2>
                     <p>{formatVietnamDate(item.startsAt, 'short')} · Giờ Hà Nội (UTC+7)</p>
@@ -113,6 +115,7 @@ export default async function RegistrationsPage({
                     && item.ticketStatus !== 'DA_SU_DUNG'
                     && new Date(item.startsAt).getTime() > Date.now()
                     && <CancelButton id={item.id}/>}
+                </div>
                 </div>
               </li>
             ))}
