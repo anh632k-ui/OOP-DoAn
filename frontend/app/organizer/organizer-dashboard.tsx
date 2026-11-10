@@ -273,6 +273,45 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           </nav>
       <p className="note">Mọi ngày giờ trong hệ thống theo giờ Hà Nội (UTC+7).</p>
 
+      {activeTab === 'overview' && <section className="panel organizer-overview-panel">
+        <div className="organizer-overview-heading">
+          <div>
+            <p className="eyebrow">BAN TỔ CHỨC / TỔNG QUAN</p>
+            <h2>{chosen ? chosen.title : 'Tổng quan hoạt động'}</h2>
+            <p className="note">{chosen ? 'Trạng thái: ' + labelStatus(chosen.status)
+              : 'Chọn sự kiện để xem chi tiết.'}</p>
+          </div>
+          <button type="button" onClick={() => setActiveTab('create')}>+ Tạo sự kiện</button>
+        </div>
+        {chosen && <div className="organizer-overview-columns">
+          <div>
+            <h3>Các suất tổ chức</h3>
+            {sessions.length === 0 ? <p className="note">Chưa có suất.</p> :
+              <ul className="organizer-overview-sessions">
+                {sessions.map(item => <li key={item.id}>
+                  <strong>{formatVietnamDate(item.startsAt,'short')}</strong>
+                  <span>{item.capacity} chỗ · {labelStatus(item.status)}</span>
+                  <small>{item.method === 'FCFS' ? 'Theo thứ tự đăng ký'
+                    : item.method === 'LOTTERY' ? 'Bốc thăm'
+                    : item.method === 'MIXED' ? 'Kết hợp cấp sớm và bốc thăm'
+                    : 'Chưa có chính sách'}</small>
+                </li>)}
+              </ul>}
+            <button type="button" className="button-secondary"
+              onClick={() => setActiveTab('sessions')}>Quản lý suất →</button>
+          </div>
+          <div>
+            <h3>Cần xử lý</h3>
+            <p>{sessions.filter(item => !item.method).length} suất chưa có chính sách phân bổ.</p>
+            <p className="note">Kiểm tra lịch, sức chứa và chính sách trước khi công bố.</p>
+            <button type="button" className="button-secondary"
+              onClick={() => setActiveTab('allocation')}>Thiết lập phân bổ →</button>
+            <button type="button" className="button-secondary"
+              onClick={() => setActiveTab('people')}>Đăng ký & danh sách chờ →</button>
+          </div>
+        </div>}
+      </section>}
+
       {activeTab === 'create' && (
         <>
       <section className="panel">
@@ -345,8 +384,19 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
             </form>
           </section>
 
-          <section className="panel">
-            <h2>Chính sách phân bổ</h2>
+
+
+
+          </>
+      )}
+      {activeTab === 'allocation' && <div className="organizer-allocation-panel">
+        <header><p className="eyebrow">BAN TỔ CHỨC / PHÂN BỔ VÉ</p>
+          <h2>Chính sách & phân bổ vé</h2>
+          <p className="note">FCFS cấp vé ngay theo thứ tự, Lottery chọn sau khi đóng đăng ký,
+            MIXED kết hợp cả hai theo hạn mức cấu hình.</p>
+        </header>
+        <section className="panel">
+            <h3>Thiết lập chính sách</h3>
             {sessions.length ? (
               <ul>{sessions.map(s => <li key={s.id}>
                 {formatVietnamDate(s.startsAt, 'short')} ·
@@ -378,10 +428,14 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
               <button type="submit" disabled={busy || !sessions.length}>Lưu chính sách</button>
             </form>
           </section>
-
-
-          </>
-      )}
+        <section className="panel">
+          <h3>Danh sách chờ & kết quả</h3>
+          <p className="note">Theo dõi kết quả bốc thăm, số vé đã cấp và người đang chờ theo từng suất.</p>
+          <button type="button" onClick={() => setActiveTab('people')}>
+            Xem đăng ký & danh sách chờ →
+          </button>
+        </section>
+      </div>}
       {activeTab === 'people' && (
         <>
       {chosen && sessions.length > 0 && (
