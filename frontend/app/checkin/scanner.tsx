@@ -127,53 +127,70 @@ export default function CheckinScanner() {
     } catch { setStats(null); }
   }
 
-  return <section className="panel scan-panel">
-    <form className="auth-form scan-form" onSubmit={submit}>
-      <label>Suất được phân công
-        <select value={sessionId} onChange={e => {
-          setSessionId(e.target.value); setStats(null); setResult(null);
-        }} required>
-          <option value="">-- Chọn suất --</option>
-          {assignedSessions.map(s => <option key={s.id} value={s.id}>
-            {s.title} · {s.venue} · {formatVietnamDate(s.startsAt,'short')}
-          </option>)}
-        </select>
-      </label>
-      {listError && <p role="alert" className="form-error">{listError}</p>}
-      {!assignedSessions.length && !listError &&
-        <p className="note">Chưa có suất được phân công. Liên hệ ban tổ chức.</p>}
-      <label>Mã vé (quét QR hoặc nhập thủ công)
-        <input value={code} onChange={e => setCode(e.target.value)}
-          placeholder="Mã vé điện tử" autoComplete="off" required />
-      </label>
-      <div className="auth-nav">
-        <button type="button" onClick={scanning ? stopCamera : startCamera} disabled={busy}>
-          {scanning ? 'Dừng camera' : 'Mở camera quét QR'}
-        </button>
-        <button type="submit" disabled={busy || !sessionId}>
-          {busy ? 'Đang kiểm tra...' : 'Xác nhận check-in'}
-        </button>
+  return <section className="scan-workspace-grid">
+    <div className="panel scan-control-panel">
+      <form className="auth-form scan-form" onSubmit={submit}>
+        <label>Suất được phân công
+          <select value={sessionId} onChange={e => {
+            setSessionId(e.target.value); setStats(null); setResult(null);
+          }} required>
+            <option value="">-- Chọn suất --</option>
+            {assignedSessions.map(s => <option key={s.id} value={s.id}>
+              {s.title} · {s.venue} · {formatVietnamDate(s.startsAt,'short')}
+            </option>)}
+          </select>
+        </label>
+        {listError && <p role="alert" className="form-error">{listError}</p>}
+        {!assignedSessions.length && !listError &&
+          <p className="note">Chưa có suất được phân công. Liên hệ ban tổ chức.</p>}
+        <div className={scanning ? 'camera-stage camera-live' : 'camera-stage camera-idle'}>
+          <video ref={videoRef} muted playsInline className="scan-video"
+            aria-label="Hình ảnh camera dùng để nhận diện QR"/>
+          {!scanning && <p className="camera-help">ĐƯA MÃ QR VÀO KHUNG
+            <span>Camera đang tắt · Hỗ trợ HTTPS hoặc localhost</span>
+          </p>}
+        </div>
+        {cameraError && <p role="alert" className="form-error">{cameraError}</p>}
+        <div className="scan-form-actions">
+          <button type="button" onClick={scanning ? stopCamera : startCamera}
+            disabled={busy}>{scanning ? 'Dừng camera' : 'Mở camera'}</button>
+          <label>Mã vé (quét QR hoặc nhập thủ công)
+            <input value={code} onChange={e => setCode(e.target.value)}
+              placeholder="Nhập mã vé điện tử" autoComplete="off" required />
+          </label>
+          <button type="submit" disabled={busy || !sessionId || !code.trim()}>
+            {busy ? 'Đang kiểm tra...' : 'Xác nhận check-in'}
+          </button>
+        </div>
+        <p className="note">Khi camera không khả dụng, nhân viên vẫn có thể nhập mã vé thủ công.</p>
+      </form>
+    </div>
+    <aside className="scan-side-panel" aria-label="Thống kê và kết quả check-in">
+      <div className="scan-stats-side">
+        <div><span>Vé đã cấp</span>
+          <strong>{stats ? stats.tickets.toLocaleString('vi-VN') : '—'}</strong>
+          <small>{stats ? 'Sức chứa ' + stats.capacity.toLocaleString('vi-VN') : 'Chưa tải thống kê'}</small></div>
+        <div><span>Check-in thành công</span>
+          <strong>{stats ? stats.used.toLocaleString('vi-VN') : '—'}</strong>
+          <small>Cập nhật theo suất đã chọn</small></div>
+        <div><span>Lượt từ chối</span>
+          <strong>{stats ? stats.rejected.toLocaleString('vi-VN') : '—'}</strong>
+          <small>Cập nhật theo suất đã chọn</small></div>
       </div>
-      <div className={scanning ? 'camera-stage camera-live' : 'camera-stage camera-idle'}>
-        <video ref={videoRef} muted playsInline className="scan-video"
-          aria-label="Hình ảnh camera dùng để nhận diện QR"/>
-        {!scanning && <p className="camera-help">Camera đang tắt.
-          <span>Chọn “Mở camera quét QR” hoặc nhập mã vé thủ công.</span>
-        </p>}
+      <button className="button-secondary scan-refresh" type="button"
+        disabled={!sessionId} onClick={() => void loadStats()}>
+        Cập nhật thống kê
+      </button>
+      <div className="scan-result-card" aria-live="polite">
+        <h2>Kết quả quét</h2>
+        {result ? <p role="status"
+          className={result.accepted ? 'scan-result-success' : 'scan-result-error'}>
+          {result.accepted ? '✓ Vé hợp lệ / vào cổng' : 'Từ chối check-in'}
+        </p> : <p className="scan-result-neutral">Chưa có lượt kiểm tra trong phiên này.</p>}
+        <p className="note">{result
+          ? result.message
+          : 'Hệ thống kiểm tra hiệu lực, khung giờ và chống sử dụng trùng vé.'}</p>
       </div>
-      {cameraError && <p role="alert" className="form-error">{cameraError}</p>}
-      {result && <p role="status" className={result.accepted ? 'success-note' : 'form-error'}>
-        {result.accepted ? 'ĐƯỢC VÀO CỔNG' : 'TỪ CHỐI'} — {result.message}
-      </p>}
-    </form>
-    <hr />
-    <button type="button" onClick={() => void loadStats()}>
-      Cập nhật thống kê suất
-    </button>
-    {stats && <dl className="scan-stats">
-      <div><dt>Vé đã cấp</dt><dd>{stats.tickets}/{stats.capacity}</dd></div>
-      <div><dt>Đã check-in</dt><dd>{stats.used}</dd></div>
-      <div><dt>Lượt từ chối</dt><dd>{stats.rejected}</dd></div>
-    </dl>}
+    </aside>
   </section>;
 }
