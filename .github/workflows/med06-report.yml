@@ -6,6 +6,7 @@ on:
     paths:
       - 'reports/build_med06_report.py'
       - 'reports/finalize_index.py'
+      - 'reports/preview_static.py'
       - '.github/workflows/med06-report.yml'
   workflow_dispatch:
 
@@ -70,12 +71,12 @@ jobs:
       - name: Fill true rendered page numbers in automatic indexes
         run: |
           python reports/finalize_index.py
-          rm -f reports/_render/MED06_BaoCao_DoAn.pdf
-          libreoffice -env:UserInstallation=file:///tmp/lo_med06_second --headless --convert-to pdf --outdir reports/_render reports/MED06_BaoCao_DoAn.docx
+          python reports/preview_static.py
+          libreoffice -env:UserInstallation=file:///tmp/lo_med06_second --headless --convert-to pdf --outdir reports/_render reports/_render/MED06_BaoCao_DoAn_preview.docx
           python - <<'PY'
           from pathlib import Path
           import fitz
-          path=Path('reports/_render/MED06_BaoCao_DoAn.pdf')
+          path=Path('reports/_render/MED06_BaoCao_DoAn_preview.pdf')
           p=fitz.open(path)
           out=Path('reports/qa_preview')
           for f in out.glob('page_*.png'):
@@ -87,6 +88,9 @@ jobs:
               pix.save(out/f'page_{i+1:03d}.png')
           with Path('reports/QA_SUMMARY.txt').open('a',encoding='utf-8') as f:
               f.write(f'Chỉ mục đã đối chiếu số trang thực tế: {len(p)} trang.\n')
+          # A correctly numbered index must show multiple actual page numbers.
+          actual=p[2].get_text()
+          assert ('6' in actual and '20' in actual), 'Index preview did not retain page references'
           print('Final rendered page count:',len(p))
           PY
       - name: Commit finished Word and QA previews
