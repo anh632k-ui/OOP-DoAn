@@ -1589,7 +1589,7 @@ body:has(.admin-workspace) > .site-footer { display: none; }
 
 .discover-card .discover-poster { padding: 0; }
 .discover-cover-photo { display: block; width: 100%; height: 100%; object-fit: cover; min-height: 210px; }
-.discover-card .discover-poster:has(.poster-graphic) { padding: 18px; }
+.discover-card .discover-poster:not(.has-cover) { padding: 18px; }
 .hero-art-figure { z-index: 0; pointer-events: none; }
 .hero-art-top { position: relative; z-index: 2; }
 .hero-art-bottom { position: relative; z-index: 3; gap: 12px; align-items: flex-end; }
@@ -1651,4 +1651,16 @@ body:has(.admin-workspace) > .site-footer { display: none; }
 }
 @media print {
   .ticket-backup-tools button { display: none !important; }
+}
+
+/* Override legacy list spacing so organizer event buttons line up without a nested scrollbar. */
+.management-area .organizer-event-selector .organizer-event-choices {
+  padding: 0; margin: 16px 0 0;
+  max-height: none; overflow: visible; list-style: none;
+}
+.management-area .organizer-event-selector .organizer-event-choices li {
+  padding: 0; margin: 0;
+}
+.management-area .organizer-event-selector .organizer-event-choices li button {
+  margin: 0; width: 100%;
 }
