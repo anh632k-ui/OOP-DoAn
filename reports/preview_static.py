@@ -18,10 +18,10 @@ with ZipFile(source) as zin:
         if raw_text:
             continue
         instr=' '.join(x.text or '' for x in p.findall('.//w:instrText',ns))
-        has_only_field_end=(
-            len(list(p))==1 and list(p)[0].find('w:fldChar',ns) is not None
-            and list(p)[0].find('w:fldChar',ns).get(W+'fldCharType')=='end'
-        )
+        has_only_field_end=any(
+            x.get(W+'fldCharType')=='end'
+            for x in p.findall('w:r/w:fldChar',ns)
+        ) and not instr
         if 'TOC' in instr or has_only_field_end:
             body.remove(p)
             removed+=1
