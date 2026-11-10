@@ -1,6 +1,6 @@
 /** UI labels only. API and database enum values are unchanged. */
 const statuses: Record<string, string> = {
-  NHAP: 'Bản nháp', DA_CONG_BO: 'Đã công bố',
+  NHAP: 'Bản nháp', DA_CONG_BO: 'Đã công bố', TAM_NGUNG: 'Tạm ngưng',
   MO_DANG_KY: 'Đang mở đăng ký', DONG_DANG_KY: 'Đã đóng đăng ký',
   HOAN_TAT: 'Đã hoàn tất', DA_HUY: 'Đã hủy',
   CHO_PHAN_BO: 'Chờ phân bổ vé', DANH_SACH_CHO: 'Trong danh sách chờ',
