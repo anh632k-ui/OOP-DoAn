@@ -165,7 +165,7 @@ export class AuthService {
       if (existing.rows[0]?.status === 'DA_DUYET') {
         throw new ConflictException('Yêu cầu đã được duyệt');
       }
-      const reason = body.reason.trim();
+      const reason = String(body.reason).trim();
       const [application] = (await client.query<{ id: string }>(
         `INSERT INTO yeu_cau_to_chuc(ma_nguoi_dung,ly_do) VALUES($1,$2)
          ON CONFLICT(ma_nguoi_dung) DO UPDATE SET
