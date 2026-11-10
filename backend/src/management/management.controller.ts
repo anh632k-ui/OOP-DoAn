@@ -36,6 +36,14 @@ export class ManagementController {
   publish(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.management.publishEvent(req.user!, id);
   }
+  @Post('events/:id/pause')
+  pause(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.management.pauseEvent(req.user!, id);
+  }
+  @Post('events/:id/resume')
+  resume(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.management.resumeEvent(req.user!, id);
+  }
   @Post('events/:id/cancel')
   cancel(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.management.cancelEmptyEvent(req.user!, id);
