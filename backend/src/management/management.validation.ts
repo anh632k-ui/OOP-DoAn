@@ -69,12 +69,23 @@ export function sessionInput(value: unknown) {
     registrationOpensAt, registrationClosesAt,
   };
 }
-export function allocationMethod(value: unknown): 'FCFS' | 'LOTTERY' {
+export type AllocationMethod = 'FCFS' | 'LOTTERY' | 'MIXED';
+export function allocationMethod(value: unknown): AllocationMethod {
   const obj = asObject(value);
-  if (obj.method !== 'FCFS' && obj.method !== 'LOTTERY') {
-    throw new BadRequestException('Phương thức phải là FCFS hoặc LOTTERY');
+  if (obj.method !== 'FCFS' && obj.method !== 'LOTTERY' && obj.method !== 'MIXED') {
+    throw new BadRequestException('Phương thức phải là FCFS, LOTTERY hoặc MIXED');
   }
   return obj.method;
+}
+
+export function allocationPolicy(value: unknown): { method: AllocationMethod; fcfsQuota: number | null } {
+  const obj = asObject(value);
+  const method = allocationMethod(obj);
+  if (method !== 'MIXED') return { method, fcfsQuota: null };
+  if (!Number.isInteger(obj.fcfsQuota) || (obj.fcfsQuota as number) < 1) {
+    throw new BadRequestException('Số vé FCFS phải là số nguyên dương');
+  }
+  return { method, fcfsQuota: obj.fcfsQuota as number };
 }
 export function verifiedAccessibility(value: unknown) {
   const obj = asObject(value);
