@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Get, Param, ParseUUIDPipe, Patch, Put, Query, Req, UseGuards,
+  Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UseGuards,
 } from '@nestjs/common';
 import { AuthenticatedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -15,6 +15,17 @@ export class AdminController {
   @Get('audit')
   audit(@Query('page') page?: string, @Query('action') action?: string) {
     return this.service.listAudit(page, action);
+  }
+
+  @Get('organizer-requests')
+  organizerRequests() {
+    return this.service.listOrganizerRequests();
+  }
+
+  @Post('organizer-requests/:id/review')
+  reviewOrganizerRequest(@Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string, @Body() body: unknown) {
+    return this.service.reviewOrganizerRequest(req.user!, id, body);
   }
 
   @Get('users')
