@@ -13,7 +13,7 @@ import { labelStatus } from '../../lib/status-label';
 
 type Session = {
   id: string; startsAt: string; endsAt: string; capacity: number;
-  status: string; method: string | null; registrationClosesAt: string;
+  status: string; method: string | null; fcfsQuota?: number | null; registrationClosesAt: string;
 };
 
 type Props = {
@@ -294,7 +294,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           {sessions.length ? <ul className="session-management-list">{sessions.map(s =>
             <li key={s.id} className="session-management-item">
               <strong>{formatVietnamDate(s.startsAt, 'short')}</strong>
-              <p>{s.capacity} vé · {s.method ?? 'Chưa có chính sách'}
+              <p>{s.capacity} vé · {s.method === 'MIXED' ? `Kết hợp: ${s.fcfsQuota ?? 0} vé theo thứ tự, ${s.capacity - (s.fcfsQuota ?? 0)} vé bốc thăm` : (s.method ?? 'Chưa có chính sách')}
                 {' '}· {labelStatus(s.status)}</p>
               <p className="note">Mã suất: <code>{s.id}</code></p>
             {s.status !== 'DA_HUY' && new Date(s.startsAt).getTime() >
@@ -308,11 +308,11 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
                 <button type="button" disabled={busy}
                   onClick={() => completeSession(s.id)}>Hoàn tất suất</button>
               )}
-            {s.method === 'LOTTERY' && new Date(s.registrationClosesAt).getTime() <= Date.now()
+            {(s.method === 'LOTTERY' || s.method === 'MIXED') && new Date(s.registrationClosesAt).getTime() <= Date.now()
               && s.status !== 'DONG_DANG_KY' && s.status !== 'DA_HUY'
               && s.status !== 'HOAN_TAT' && chosen.status === 'DA_CONG_BO' && (
                 <button type="button" disabled={busy} onClick={() => runDraw(s.id)}>
-                  Bốc thăm Lottery
+                  Bốc thăm phần vé còn lại
                 </button>
               )}
           </li>)}</ul> : <p>Chưa có suất.</p>}
@@ -350,7 +350,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
             {sessions.length ? (
               <ul>{sessions.map(s => <li key={s.id}>
                 {formatVietnamDate(s.startsAt, 'short')} ·
-                {' '}{s.capacity} vé · {s.method ?? 'Chưa cấu hình'}
+                {' '}{s.capacity} vé · {s.method === 'MIXED' ? `Kết hợp (${s.fcfsQuota ?? 0} cấp sớm / ${s.capacity - (s.fcfsQuota ?? 0)} bốc thăm)` : (s.method ?? 'Chưa cấu hình')}
               </li>)}</ul>
             ) : <p>Chưa có suất.</p>}
             <form className="auth-form" onSubmit={setPolicy}>
@@ -494,7 +494,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
 
           <section className="panel">
             <h2>Công bố sự kiện</h2>
-            <p className="note">Mọi suất phải có lịch tương lai và chính sách FCFS hoặc LOTTERY.</p>
+            <p className="note">Mọi suất phải có lịch tương lai và chính sách phân bổ hợp lệ (theo thứ tự, bốc thăm hoặc kết hợp).</p>
             <button type="button" disabled={busy || !sessions.length} onClick={publish}>
               Công bố sự kiện
             </button>
