@@ -7,7 +7,7 @@ import { labelStatus } from '../../../lib/status-label';
 
 export const dynamic = 'force-dynamic';
 
-type EventDetail = { id: string; title: string; description: string; hasCover: boolean; accessibility: { name: string; note: string }[] };
+type EventDetail = { id: string; title: string; description: string; status: string; hasCover: boolean; accessibility: { name: string; note: string }[] };
 type Session = {
   id: string;
   startsAt: string;
@@ -72,7 +72,7 @@ export default async function EventPage({
     <section className="event-detail-hero" aria-labelledby="event-title">
       <div className="event-detail-copy">
         <p className="eyebrow">MED-06 · TRẢI NGHIỆM VĂN HÓA</p>
-        <p className="event-type-tag">● Sự kiện miễn phí</p>
+        <p className="event-type-tag">● {event.status === 'TAM_NGUNG' ? 'Sự kiện đang tạm ngưng' : 'Sự kiện miễn phí'}</p>
         <h1 id="event-title">{event.title}</h1>
         <p className="event-lead">{event.description}</p>
         <div className="detail-facts">
@@ -117,7 +117,9 @@ export default async function EventPage({
                 <div className="detail-session-metadata">
                   <p><strong>Địa điểm</strong><span>{session.venue} · {session.address}</span></p>
                   <p><strong>Sức chứa</strong><span>{session.capacity} chỗ · Đã cấp {session.issuedSeats} vé</span></p>
-                  <p><strong>Xác nhận vé</strong><span>{session.allocationMethod === 'LOTTERY'
+                  <p><strong>Xác nhận vé</strong><span>{session.allocationMethod === 'MIXED'
+                     ? 'Một phần vé xác nhận ngay, phần còn lại xét sau khi đóng đăng ký'
+                     : session.allocationMethod === 'LOTTERY'
                     ? 'Nhận kết quả sau khi hết hạn đăng ký'
                     : session.allocationMethod === 'FCFS'
                       ? 'Xác nhận theo số chỗ còn lại'
@@ -133,7 +135,8 @@ export default async function EventPage({
                 </p>
                 <div className="detail-session-actions">
                   <SessionRegisterButton sessionId={session.id}
-                    available={Date.now() >= new Date(session.registrationOpensAt).getTime()
+                    available={event.status === 'DA_CONG_BO'
+                     && Date.now() >= new Date(session.registrationOpensAt).getTime()
                       && Date.now() < new Date(session.registrationClosesAt).getTime()
                       && new Date(session.startsAt).getTime() > Date.now()
                       && session.status !== 'DA_HUY'}/>
