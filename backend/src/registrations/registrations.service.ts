@@ -15,13 +15,14 @@ type Session = {
   opensAt: Date;
   closesAt: Date;
   capacity: number;
-  method: 'FCFS' | 'LOTTERY';
+  method: 'FCFS' | 'LOTTERY' | 'MIXED';
+  fcfsQuota: number | null;
 };
 
 type RegisterResult = {
   id: string; sessionId: string;
   status: 'DA_XAC_NHAN' | 'DANH_SACH_CHO' | 'CHO_PHAN_BO';
-  method: 'FCFS' | 'LOTTERY';
+  method: 'FCFS' | 'LOTTERY' | 'MIXED';
   ticketId?: string; waitingPosition?: number;
 };
 
@@ -48,7 +49,8 @@ export class RegistrationsService {
          e.trang_thai AS "eventStatus",
          s.bat_dau AS "startsAt",s.mo_dang_ky AS "opensAt",
          s.dong_dang_ky AS "closesAt", s.suc_chua AS capacity,
-         c.phuong_thuc AS method
+         c.phuong_thuc AS method,
+         (c.cau_hinh->>'fcfsQuota')::int AS "fcfsQuota"
        FROM suat_su_kien s
        JOIN su_kien e ON e.ma_su_kien=s.ma_su_kien
        JOIN chinh_sach_phan_bo c ON c.ma_suat=s.ma_suat
@@ -98,18 +100,9 @@ export class RegistrationsService {
         throw new ConflictException('Bạn đã đăng ký suất này');
       }
 
-      const initialStatus = s.method === 'LOTTERY' ? 'CHO_PHAN_BO' : 'DA_XAC_NHAN';
-      const inserted = await client.query<{ id: string }>(
-        `INSERT INTO dang_ky(ma_nguoi_dung,ma_suat,trang_thai)
-          VALUES($1,$2,$3) RETURNING ma_dang_ky AS id`,
-        [user.id, sessionId, initialStatus],
-      );
-      const id = inserted.rows[0].id;
-      if (s.method === 'LOTTERY') {
-        await appendAudit(client,user.id,'DANG_KY_CHO_LOTTERY',{ registrationId:id,sessionId });
-        return { id, sessionId, status: 'CHO_PHAN_BO', method: s.method };
-      }
-
+      // The session row lock above serializes registration and ticket issuance.
+      // MIXED reserves its configured FCFS quota; remaining applicants enter
+      // the lottery pool instead of taking the other seats immediately.
       const count = await client.query<{ seats: number }>(
         `SELECT count(*)::int AS seats FROM ve
            WHERE ma_suat=$1 AND trang_thai IN ('CHUA_SU_DUNG','DA_SU_DUNG')`,
@@ -121,7 +114,22 @@ export class RegistrationsService {
            WHERE d.ma_suat=$1 AND w.trang_thai='DANG_CHO'`,
         [sessionId],
       );
-      if (count.rows[0].seats < s.capacity && pending.rows[0].count === 0) {
+      const fcfsLimit = s.method === 'MIXED' ? (s.fcfsQuota ?? 0) : s.capacity;
+      const takeImmediate = s.method !== 'LOTTERY'
+        && count.rows[0].seats < fcfsLimit && pending.rows[0].count === 0;
+      const initialStatus = takeImmediate ? 'DA_XAC_NHAN'
+        : s.method === 'FCFS' ? 'DANH_SACH_CHO' : 'CHO_PHAN_BO';
+      const inserted = await client.query<{ id: string }>(
+        `INSERT INTO dang_ky(ma_nguoi_dung,ma_suat,trang_thai)
+          VALUES($1,$2,$3) RETURNING ma_dang_ky AS id`,
+        [user.id, sessionId, initialStatus],
+      );
+      const id = inserted.rows[0].id;
+      if (initialStatus === 'CHO_PHAN_BO') {
+        await appendAudit(client,user.id,'DANG_KY_CHO_LOTTERY',{ registrationId:id,sessionId });
+        return { id, sessionId, status: 'CHO_PHAN_BO', method: s.method };
+      }
+      if (takeImmediate) {
         const ticketId = await this.issueTicket(client, id, sessionId);
         await appendAudit(client,user.id,'DANG_KY_FCFS_DUOC_VE',{
           registrationId:id,sessionId,ticketId,
