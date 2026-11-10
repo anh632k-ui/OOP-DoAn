@@ -307,14 +307,14 @@ class Expansion:
         self.h2("2.8. Các điều kiện tương tác cần kiểm thử")
         self.add("Use Case trong UML mô tả mục tiêu của người dùng, không tự chứng minh chương trình chạy đúng. Muốn kiểm chứng, mỗi chức năng phải có dữ liệu đầu vào, kỳ vọng, trạng thái cuối và một hoặc nhiều cách kiểm tra độc lập. Các hoạt động chính liên hệ với TC01–TC25 ở chương V.")
     def ch3(self):
-        self.h2("3.8. Mô tả chi tiết các lớp đối tượng")
+        self.h2("3.6. Mô tả chi tiết các lớp đối tượng")
         puml=read("PTTK/03_ClassDiagram/01-class-diagram-entities.puml")
         cls={}
         for m in re.finditer(r"class\s+(\w+)\s*\{(.*?)\}",puml,re.S):
             cls[m.group(1)]=[v.strip() for v in m.group(2).splitlines() if v.strip()]
         for i,(name,meaning,rule) in enumerate(DOMAIN_OBJECTS,1):
             if not self.can(35+i):continue
-            self.h3(f"3.8.{i}. Lớp {name}")
+            self.h3(f"3.6.{i}. Lớp {name}")
             info=cls.get(name,[])
             attributes=[v for v in info if v.startswith("-")]
             methods=[v for v in info if v.startswith("+")]
@@ -325,7 +325,7 @@ class Expansion:
                 ("Quan hệ",name+" liên kết với các thực thể khác theo sơ đồ Domain.", "Đa số liên kết được bảo vệ bằng FK khi ánh xạ PostgreSQL."),
             ])
             self.add("Tại mức phân tích, lớp "+name+" biểu diễn khái niệm nghiệp vụ. Khi hiện thực, các phép đọc/ghi đi qua NestJS service, không có nghĩa mọi phương thức UML nhất thiết trở thành một method TypeScript trùng tên.")
-        self.h2("3.9. Phân tích luồng trạng thái")
+        self.h2("3.7. Phân tích luồng trạng thái")
         paths=["PTTK/07_State/01-registration-state.puml","PTTK/07_State/02-ticket-state.puml","PTTK/07_State/03-event-session-state.puml","PTTK/07_State/04-event-state.puml"]
         for k,path in enumerate(paths,1):
             src=read(path)
@@ -333,12 +333,12 @@ class Expansion:
             for line in src.splitlines():
                 if "-->" in line and not line.lstrip().startswith("'"):
                     transitions.append(line.strip()[:180])
-            self.h3(f"3.9.{k}. Ma trận chuyển trạng thái – "+["Đăng ký","Vé điện tử","Suất sự kiện","Sự kiện"][k-1])
+            self.h3(f"3.7.{k}. Ma trận chuyển trạng thái – "+["Đăng ký","Vé điện tử","Suất sự kiện","Sự kiện"][k-1])
             self.t(["Chuyển trạng thái được thể hiện","Ý nghĩa kiểm soát"],[
                 (x,"Chỉ thực hiện khi các tiền điều kiện của nghiệp vụ đạt; phản hồi phải phản ánh trạng thái sau transaction.")
                 for x in transitions[:15] ] or [("Không có mũi tên dạng -->","Đọc thêm sơ đồ nguồn.")])
             self.source(path)
-        self.h2("3.10. Liên hệ sơ đồ tuần tự và hoạt động với thiết kế")
+        self.h2("3.8. Liên hệ sơ đồ tuần tự và hoạt động với thiết kế")
         self.t(["Nghiệp vụ","Điểm kiểm soát trong sequence","Nhánh quyết định trong activity"],[
          ("Đăng ký","Kiểm tra phiên và khóa suất trước khi phát vé","Còn chỗ/đầy/chờ bốc thăm."),
          ("Hủy/đôn chờ","Thu hồi vé và cập nhật người chờ trong cùng giao dịch","Có người chờ hay không; vé đã sử dụng hay chưa."),
@@ -373,9 +373,9 @@ class Expansion:
             self.add("Chỉ mục này nằm trong migration thực tế. Khi đánh giá ảnh hưởng cần xem nó phục vụ truy vấn nào, có ngăn trùng dữ liệu hay không và chi phí cập nhật khi có đăng ký đồng thời.")
         self.h2("4.8. Truy vấn đối chiếu bất biến dữ liệu")
         for i,(topic,sql,meaning) in enumerate([
-          ("Số vé hợp lệ theo suất","SELECT ma_suat, count(*) FROM ve WHERE trang_thai = 'HOP_LE' GROUP BY ma_suat;",
+          ("Số vé hợp lệ theo suất","SELECT ma_suat, count(*) FROM ve WHERE trang_thai = 'CHUA_SU_DUNG' GROUP BY ma_suat;",
            "Dùng để đối chiếu với suc_chua của suat_su_kien sau các lượt đăng ký và phân bổ."),
-          ("Đăng ký còn hiệu lực","SELECT ma_suat, ma_nguoi_dung, count(*) FROM dang_ky WHERE trang_thai <> 'DA_HUY' GROUP BY ma_suat, ma_nguoi_dung HAVING count(*) > 1;",
+          ("Đăng ký còn hiệu lực","SELECT ma_suat, ma_nguoi_dung, count(*) FROM dang_ky WHERE trang_thai IN ('CHO_PHAN_BO','DANH_SACH_CHO','DA_XAC_NHAN') GROUP BY ma_suat, ma_nguoi_dung HAVING count(*) > 1;",
            "Kết quả rỗng là bằng chứng không có đăng ký trùng theo tiêu chí truy vấn này."),
           ("Danh sách chờ theo suất","SELECT d.ma_suat, m.thu_tu, d.ma_nguoi_dung FROM muc_danh_sach_cho m JOIN dang_ky d ON d.ma_dang_ky=m.ma_dang_ky ORDER BY d.ma_suat,m.thu_tu;",
            "Sắp xếp giúp kiểm tra quy tắc xử lý người chờ theo thứ tự."),
@@ -392,12 +392,12 @@ class Expansion:
         r.font.color.rgb=RGBColor(28,59,67)
         return p
     def ch5(self):
-        self.h2("5.9. Phân rã thành phần trong mã nguồn")
+        self.h2("5.11. Phân rã thành phần trong mã nguồn")
         for i,(rel,explain) in enumerate(SERVICE_DESCRIPTIONS.items(),1):
             if not self.can(30+i):continue
             s=read("backend/src/"+rel)
             methods=re.findall(r"\b(?:private\s+|public\s+|protected\s+)?(?:async\s+)?([A-Za-z]\w*)\s*\([^\n]*\)\s*(?::[^{\n]+)?\s*\{",s)
-            self.h3(f"5.9.{i}. {rel}")
+            self.h3(f"5.11.{i}. {rel}")
             self.add(explain)
             self.t(["Nội dung đọc từ mã nguồn","Mô tả"],[
              ("Tệp triển khai",rel),
@@ -410,17 +410,17 @@ class Expansion:
                 self.add("Các chi tiết kỹ thuật đáng chú ý, trích theo dòng mã nguồn thực tế:")
                 self.code("\n".join(important[:7]),max_lines=7)
             self.add("Phần kiểm tra của thành phần này phải bao gồm quyền truy cập, điều kiện trạng thái và kết quả cuối cùng. Giải thích trên không khẳng định mọi nhánh lỗi đã được nghiệm thu thủ công trên Windows.")
-        self.h2("5.10. Danh sách API xác định trực tiếp từ controller")
+        self.h2("5.12. Danh sách API xác định trực tiếp từ controller")
         groups=endpoint_routes()
         for i,(f,eps) in enumerate(groups,1):
             if not self.can(35+i):continue
-            self.h3(f"5.10.{i}. Các endpoint của {f}")
+            self.h3(f"5.12.{i}. Các endpoint của {f}")
             if eps:
                 self.t(["Phương thức","Đường dẫn","Hàm điều khiển"],eps)
                 self.add("Đường dẫn trên được trích từ decorator Controller và method tại "+f+". Controller xử lý transport/guard rồi chuyển logic sang service. Các đường dẫn này được ưu tiên hơn tài liệu API baseline cũ nếu có chênh lệch khi code.")
             else:
                 self.add("Không thấy decorator endpoint GET/POST/PATCH/PUT/DELETE phù hợp với bộ phân tích hiện tại; tra cứu trực tiếp trong tệp nguồn để xác định.")
-        self.h2("5.11. Quy trình triển khai môi trường phát triển")
+        self.h2("5.13. Quy trình triển khai môi trường phát triển")
         commands=[
            ("Kiểm tra Git và Docker","git status\ndocker compose version","Bảo đảm đúng nhánh, đúng thư mục và Docker Desktop đang chạy."),
            ("Khởi động cơ sở dữ liệu và migrate","docker compose up -d --build","Compose chờ db khỏe trước khi migrate và chạy backend/frontend."),
@@ -431,10 +431,10 @@ class Expansion:
         ]
         for i,(name,c,meaning) in enumerate(commands,1):
             if not self.can(40+i):continue
-            self.h3(f"5.11.{i}. {name}")
+            self.h3(f"5.13.{i}. {name}")
             self.code(c,max_lines=5)
             self.add(meaning+" Khi trình bày bằng chứng, ghi rõ thời điểm và môi trường chạy. Các câu lệnh là hướng dẫn, không phải đầu ra đã được thực thi trong thời điểm lập báo cáo.")
-        self.h2("5.12. Ma trận kiểm thử, kết quả mong đợi và mức bằng chứng")
+        self.h2("5.14. Ma trận kiểm thử, kết quả mong đợi và mức bằng chứng")
         md=read("docs/MED06_TEST_CASES.md")
         tests=[r for r in rows_of(md) if re.match(r"TC\d+",r[0])]
         self.t(["Mã","Nghiệp vụ","Mong đợi","Nguồn"],tests)
@@ -442,7 +442,7 @@ class Expansion:
         for i,case in enumerate(tests,1):
             if not self.can(23+i):continue
             cid,feature,expected,status=case[:4]
-            self.h3(f"5.12.{i}. {cid} – {feature}")
+            self.h3(f"5.14.{i}. {cid} – {feature}")
             self.t(["Hạng mục","Nội dung"],[
               ("Mục tiêu kiểm tra",feature+"."),
               ("Dữ liệu và điều kiện","Thiết lập trạng thái phù hợp với chức năng tại "+cid+"; dùng tài khoản/thực thể kiểm thử riêng."),
@@ -452,7 +452,7 @@ class Expansion:
               ("Bằng chứng cần đối chiếu",evidence_for_test(feature)),
             ])
             self.add("Kết quả được ghi ở ma trận trên là kỳ vọng hoặc đánh dấu nguồn kiểm thử của dự án; chưa thể suy ra trường hợp này đã được chụp ảnh nghiệm thu trên máy của sinh viên. Khi bổ sung ảnh, cần giữ nguyên thông số đầu vào và kết quả để người chấm có thể kiểm chứng.")
-        self.h2("5.13. Liên hệ nghiệp vụ, thành phần kỹ thuật và ràng buộc")
+        self.h2("5.15. Liên hệ nghiệp vụ, thành phần kỹ thuật và ràng buộc")
         self.t(["Nghiệp vụ","Module có trách nhiệm","Cơ chế bảo vệ"],[
           ("Đăng ký tài khoản","AuthService; PostgreSQL","Băm mật khẩu, vai trò mặc định, email duy nhất."),
           ("Công bố sự kiện","ManagementService","Ownership và đủ suất hợp lệ."),
@@ -489,3 +489,158 @@ class Expansion:
           ("Môi trường, kết quả và hướng phát triển","Chương VII","Đối chiếu thành quả và giới hạn."),
         ])
         self.add("Việc có đủ các mục nói trên không tự động đồng nghĩa tất cả testcase đã được chứng minh bằng ảnh. Ảnh sản phẩm thật là minh chứng cần tách khỏi hình thiết kế. Không dùng tài khoản thật, mật khẩu, token truy cập hoặc mã QR có hiệu lực trong phần phụ lục.")
+
+    def ch4_more(self):
+        self.h2("4.9. Thiết kế giao dịch theo các trường hợp sử dụng")
+        specs=[
+          ("Nhận đăng ký FCFS",
+           "Khóa tài khoản hiện tại và suất được chọn, sau đó kiểm tra lại trạng thái, thời gian và số vé. Nếu còn chỗ thì ghi đăng ký được xác nhận và phát một vé; nếu hết chỗ thì tạo vị trí chờ. Thao tác tạo đăng ký cùng phát vé phải hoàn thành hoặc hoàn tác cùng nhau.",
+           "Số vé CHUA_SU_DUNG không vượt suc_chua; không có hai đăng ký hợp lệ cùng tài khoản và suất."),
+          ("Nhận yêu cầu chờ bốc thăm",
+           "Kiểm tra cửa sổ nhận đăng ký rồi lưu bản ghi CHO_PHAN_BO. Không cấp vé ngay ở bước này. Đăng ký đủ điều kiện chỉ được đưa vào tập ứng viên khi bốc thăm sau hạn đóng.",
+           "Không có vé trước thời điểm phân bổ; người tham dự nhìn thấy trạng thái đang chờ."),
+          ("Chạy đợt Lottery",
+           "Khóa suất, kiểm tra chưa có đợt phân bổ đã hoàn tất, lấy các đăng ký hợp lệ. Thứ tự lựa chọn dựa trên thuật toán trong module allocations và ghi lại dữ liệu đủ để đối chiếu.",
+           "Số vé và người trúng không vượt hạn mức còn lại; không chạy lại đợt của cùng suất."),
+          ("Hủy và đôn người chờ",
+           "Kiểm tra lượt đăng ký có thuộc tài khoản hay không, suất chưa bắt đầu và vé chưa dùng. Nếu vé đang có hiệu lực, vô hiệu hóa rồi tìm mục chờ đầu tiên hợp lệ để cấp lại trong cùng transaction.",
+           "Một vị trí vừa được giải phóng không bị hai giao dịch cùng cấp cho hai người."),
+          ("Quét QR tại cổng",
+           "Nhân viên chọn đúng suất được phân công, backend tìm vé theo mã và suất. Trước khi chuyển trạng thái, service kiểm tra tình trạng sự kiện, thời gian, quyền và bản ghi quét cũ.",
+           "Một mã vé chỉ được ghi nhận Check-in thành công đúng một lần."),
+          ("Thay đổi thời gian suất",
+           "Thực hiện điều kiện đổi lịch, lưu lịch cũ và lý do thay đổi theo migration 008. Thông báo lại ngày giờ thực tế trên trang chi tiết và thông tin của người đã đăng ký.",
+           "Mốc đăng ký và giờ bắt đầu suất vẫn hợp lệ sau thay đổi."),
+        ]
+        for i,(name,flow,assertion) in enumerate(specs,1):
+            self.h3(f"4.9.{i}. {name}")
+            self.t(["Pha giao dịch","Nội dung"],[
+             ("Dữ liệu đầu vào",name+"."),
+             ("Tổ chức xử lý",flow),
+             ("Điều kiện nhất quán",assertion),
+             ("Cách truy vết","Xem migration liên quan, bản ghi nghiệp vụ và nhật ký theo thời điểm; không dựa riêng vào màu thông báo trên web."),
+            ])
+            self.add("Thiết kế giao dịch này tách điều kiện thuộc service khỏi điều kiện dữ liệu thuộc PostgreSQL. Ràng buộc SQL giữ bất biến ngay cả khi nhiều lời gọi API đến đồng thời; service chịu trách nhiệm thông báo cho người dùng bằng lời dễ hiểu.")
+        self.h2("4.10. Ma trận ánh xạ quy tắc với bảng PostgreSQL")
+        self.t(["Quy tắc","Bảng liên quan","Tình huống phải từ chối"],[
+          ("Không tạo đăng ký trùng","dang_ky, nguoi_dung","Một người đăng ký hai lần khi lượt đầu vẫn hiệu lực."),
+          ("Không phát vé quá chỗ","suat_su_kien, ve, dang_ky","Hai người cùng đăng ký lúc chỉ còn một chỗ."),
+          ("Mỗi đăng ký được phát tối đa một vé","ve, dang_ky","Lệnh cấp vé chạy lại khi người dùng refresh."),
+          ("Check-in một lần","ve, ban_ghi_check_in","Mã QR xuất trình lần hai."),
+          ("Một suất có chính sách rõ ràng","chinh_sach_phan_bo, suat_su_kien","Thiếu policy nhưng yêu cầu phân bổ."),
+          ("Chỉ nhân viên đúng suất","phan_cong_check_in, suat_su_kien","Nhân viên cố quét vé ngoài phạm vi."),
+          ("Hủy có thể đôn chờ","muc_danh_sach_cho, ve, dang_ky","Đôn hai người cùng một chỗ được trả về."),
+          ("Kiểm chứng bốc thăm","dot_phan_bo, ket_qua_phan_bo","Chạy lại phân bổ sau khi chốt."),
+          ("Xét duyệt quyền tổ chức","yeu_cau_to_chuc, nguoi_dung_vai_tro","Tự cấp quyền khi chưa được phê duyệt."),
+        ])
+    def ch5_more(self):
+        self.h2("5.16. Tổ chức trang giao diện trong Next.js")
+        pages=sorted((BASE/"frontend/app").rglob("page.tsx"))
+        for i,f in enumerate(pages,1):
+            if not self.can(55+i):continue
+            rel=f.relative_to(BASE).as_posix()
+            url="/"+"/".join(f.parent.relative_to(BASE/"frontend/app").parts)
+            url=url.replace("/[id]","/:id")
+            if url=="/.":url="/"
+            source=f.read_text(encoding="utf-8")
+            api_refs=sorted(set(re.findall(r"['\"](/(?:auth|events|manage|admin|registrations|tickets|checkin|account)[^'\"\s]*)['\"]",source)))
+            titles=re.findall(r"<h[12][^>]*>([^<]{3,80})",source)
+            self.h3(f"5.16.{i}. Trang {url}")
+            self.t(["Thành phần","Kiểm tra từ mã nguồn"],[
+              ("Tệp Next.js",rel),
+              ("Đường dẫn",url),
+              ("Nhiệm vụ giao diện",self._page_meaning(url)),
+              ("Tham chiếu nội bộ",", ".join(api_refs[:8]) if api_refs else "API được gọi thông qua service/helper hoặc component con."),
+              ("Tiêu đề hiển thị",", ".join(titles[:3]) if titles else "Thành phần tiêu đề nằm trong JSX/component khác."),
+            ])
+            self.add("Khi kiểm thử trang "+url+", cần kiểm tra điều hướng, trạng thái đang tải, xử lý trả lỗi và xác thực vai trò từ API. Cấu trúc trang không đủ để suy ra rằng dữ liệu đã được lưu hoặc nghiệp vụ đã chạy thành công.")
+        self.h2("5.17. Các tầng bảo vệ người dùng và dữ liệu")
+        defenses=[
+          ("Xác thực","JwtAuthGuard bảo vệ tuyến yêu cầu đăng nhập; backend xác định tài khoản từ thông tin phiên, không dựa vào tên người dùng từ HTML."),
+          ("Phân quyền","RolesGuard chặn tài khoản không có role phù hợp; service còn kiểm tra sự kiện thuộc phạm vi tổ chức hay không."),
+          ("Chống trùng","Unique constraint trong migration và khóa dữ liệu khi đăng ký giúp tránh lỗi hai lời gọi cùng cấp một suất."),
+          ("Chống phát quá sức chứa","Khóa suất khi tính số vé và trigger/chỉ mục CSDL hỗ trợ bảo vệ giới hạn."),
+          ("Kiểm tra Check-in","Chỉ nhân viên đúng suất được phân công mới có thể xác thực vé tại cổng."),
+          ("Bảo mật mã","QR chứa mã định danh vé có thể kiểm tra nhưng không được ghi vào audit log dưới dạng rõ."),
+          ("Hạn chế gọi dồn","Guard theo tài khoản cho nghiệp vụ đăng ký nhằm hạn chế spam đơn giản."),
+          ("Ảnh tải lên","Cần kiểm tra MIME, giới hạn kích thước và không tin tên file do người dùng cung cấp."),
+        ]
+        for i,(name,content) in enumerate(defenses,1):
+            if not self.can(65+i):continue
+            self.h3(f"5.17.{i}. {name}")
+            self.add(content+" Nếu chỉ ẩn nút ở giao diện mà không kiểm tra lại trong API thì một yêu cầu tự tạo vẫn có thể vượt qua. Vì vậy việc kiểm tra cần nằm ở nhiều lớp phù hợp.")
+            self.t(["Kiểm tra quan trọng","Bằng chứng cần đối chiếu"],[
+              ("Mã nguồn","Tìm guard/service/SQL có liên quan trong nhánh med06-code."),
+              ("Trạng thái HTTP","Quan sát trường hợp hợp lệ và bị từ chối."),
+              ("CSDL","Đọc trạng thái trước/sau trong môi trường thử nghiệm."),
+              ("Bảo mật ảnh chụp","Che token, mã QR có hiệu lực và khóa bí mật trước khi đưa vào báo cáo."),
+            ])
+        self.h2("5.18. Các bước trình diễn sản phẩm MED-06")
+        steps=[
+          ("Chuẩn bị tài khoản", "Khởi động frontend/backend, kiểm tra kết nối; chuẩn bị vai trò ADMIN, Organizer, Attendee và nhân viên Check-in."),
+          ("Tạo sự kiện và suất","Tạo chương trình nháp, nhập dữ liệu địa điểm/suất, chọn chính sách, công bố sau khi hợp lệ."),
+          ("Đăng ký FCFS cạnh tranh","Mở hai phiên người dùng, chọn suất sức chứa 1, gửi đăng ký gần đồng thời và kiểm tra đúng một vé."),
+          ("Kiểm tra danh sách chờ","Hủy vé chưa dùng của người được xác nhận và theo dõi người kế tiếp được đôn chờ."),
+          ("Bốc thăm Lottery","Đối chiếu suất đóng đăng ký, xác nhận tập ứng viên và một lần phân bổ; không bốc thăm lại."),
+          ("Vé QR và Check-in","Hiển thị mã QR tại /tickets, quét hoặc nhập mã dự phòng, chứng minh lượt đầu thành công và lượt sau bị từ chối."),
+          ("Quản trị hệ thống","Tìm người dùng, xét duyệt quyền tổ chức và xem nhật ký thao tác."),
+          ("Kiểm tra vận hành","Xem health API, Docker container và các nhóm ràng buộc trong PostgreSQL."),
+        ]
+        for i,(name,body) in enumerate(steps,1):
+            if not self.can(70+i):continue
+            self.h3(f"5.18.{i}. {name}")
+            self.add(body)
+            self.t(["Nội dung báo cáo","Mô tả"],[
+              ("Mục đích minh chứng",name),
+              ("Điều kiện hoàn thành","Có thao tác thành công hoặc bị từ chối đúng như quy tắc đã thiết kế."),
+              ("Cần chụp khi nghiệm thu","Màn hình trước/sau thao tác và trạng thái liên quan; không dùng số liệu của mockup."),
+              ("Kết quả đã xác minh trong tài liệu","Chỉ kiểm thử đánh dấu CI trong docs/MED06_TEST_CASES.md; các bước thao tác thật cần chụp riêng."),
+            ])
+        self.h2("5.19. Quan hệ giữa thiết kế và cài đặt")
+        self.t(["Nguồn thiết kế","Thành phần mã nguồn","Chứng cứ xác minh"],[
+          ("Use Case đăng nhập","AuthController, AuthService","Route HTTP và session có kiểm tra tài khoản."),
+          ("Use Case tạo sự kiện","ManagementController, ManagementService","Sự kiện nháp và quy tắc công bố."),
+          ("Sequence đăng ký","RegistrationsService","Khóa suất, tạo đăng ký, cấp vé/đưa vào chờ."),
+          ("Sequence Lottery","AllocationsService","Tạo đợt, sắp thứ tự, phát vé đúng hạn mức."),
+          ("Sequence Check-in","CheckinService, StaffService","Đúng suất, chống dùng lặp và bản ghi kết quả."),
+          ("ERD/SQL","database/migrations/*.sql","PK, FK, UNIQUE, INDEX, trigger và transaction."),
+          ("Thiết kế giao diện","frontend/app/**/page.tsx","Các trang theo vai trò và trạng thái."),
+        ])
+    def _page_meaning(self,url):
+        if url in ("/","/."):return "Khám phá, tìm kiếm và điều hướng đến sự kiện."
+        if "/events/" in url:return "Chi tiết sự kiện, suất và thao tác đăng ký."
+        if "/tickets" in url:return "Quản lý vé QR và lịch sử."
+        if "/registrations" in url:return "Theo dõi trạng thái tham dự và danh sách chờ."
+        if "/organizer" in url:return "Tổ chức chương trình, suất và phân bổ."
+        if "/checkin" in url:return "Xác minh vé theo suất được phân công."
+        if "/admin" in url:return "Quản trị hệ thống, tài khoản hoặc nhật ký."
+        if "/account" in url:return "Thông tin tài khoản, đăng nhập hoặc tạo tài khoản."
+        return "Trang nghiệp vụ trong hệ thống MED-06."
+    def ch7_more(self):
+        self.h2("7.6. Đánh giá mức độ đáp ứng các mục tiêu của đồ án")
+        checks=[
+          ("Quản lý các suất văn hóa","Mã nguồn có route quản lý sự kiện, địa điểm và các khung giờ; cần ảnh chụp xác nhận thao tác quản trị."),
+          ("Nhận đăng ký miễn phí","Có module đăng ký và luồng hiển thị trạng thái; cần đối chiếu với bản ghi thật."),
+          ("Phân bổ vé có giới hạn","Mã nguồn dùng hai cơ chế FCFS/Lottery và bổ sung MIXED; phép kiểm chính là số vé hợp lệ không vượt sức chứa."),
+          ("Danh sách chờ có thứ tự","Dữ liệu chờ có thứ tự trong cơ sở dữ liệu và nghiệp vụ đôn người chờ khi có chỗ."),
+          ("Check-in chống trùng","Có ràng buộc một lượt thành công, cần thử quét lặp bằng cùng vé."),
+          ("Phân quyền theo vai trò","Guards và kiểm tra ownership có trong backend; thao tác quản trị cần tài khoản đủ quyền."),
+          ("Accessibility","Sự kiện có đặc tính tiếp cận được xác nhận và bộ lọc công khai."),
+          ("Theo dõi và truy vết","Các thao tác quan trọng có audit log; dữ liệu bí mật không được đưa vào nhật ký."),
+        ]
+        self.t(["Mục tiêu","Căn cứ đối chiếu"],checks)
+        for i,(name,contents) in enumerate(checks,1):
+            if not self.can(55+i):continue
+            self.h3(f"7.6.{i}. {name}")
+            self.add(contents)
+            self.add("Khi đánh giá nghiệm thu, đối tượng được kiểm tra phải tách thành ba mức: bản thiết kế đã xây dựng, mã nguồn/CI có thể chạy, và bằng chứng vận hành thực tế do người thực hiện thu thập. Báo cáo này không đồng nhất ba mức đó.")
+        self.h2("7.7. Bài học thiết kế và hướng bảo trì")
+        self.t(["Vấn đề đã gặp","Kinh nghiệm sử dụng cho MED-06"],[
+          ("Sơ đồ khác cấu trúc triển khai","Theo dõi migration và mô tả phần thay đổi thay vì sửa im lặng tài liệu gốc."),
+          ("Thông tin trạng thái gây nhầm lẫn","Chuyển mã kỹ thuật thành thông báo rõ bằng tiếng Việt ở UI."),
+          ("Nhiều vai trò trong một tài khoản","Kiểm tra cả roles lẫn ownership/phạm vi suất."),
+          ("Cấp vé cạnh tranh","Đặt kiểm tra và cập nhật trong transaction cùng các bất biến ở DB."),
+          ("Tham chiếu ảnh","Lưu khóa ảnh ngoài database, kiểm tra MIME và tách ảnh demo."),
+          ("Minh chứng chưa đủ","Lưu kịch bản thử, dữ liệu thử và kết quả thật trước khi đánh dấu hoàn thành."),
+        ])
+        self.add("Định hướng tiếp theo là cải thiện kiểm thử tích hợp, tăng độ ổn định khi nhiều người đăng ký đồng thời và xác nhận tính dễ sử dụng trên điện thoại. Các hoạt động này phải được phân biệt với chức năng đã có trong mã hiện hành.")
