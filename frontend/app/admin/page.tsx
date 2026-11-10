@@ -4,84 +4,129 @@ import { getAuthenticated } from '../../lib/backend';
 
 export const dynamic = 'force-dynamic';
 type User = { name: string; roles: string[] };
-type CountResponse = { total: number };
-
+type Overview = {
+  users: number; events: number; sessions: number;
+  pendingRequests: number; auditEntries: number;
+};
+type AuditEntry = {
+  id: string; action: string; actorName: string | null; createdAt: string;
+};
+type RecentAudit = { items: AuditEntry[] };
 const sections = [
   {
-    path: '/admin/users',
-    tag: '01 · TÀI KHOẢN',
+    path: '/admin/users', tag: '01 · TÀI KHOẢN',
     title: 'Người dùng & phân quyền',
-    description: 'Tra cứu thành viên, quản lý trạng thái và phân công vai trò.',
+    description: 'Tìm kiếm, cấp quyền, khóa và mở khóa tài khoản.',
   },
   {
-    path: '/admin/organizer',
-    tag: '02 · SỰ KIỆN',
-    title: 'Quản lý sự kiện',
-    description: 'Tạo chương trình, thiết lập suất, sức chứa và chính sách phân bổ.',
+    path: '/admin/organizer', tag: '02 · SỰ KIỆN',
+    title: 'Sự kiện & suất tổ chức',
+    description: 'Theo dõi chương trình, thời gian và các chính sách phân bổ.',
   },
   {
-    path: '/admin/checkin',
-    tag: '03 · VẬN HÀNH',
-    title: 'Kiểm tra vé',
-    description: 'Truy cập công cụ quét QR và giám sát check-in của suất.',
-  },
-  {
-    path: '/admin/audit',
-    tag: '04 · KIỂM SOÁT',
+    path: '/admin/audit', tag: '03 · NHẬT KÝ',
     title: 'Nhật ký hệ thống',
-    description: 'Xem hoạt động quan trọng và kiểm tra dấu vết thay đổi.',
+    description: 'Tra cứu các thao tác cấp vé, check-in và phân quyền.',
+  },
+  {
+    path: '/admin/checkin', tag: '04 · VẬN HÀNH',
+    title: 'Giám sát Check-in',
+    description: 'Kiểm tra vé và số lượt ra vào tại những suất được phân quyền.',
   },
 ];
+const auditLabels: Record<string, string> = {
+  CAP_NHAT_VAI_TRO: 'Cập nhật vai trò',
+  CAP_NHAT_TRANG_THAI_TAI_KHOAN: 'Thay đổi trạng thái tài khoản',
+  YEU_CAU_TO_CHUC: 'Yêu cầu làm Ban tổ chức',
+  DUYET_YEU_CAU_TO_CHUC: 'Xét duyệt Ban tổ chức',
+  PHAN_BO_LOTTERY: 'Phân bổ vé bốc thăm',
+  DANG_KY_FCFS_DUOC_VE: 'Cấp vé theo thứ tự',
+  DANG_KY_CHO_LOTTERY: 'Nhận đăng ký chờ bốc thăm',
+  DANG_KY_VAO_DANH_SACH_CHO: 'Tham gia danh sách chờ',
+  CHECKIN_THANH_CONG: 'Check-in thành công',
+  CHECKIN_TU_CHOI: 'Từ chối check-in',
+  HUY_DANG_KY: 'Hủy đăng ký',
+  HUY_SUAT: 'Hủy suất',
+  HUY_SU_KIEN: 'Hủy sự kiện',
+};
 
 export default async function AdminPage() {
   const user = await getAuthenticated<User>('auth/me');
   if (!user) redirect('/account/login');
   if (!user.roles.includes('ADMIN')) redirect('/account');
 
-  const [users, audits] = await Promise.all([
-    getAuthenticated<CountResponse>('admin/users?page=1'),
-    getAuthenticated<CountResponse>('admin/audit?page=1'),
+  const [overview, audit] = await Promise.all([
+    getAuthenticated<Overview>('admin/overview'),
+    getAuthenticated<RecentAudit>('admin/audit?page=1'),
   ]);
+  const metrics = [
+    { label: 'Người dùng', value: overview?.users, detail: 'Tài khoản trong hệ thống' },
+    { label: 'Sự kiện', value: overview?.events, detail: 'Tất cả trạng thái' },
+    { label: 'Suất tổ chức', value: overview?.sessions, detail: 'Trên toàn hệ thống' },
+    { label: 'Chờ xét duyệt', value: overview?.pendingRequests,
+      detail: 'Yêu cầu Ban tổ chức', href: '/admin/requests' },
+  ];
 
-  return (
-    <main id="main-content" className="container admin-dashboard">
-      <header className="admin-dashboard-intro">
-        <p className="eyebrow">MED-06 · TRUNG TÂM ĐIỀU HÀNH</p>
-        <h1>Tổng quan quản trị</h1>
-        <p>Chào {user.name}. Theo dõi hệ thống và truy cập từng khu vực quản lý từ đây.</p>
-      </header>
+  return <main id="main-content" className="container admin-dashboard">
+    <header className="admin-dashboard-intro">
+      <p className="eyebrow">ADMIN / DASHBOARD HỆ THỐNG</p>
+      <h1>Trung tâm quản trị</h1>
+      <p>Theo dõi tài khoản, sự kiện và các hoạt động quan trọng. Mọi số liệu được lấy từ hệ thống.</p>
+    </header>
 
-      <section className="admin-dashboard-overview" aria-labelledby="admin-overview-title">
-        <h2 id="admin-overview-title">Thông tin hệ thống</h2>
-        <div className="admin-dashboard-metrics">
-          <div><span>Tổng tài khoản</span><strong>{users ? users.total : '—'}</strong>
-            <small>{users ? 'Đang có trong hệ thống' : 'Chưa tải được thống kê'}</small></div>
-          <div><span>Bản ghi nhật ký</span><strong>{audits ? audits.total : '—'}</strong>
-            <small>{audits ? 'Hoạt động đã ghi nhận' : 'Chưa tải được thống kê'}</small></div>
-          <div><span>Kiểm soát truy cập</span><strong>ADMIN</strong>
-            <small>Chỉ tài khoản được cấp quyền</small></div>
-        </div>
-      </section>
+    <section className="admin-dashboard-overview" aria-labelledby="admin-overview-title">
+      <h2 id="admin-overview-title">Tổng quan hệ thống</h2>
+      <div className="admin-dashboard-metrics">
+        {metrics.map(item => <div key={item.label}>
+          <span>{item.label}</span>
+          <strong>{item.value === undefined ? '—' : item.value.toLocaleString('vi-VN')}</strong>
+          <small>{item.detail}</small>
+          {'href' in item && item.href && <Link href={item.href}>Xem yêu cầu →</Link>}
+        </div>)}
+      </div>
+      {!overview && <p className="note" role="status">
+        Chưa tải được thống kê từ máy chủ; không hiển thị dữ liệu minh họa.
+      </p>}
+    </section>
 
-      <section className="admin-dashboard-section" aria-labelledby="admin-modules-title">
-        <div className="admin-dashboard-section-heading">
-          <div>
-            <p className="eyebrow">CÁC PHÂN HỆ</p>
-            <h2 id="admin-modules-title">Công cụ quản lý</h2>
-          </div>
-          <Link href="/account">Tài khoản của tôi <span aria-hidden="true">↗</span></Link>
+    <section className="admin-dashboard-section" aria-labelledby="admin-modules-title">
+      <div className="admin-dashboard-section-heading">
+        <div>
+          <p className="eyebrow">KHU VỰC QUẢN TRỊ</p>
+          <h2 id="admin-modules-title">Công cụ quản lý</h2>
         </div>
-        <div className="admin-dashboard-grid">
-          {sections.map(item => (
-            <Link key={item.path} href={item.path} className="admin-dashboard-card">
-              <span>{item.tag}</span>
-              <strong>{item.title}</strong>
-              <p>{item.description}</p>
-              <b aria-hidden="true">↗</b>
-            </Link>
-          ))}
+        <Link href="/admin/requests" className="button-secondary">Duyệt yêu cầu tổ chức →</Link>
+      </div>
+      <div className="admin-dashboard-grid">
+        {sections.map(item => <Link key={item.path} href={item.path}
+          className="admin-dashboard-card">
+          <span>{item.tag}</span>
+          <strong>{item.title}</strong>
+          <p>{item.description}</p>
+          <b aria-hidden="true">↗</b>
+        </Link>)}
+      </div>
+    </section>
+
+    <section className="admin-recent-section panel" aria-labelledby="recent-heading">
+      <div className="admin-recent-heading">
+        <div>
+          <p className="eyebrow">THEO DÕI HOẠT ĐỘNG</p>
+          <h2 id="recent-heading">Nhật ký thao tác gần đây</h2>
         </div>
-      </section>
-    </main>
-  );
+        <Link href="/admin/audit">Xem tất cả →</Link>
+      </div>
+      {audit === null ? <p role="status">Chưa tải được nhật ký.</p>
+        : audit.items.length === 0 ? <p className="note">Chưa có thao tác nào được ghi nhận.</p>
+        : <ul className="admin-recent-list">
+          {audit.items.slice(0, 5).map(item => <li key={item.id}>
+            <strong>{auditLabels[item.action] ?? 'Thao tác hệ thống'}</strong>
+            <span>{item.actorName ?? 'Hệ thống'}</span>
+            <time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString('vi-VN', {
+              timeZone: 'Asia/Ho_Chi_Minh',
+            })}</time>
+          </li>)}
+        </ul>}
+    </section>
+  </main>;
 }
