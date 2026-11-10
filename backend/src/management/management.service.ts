@@ -6,7 +6,7 @@ import { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service';
 import { PublicUser } from '../auth/auth.types';
 import {
-  allocationMethod, asObject, description, optionalPatch,
+  allocationPolicy, asObject, description, optionalPatch,
   requiredText, sessionInput, verifiedAccessibility,
 } from './management.validation';
 import { rescheduleInput } from './reschedule.validation';
@@ -49,7 +49,7 @@ export class ManagementService {
         mo_ta AS description, trang_thai AS status,
         ma_nguoi_to_chuc AS "organizerId"
       FROM su_kien WHERE ($1::boolean OR ma_nguoi_to_chuc=$2)
-      ORDER BY tao_luc DESC, ma_su_kien DESC LIMIT 200`,
+      ORDER BY (trang_thai='DA_HUY') ASC, tao_luc DESC, ma_su_kien DESC LIMIT 200`,
       [isAdmin, user.id],
     );
     return { items };
@@ -112,6 +112,32 @@ export class ManagementService {
       await client.query(
         `UPDATE su_kien SET trang_thai='DA_CONG_BO' WHERE ma_su_kien=$1`, [id],
       );
+      return { id, status: 'DA_CONG_BO' };
+    });
+  }
+
+  async pauseEvent(user: PublicUser, id: string) {
+    return this.db.transaction(async client => {
+      const event = await this.lockEvent(client, user, id, false);
+      if (event.status !== 'DA_CONG_BO') {
+        throw new ConflictException('Chỉ tạm ngưng sự kiện đã công bố');
+      }
+      await client.query(`UPDATE su_kien SET trang_thai='TAM_NGUNG' WHERE ma_su_kien=$1`, [id]);
+      await client.query(`INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet)
+        VALUES($1,'TAM_NGUNG_SU_KIEN',$2::jsonb)`, [user.id, JSON.stringify({eventId:id})]);
+      return { id, status: 'TAM_NGUNG' };
+    });
+  }
+
+  async resumeEvent(user: PublicUser, id: string) {
+    return this.db.transaction(async client => {
+      const event = await this.lockEvent(client, user, id, false);
+      if (event.status !== 'TAM_NGUNG') {
+        throw new ConflictException('Chỉ mở lại sự kiện đang tạm ngưng');
+      }
+      await client.query(`UPDATE su_kien SET trang_thai='DA_CONG_BO' WHERE ma_su_kien=$1`, [id]);
+      await client.query(`INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet)
+        VALUES($1,'MO_LAI_SU_KIEN',$2::jsonb)`, [user.id, JSON.stringify({eventId:id})]);
       return { id, status: 'DA_CONG_BO' };
     });
   }
@@ -390,7 +416,8 @@ export class ManagementService {
           s.suc_chua AS capacity, s.trang_thai AS status,
           s.mo_dang_ky AS "registrationOpensAt",
           s.dong_dang_ky AS "registrationClosesAt",
-          s.ma_dia_diem AS "venueId", c.phuong_thuc AS method
+          s.ma_dia_diem AS "venueId", c.phuong_thuc AS method,
+          (c.cau_hinh->>'fcfsQuota')::int AS "fcfsQuota"
         FROM suat_su_kien s
         LEFT JOIN chinh_sach_phan_bo c ON c.ma_suat=s.ma_suat
         WHERE s.ma_su_kien=$1 ORDER BY s.bat_dau`, [eventId],
@@ -402,7 +429,10 @@ export class ManagementService {
   async createSession(user: PublicUser, eventId: string, body: unknown) {
     const data = sessionInput(body);
     return this.db.transaction(async client => {
-      await this.lockEvent(client, user, eventId);
+      const event = await this.lockEvent(client, user, eventId, false);
+      if (!['NHAP','DA_CONG_BO'].includes(event.status)) {
+        throw new ConflictException('Sự kiện đã hủy hoặc tạm ngưng, không thể thêm suất');
+      }
       const venue = await client.query(
         `SELECT 1 FROM dia_diem WHERE ma_dia_diem=$1`, [data.venueId],
       );
@@ -421,23 +451,54 @@ export class ManagementService {
   }
 
   async setPolicy(user: PublicUser, sessionId: string, body: unknown) {
-    const method = allocationMethod(body);
+    const { method, fcfsQuota } = allocationPolicy(body);
     return this.db.transaction(async client => {
       const parent = await client.query<{ eventId: string }>(
         `SELECT ma_su_kien AS "eventId" FROM suat_su_kien
           WHERE ma_suat=$1`, [sessionId],
       );
       if (!parent.rows[0]) throw new NotFoundException('Không tìm thấy suất');
-      await this.lockEvent(client, user, parent.rows[0].eventId);
+      const event = await this.lockEvent(client, user, parent.rows[0].eventId, false);
+      if (!['NHAP','DA_CONG_BO'].includes(event.status)) {
+        throw new ConflictException('Không thể đổi chính sách khi sự kiện đã tạm ngưng hoặc hủy');
+      }
+      const locked = await client.query<{ capacity: number; opensAt: Date; status: string }>(
+        `SELECT suc_chua AS capacity, mo_dang_ky AS "opensAt", trang_thai AS status
+         FROM suat_su_kien WHERE ma_suat=$1 FOR UPDATE`, [sessionId],
+      );
+      const session = locked.rows[0];
+      if (session.status === 'DA_HUY' || session.status === 'HOAN_TAT') {
+        throw new ConflictException('Không thể cấu hình suất đã hủy hoặc hoàn tất');
+      }
+      if (method === 'MIXED' && (fcfsQuota === null || fcfsQuota >= session.capacity)) {
+        throw new BadRequestException('Vé FCFS phải ít hơn sức chứa để còn vé bốc thăm');
+      }
+      if (event.status === 'DA_CONG_BO') {
+        const existing = await client.query(
+          `SELECT 1 FROM dang_ky WHERE ma_suat=$1 LIMIT 1`, [sessionId],
+        );
+        if (existing.rowCount) {
+          throw new ConflictException('Đã có người đăng ký: không được thay đổi chính sách');
+        }
+      }
+      const config = method === 'MIXED' ? { fcfsQuota } : {};
       await client.query(
         `INSERT INTO chinh_sach_phan_bo(ma_suat,phuong_thuc,cau_hinh)
-          VALUES($1,$2,'{}'::jsonb)
+          VALUES($1,$2,$3::jsonb)
           ON CONFLICT(ma_suat) DO UPDATE SET
             phuong_thuc=EXCLUDED.phuong_thuc,
             cau_hinh=EXCLUDED.cau_hinh`,
-        [sessionId,method],
+        [sessionId,method,JSON.stringify(config)],
       );
-      return { sessionId, method };
+      if (event.status === 'DA_CONG_BO' && session.status === 'NHAP') {
+        await client.query(
+          `UPDATE suat_su_kien SET trang_thai=CASE
+            WHEN mo_dang_ky<=now() AND dong_dang_ky>now() THEN 'MO_DANG_KY'
+            ELSE 'NHAP' END
+          WHERE ma_suat=$1`, [sessionId],
+        );
+      }
+      return { sessionId, method, fcfsQuota };
     });
   }
 
