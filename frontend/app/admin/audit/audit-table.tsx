@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 type AuditEntry = {
   id: string; actorName: string | null; action: string;
@@ -201,62 +201,130 @@ function describe(entry: AuditEntry): string {
 
 export default function AuditTable() {
   const [action, setAction] = useState('ALL');
+  const [typedQuery, setTypedQuery] = useState('');
+  const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [data, setData] = useState<AuditResult | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
-    setLoading(true); setError('');
-    const query = new URLSearchParams({ action, page: String(page) });
-    fetch('/api/admin/audit?' + query.toString(), { cache: 'no-store' })
-      .then(async r => {
-        const body = (await r.json()) as AuditResult & ApiError;
-        if (!r.ok) throw new Error(Array.isArray(body.message)
+    setLoading(true);
+    setError('');
+    setData(null);
+    const params = new URLSearchParams({ action, page: String(page) });
+    if (query) params.set('q', query);
+    fetch('/api/admin/audit?' + params.toString(), { cache: 'no-store' })
+      .then(async response => {
+        const body = (await response.json()) as AuditResult & ApiError;
+        if (!response.ok) throw new Error(Array.isArray(body.message)
           ? body.message.join(', ') : body.message ?? 'Không thể tải nhật ký');
         return body;
       })
-      .then(body => { if (active) setData(body); })
-      .catch(err => { if (active) setError(err instanceof Error ? err.message : 'Lỗi máy chủ'); })
+      .then(result => { if (active) setData(result); })
+      .catch(err => {
+        if (active) setError(err instanceof Error ? err.message : 'Lỗi máy chủ');
+      })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [action,page]);
+  }, [action, page, query]);
 
-  return <section className="panel">
-    <label className="management-label">Loại thao tác
-      <select value={action} onChange={event => {
-        setAction(event.target.value); setPage(1);
-      }}>
-        {ACTIONS.map(([value,label]) => <option value={value} key={value}>{label}</option>)}
-      </select>
-    </label>
-    {loading && <p role="status">Đang tải...</p>}
+  function search(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setQuery(typedQuery.trim().slice(0, 100));
+    setExpandedId(null);
+    setPage(1);
+  }
+
+  return <section className="panel audit-workspace">
+    <div className="audit-workspace-heading">
+      <div>
+        <p className="eyebrow">NHẬT KÝ QUẢN TRỊ</p>
+        <h2>Tra cứu hoạt động</h2>
+        <p className="note">Thời gian hiển thị theo giờ Hà Nội (UTC+7).</p>
+      </div>
+      <span className="audit-record-count">
+        {data ? data.total.toLocaleString('vi-VN') + ' bản ghi' : 'Nhật ký'}
+      </span>
+    </div>
+    <form className="audit-filters" role="search" onSubmit={search}>
+      <label className="management-label">Người thao tác
+        <input type="search" value={typedQuery} maxLength={100}
+          onChange={event => setTypedQuery(event.target.value)}
+          placeholder="Tìm theo tên người thực hiện"/>
+      </label>
+      <label className="management-label">Loại thao tác
+        <select value={action} onChange={event => {
+          setAction(event.target.value); setExpandedId(null); setPage(1);
+        }}>
+          {ACTIONS.map(([value,label]) => <option value={value} key={value}>{label}</option>)}
+        </select>
+      </label>
+      <button type="submit" disabled={loading}>Tìm kiếm</button>
+    </form>
+    {loading && <p role="status" className="audit-loading">Đang tải nhật ký...</p>}
     {error && <p role="alert" className="form-error">{error}</p>}
     {data && <>
-      <p>{data.total} bản ghi · Trang {data.page}/{Math.max(1,data.pages)}</p>
-      {data.items.length === 0 ? <p>Chưa có nhật ký phù hợp.</p> :
-        <ol className="audit-list">{data.items.map(entry =>
-          <li key={entry.id}>
-            <strong>{ACTION_LABELS[entry.action] ?? 'Thao tác hệ thống'}</strong> · {entry.actorName ?? 'Hệ thống'}
-            <p>{describe(entry)}</p>
-            <p>{new Date(entry.createdAt).toLocaleString('vi-VN', {
-              timeZone: 'Asia/Ho_Chi_Minh',
-            })}</p>
-            <details>
-              <summary>Chi tiết thao tác</summary>
-              <div className="audit-detail-list">
-                {detailRows(entry).map((row, index) =>
-                  <p key={index}><strong>{row.label}:</strong> {row.value}</p>)}
-              </div>
-            </details>
-          </li>)}</ol>}
-      <nav className="insights-pager" aria-label="Phân trang nhật ký">
-        <button type="button" disabled={loading || page <= 1}
-          onClick={() => setPage(p => Math.max(1,p-1))}>Trang trước</button>
-        <button type="button" disabled={loading || page >= data.pages}
-          onClick={() => setPage(p => p+1)}>Trang sau</button>
-      </nav>
+      {data.items.length === 0
+        ? <p className="state-message">Chưa có nhật ký phù hợp với điều kiện tìm kiếm.</p>
+        : <div className="table-scroll audit-table-scroll">
+          <table className="audit-data-table">
+            <thead><tr>
+              <th scope="col">Thời gian</th>
+              <th scope="col">Người thực hiện</th>
+              <th scope="col">Hành động</th>
+              <th scope="col">Nội dung</th>
+              <th scope="col">Chi tiết</th>
+            </tr></thead>
+            {data.items.map(entry => <tbody key={entry.id}>
+              <tr>
+                <td className="audit-when">
+                  <time dateTime={entry.createdAt}>
+                    {new Date(entry.createdAt).toLocaleString('vi-VN', {
+                      timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'short', timeStyle: 'short',
+                    })}
+                  </time>
+                </td>
+                <td><strong>{entry.actorName ?? 'Hệ thống'}</strong></td>
+                <td><span className="audit-action-pill">
+                  {ACTION_LABELS[entry.action] ?? 'Thao tác hệ thống'}
+                </span></td>
+                <td className="audit-description">{describe(entry)}</td>
+                <td><button type="button" className="button-secondary audit-detail-button"
+                  aria-expanded={expandedId === entry.id}
+                  aria-controls={'audit-detail-' + entry.id}
+                  onClick={() => setExpandedId(previous => previous === entry.id ? null : entry.id)}>
+                  {expandedId === entry.id ? 'Đóng' : 'Xem'}
+                </button></td>
+              </tr>
+              {expandedId === entry.id && <tr className="audit-expanded-row">
+                <td colSpan={5} id={'audit-detail-' + entry.id}>
+                  <div className="audit-detail-panel">
+                    <h3>Chi tiết thao tác</h3>
+                    <dl>{detailRows(entry).map((row,index) =>
+                      <div key={index}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}
+                    </dl>
+                  </div>
+                </td>
+              </tr>}
+            </tbody>)}
+          </table>
+        </div>}
+      <div className="audit-table-footer">
+        <span>Trang {data.page}/{Math.max(1, data.pages)} · {data.total.toLocaleString('vi-VN')} bản ghi</span>
+        <nav className="insights-pager" aria-label="Phân trang nhật ký">
+          <button type="button" disabled={loading || data.page <= 1}
+            onClick={() => { setExpandedId(null); setPage(Math.max(1,data.page-1)); }}>
+            Trang trước
+          </button>
+          <button type="button" disabled={loading || data.page >= data.pages}
+            onClick={() => { setExpandedId(null); setPage(data.page+1); }}>
+            Trang sau
+          </button>
+        </nav>
+      </div>
     </>}
   </section>;
 }
