@@ -129,4 +129,58 @@ export class AuthService {
     }
     return this.issueToken(record.id);
   }
+  async organizerRequestStatus(user: PublicUser) {
+    const [application] = await this.db.queryRows<{
+      id: string; status: string; reason: string; createdAt: Date;
+    }>(`SELECT ma_yeu_cau AS id, trang_thai AS status,
+         ly_do AS reason, tao_luc AS "createdAt"
+       FROM yeu_cau_to_chuc WHERE ma_nguoi_dung=$1`, [user.id]);
+    return { application: application ?? null };
+  }
+
+  async requestOrganizer(user: PublicUser, body: unknown) {
+    if (!isObject(body) || typeof body.reason !== 'string'
+      || body.reason.trim().length < 10 || body.reason.trim().length > 500) {
+      throw new BadRequestException('Hãy giới thiệu mục đích tổ chức sự kiện (10–500 ký tự).');
+    }
+    if (user.roles.includes('ORGANIZER') || user.roles.includes('ADMIN')) {
+      throw new ConflictException('Tài khoản đã có quyền tổ chức sự kiện');
+    }
+    return this.db.transaction(async client => {
+      const [account] = (await client.query<{ status: string }>(
+        `SELECT trang_thai AS status FROM nguoi_dung WHERE ma_nguoi_dung=$1 FOR UPDATE`,
+        [user.id],
+      )).rows;
+      if (!account || account.status !== 'HOAT_DONG') {
+        throw new ConflictException('Tài khoản không hoạt động');
+      }
+      const existing = await client.query<{ id: string; status: string }>(
+        `SELECT ma_yeu_cau AS id,trang_thai AS status
+         FROM yeu_cau_to_chuc WHERE ma_nguoi_dung=$1 FOR UPDATE`,
+        [user.id],
+      );
+      if (existing.rows[0]?.status === 'CHO_DUYET') {
+        throw new ConflictException('Yêu cầu đang chờ quản trị viên duyệt');
+      }
+      if (existing.rows[0]?.status === 'DA_DUYET') {
+        throw new ConflictException('Yêu cầu đã được duyệt');
+      }
+      const reason = body.reason.trim();
+      const [application] = (await client.query<{ id: string }>(
+        `INSERT INTO yeu_cau_to_chuc(ma_nguoi_dung,ly_do) VALUES($1,$2)
+         ON CONFLICT(ma_nguoi_dung) DO UPDATE SET
+           ly_do=EXCLUDED.ly_do,trang_thai='CHO_DUYET',
+           tao_luc=now(),xu_ly_luc=NULL,ma_nguoi_duyet=NULL
+         RETURNING ma_yeu_cau AS id`,
+        [user.id,reason],
+      )).rows;
+      await client.query(
+        `INSERT INTO nhat_ky_he_thong(ma_nguoi_dung,hanh_dong,chi_tiet)
+         VALUES($1,'YEU_CAU_TO_CHUC',$2::jsonb)`,
+        [user.id,JSON.stringify({applicationId:application.id})],
+      );
+      return { id: application.id, status: 'CHO_DUYET' };
+    });
+  }
+
 }
