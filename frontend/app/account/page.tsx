@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { labelRole } from '../../lib/status-label';
+import OrganizerApplication from './organizer-application';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,5 +98,7 @@ export default async function AccountPage() {
           </Link>}
       </nav>
     </section>
+    {!user.roles.includes('ORGANIZER') && !user.roles.includes('ADMIN') &&
+      <OrganizerApplication />}
   </main>;
 }
