@@ -9,9 +9,9 @@ type EventSummary = {
   status: string;
   sessionCount: number;
   nextSessionAt: string | null;
+  hasCover: boolean;
 };
 
-type HealthResponse = { status?: string; database?: string };
 type CurrentUser = { name: string; roles: string[] };
 type EventsResponse = { items: EventSummary[] };
 type FeaturesResponse = { items: { id: string; name: string }[] };
@@ -19,20 +19,6 @@ type FeaturesResponse = { items: { id: string; name: string }[] };
 export const dynamic = 'force-dynamic';
 
 const api = process.env.BACKEND_INTERNAL_URL ?? 'http://localhost:3001';
-
-async function checkBackend(): Promise<boolean> {
-  try {
-    const response = await fetch(`${api}/api/health`, {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok) return false;
-    const data = (await response.json()) as HealthResponse;
-    return data.status === 'ok' && data.database === 'connected';
-  } catch {
-    return false;
-  }
-}
 
 async function loadEvents(q: string, featureId: string): Promise<EventSummary[] | null> {
   try {
@@ -71,8 +57,8 @@ export default async function Home({
   const filters = await searchParams;
   const q = typeof filters.q === 'string' ? filters.q.trim().slice(0, 100) : '';
   const featureId = typeof filters.featureId === 'string' ? filters.featureId : '';
-  const [connected, events, features, currentUser] = await Promise.all([
-    checkBackend(), loadEvents(q, featureId), getFeatures(), getAuthenticated<CurrentUser>('auth/me'),
+  const [events, features, currentUser] = await Promise.all([
+    loadEvents(q, featureId), getFeatures(), getAuthenticated<CurrentUser>('auth/me'),
   ]);
 
   return <main id="main-content" className="home-page">
@@ -151,9 +137,15 @@ export default async function Home({
               <Link href={'/events/' + event.id} className="discover-card-link"
                 aria-label={'Xem chi tiết ' + event.title}>
                 <div className={'discover-poster poster-' + (index % 4)}>
-                  <span className="discover-poster-label">MED · 06</span>
-                  <span className="poster-graphic" aria-hidden="true"/>
-                  <span className="discover-poster-bottom">SỰ KIỆN VĂN HÓA</span>
+                  {event.hasCover ? (
+                    <img className="discover-cover-photo"
+                      src={'/api/event-cover/' + event.id} width={420} height={320}
+                      loading="lazy" alt={'Ảnh sự kiện ' + event.title}/>
+                  ) : <>
+                    <span className="discover-poster-label">MED · 06</span>
+                    <span className="poster-graphic" aria-hidden="true"/>
+                    <span className="discover-poster-bottom">SỰ KIỆN VĂN HÓA</span>
+                  </>}
                 </div>
                 <div className="discover-card-body">
                   <span className="event-category"><span aria-hidden="true">●</span> {event.status === 'TAM_NGUNG' ? 'Tạm ngưng đăng ký' : 'Vé miễn phí'}</span>
@@ -198,10 +190,5 @@ export default async function Home({
       <Link href={currentUser ? '/account' : '/account/register'}
         className="button-primary">{currentUser ? 'Tài khoản của tôi' : 'Tạo tài khoản miễn phí'} <span aria-hidden="true">↗</span></Link>
     </section>
-    {currentUser?.roles.includes('ADMIN') && <details className="home-system-details">
-      <summary>Trạng thái kết nối hệ thống</summary>
-      <p><span className={connected ? 'status ok' : 'status error'}>
-        {connected ? 'Đã kết nối' : 'Chưa kết nối'}</span> NestJS API & PostgreSQL</p>
-    </details>}
   </main>;
 }
