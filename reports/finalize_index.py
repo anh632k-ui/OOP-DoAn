@@ -41,8 +41,10 @@ refs={name:label for name,label in refs.items() if name in needed}
 
 pages=fitz.open(pdf)
 texts=[normalize(p.get_text("text")) for p in pages]
-first=next((i for i,t in enumerate(texts) if "chương i. giới thiệu đề tài" in t
-            and "1.1. bối cảnh và bài toán" in t),None)
+# The table of contents also contains chapter titles; search for body prose
+# to avoid mistaking TOC page 3 for the beginning of Chapter I.
+first=next((i for i,t in enumerate(texts) if "hoạt động văn hóa cộng đồng" in t
+            and "sức chứa" in t),None)
 if first is None:
     raise RuntimeError("Không xác định được trang bắt đầu chương I")
 page_map={}
