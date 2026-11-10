@@ -24,11 +24,12 @@ type Props = {
 
 export default function OrganizerDashboard({ events, venues, features }: Props) {
   const router = useRouter();
-  const [eventId, setEventId] = useState(events[0]?.id ?? '');
+  const [eventId, setEventId] = useState(events.find(e => e.status !== 'DA_HUY')?.id ?? events[0]?.id ?? '');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [inspectedSession, setInspectedSession] = useState('');
   const [reload, setReload] = useState(0);
   const [activeTab, setActiveTab] = useState<'sessions' | 'people' | 'settings' | 'create'>('sessions');
+  const [allocationChoice, setAllocationChoice] = useState<'FCFS'|'LOTTERY'|'MIXED'>('FCFS');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -46,7 +47,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         setInspectedSession(previous => data.items.some(s => s.id === previous)
           ? previous : (data.items[0]?.id ?? ''));
       } })
-      .catch(() => { if (!cancelled) setSessions([]); });
+      .catch(() => { if (!cancelled) { setSessions([]); setError('Không tải được các suất; vui lòng thử lại.'); } });
     return () => { cancelled = true; };
   }, [eventId, reload]);
 
@@ -112,6 +113,15 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     });
   }
 
+  function togglePause(pause: boolean) {
+    if (!eventId || !window.confirm(pause
+      ? 'Tạm ngưng sự kiện và dừng tiếp nhận đăng ký mới?'
+      : 'Mở lại sự kiện và tiếp tục tiếp nhận đăng ký?')) return;
+    void perform(async () => {
+      await request(`events/${eventId}/${pause ? 'pause' : 'resume'}`, 'POST');
+    });
+  }
+
   function cancelSession(sessionId: string) {
     if (!window.confirm('Hủy suất này? Đăng ký bị hủy, vé chưa dùng sẽ bị vô hiệu.')) return;
     void perform(async () => {
@@ -156,13 +166,21 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     e.preventDefault();
     if (!eventId) return;
     const form = e.currentTarget, data = new FormData(form);
-    const toIso = (key: string) => hanoiInputToIso(String(data.get(key)));
     void perform(async () => {
+      const toIso = (key: string) => hanoiInputToIso(String(data.get(key)));
+      const startsAt = toIso('startsAt'), endsAt = toIso('endsAt');
+      const registrationOpensAt = toIso('registrationOpensAt');
+      const registrationClosesAt = toIso('registrationClosesAt');
+      if (new Date(endsAt) <= new Date(startsAt)) {
+        throw new Error('Kết thúc suất phải sau thời điểm bắt đầu.');
+      }
+      if (new Date(registrationClosesAt) <= new Date(registrationOpensAt)
+        || new Date(registrationClosesAt) > new Date(startsAt)) {
+        throw new Error('Hạn đăng ký phải sau giờ mở và không muộn hơn khi suất bắt đầu.');
+      }
       await request(`events/${eventId}/sessions`, 'POST', {
         venueId: data.get('venueId'), capacity: Number(data.get('capacity')),
-        startsAt: toIso('startsAt'), endsAt: toIso('endsAt'),
-        registrationOpensAt: toIso('registrationOpensAt'),
-        registrationClosesAt: toIso('registrationClosesAt'),
+        startsAt, endsAt, registrationOpensAt, registrationClosesAt,
       });
       form.reset();
     });
@@ -174,7 +192,8 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     const sessionId = String(data.get('sessionId'));
     void perform(async () => {
       await request(`sessions/${sessionId}/policy`, 'PUT', {
-        method: data.get('method'),
+        method: allocationChoice,
+        ...(allocationChoice === 'MIXED' ? { fcfsQuota: Number(data.get('fcfsQuota')) } : {}),
       });
     });
   }
@@ -358,6 +377,16 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           </form>
         </section>
       )}
+      {chosen && ['DA_CONG_BO','TAM_NGUNG'].includes(chosen.status) && (
+        <section className="panel">
+          <h2>{chosen.status === 'TAM_NGUNG' ? 'Mở lại sự kiện' : 'Tạm ngưng sự kiện'}</h2>
+          <p className="note">Tạm ngưng chặn đăng ký mới; vé và đăng ký đã có vẫn được giữ.</p>
+          <button type="button" disabled={busy}
+            onClick={() => togglePause(chosen.status === 'DA_CONG_BO')}>
+            {chosen.status === 'TAM_NGUNG' ? 'Mở lại sự kiện' : 'Tạm ngưng'}
+          </button>
+        </section>
+      )}
       {chosen && chosen.status !== 'DA_HUY' && (
         <section className="panel">
           <h2>Hủy sự kiện</h2>
@@ -382,6 +411,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         <>
           <section className="panel">
             <h2>Thêm suất tổ chức</h2>
+            {error && <p className="form-error" role="alert">{error}</p>}
             <p className="note">Nhập giờ Hà Nội (UTC+7), không phụ thuộc múi giờ trên máy tính. Suất phải ở tương lai.</p>
             <form className="auth-form" onSubmit={createSession}>
               <label>Địa điểm
@@ -419,11 +449,18 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
                 </select>
               </label>
               <label>Phương thức
-                <select name="method" defaultValue="FCFS">
-                  <option value="FCFS">FCFS – Theo thời gian đăng ký</option>
-                  <option value="LOTTERY">LOTTERY – Bốc thăm</option>
+                <select name="method" value={allocationChoice}
+                  onChange={e => setAllocationChoice(e.target.value as 'FCFS'|'LOTTERY'|'MIXED')}>
+                  <option value="FCFS">Theo thứ tự đăng ký</option>
+                  <option value="LOTTERY">Bốc thăm công bằng</option>
+                  <option value="MIXED">Kết hợp cấp sớm và bốc thăm</option>
                 </select>
               </label>
+              {allocationChoice === 'MIXED' && <label>Số vé cấp theo thứ tự đăng ký
+                <input name="fcfsQuota" type="number" min={1} max={99999} required
+                  placeholder="Ví dụ: 50 trong 100 vé" />
+                <span className="note">Phần còn lại sẽ bốc thăm khi đóng đăng ký.</span>
+              </label>}
               <button type="submit" disabled={busy || !sessions.length}>Lưu chính sách</button>
             </form>
           </section>
