@@ -136,7 +136,7 @@ export default async function Home({
             <li key={event.id} className="discover-card">
               <Link href={'/events/' + event.id} className="discover-card-link"
                 aria-label={'Xem chi tiết ' + event.title}>
-                <div className={'discover-poster poster-' + (index % 4)}>
+                <div className={'discover-poster poster-' + (index % 4) + (event.hasCover ? ' has-cover' : '')}>
                   {event.hasCover ? (
                     <img className="discover-cover-photo"
                       src={'/api/event-cover/' + event.id} width={420} height={320}
