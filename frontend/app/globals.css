@@ -1236,3 +1236,11 @@ body:has(.admin-workspace) .site-footer { display: none; }
   .wallet-tabs,.admin-workspace-sidebar { display: none !important; }
   .admin-workspace { display: block; }
 }
+
+/* Admin pages use a dedicated workspace; public navigation stays in attendee pages. */
+body:has(.admin-workspace) > .site-header,
+body:has(.admin-workspace) > .site-footer { display: none; }
+.admin-workspace-content .container { max-width: 1100px; width: 100%; }
+@media (max-width: 780px) {
+  .admin-workspace-sidebar { display: block !important; }
+}
