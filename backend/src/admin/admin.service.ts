@@ -71,6 +71,28 @@ export class AdminService {
     };
   }
 
+  async overview() {
+    const [users, events, sessions, requests, audits] = await Promise.all([
+      this.db.queryRows<{ total: number }>(
+        'SELECT count(*)::int AS total FROM nguoi_dung'),
+      this.db.queryRows<{ total: number }>(
+        'SELECT count(*)::int AS total FROM su_kien'),
+      this.db.queryRows<{ total: number }>(
+        'SELECT count(*)::int AS total FROM suat_su_kien'),
+      this.db.queryRows<{ total: number }>(
+        "SELECT count(*)::int AS total FROM yeu_cau_to_chuc WHERE trang_thai='CHO_DUYET'"),
+      this.db.queryRows<{ total: number }>(
+        'SELECT count(*)::int AS total FROM nhat_ky_he_thong'),
+    ]);
+    return {
+      users: users[0].total,
+      events: events[0].total,
+      sessions: sessions[0].total,
+      pendingRequests: requests[0].total,
+      auditEntries: audits[0].total,
+    };
+  }
+
   async listAudit(page?: unknown, action?: unknown) {
     const requestedPage = pagination(page);
     const filter = action === undefined ? 'ALL' : action;
