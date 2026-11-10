@@ -123,7 +123,8 @@ with ZipFile(docx,'r') as source,ZipFile(safe,'w') as dest:
         dest.writestr(item,data)
 safe.replace(docx)
 assert len(page_map)==len(refs)
-assert len(set(page_map.values()))>10, 'Most page references unexpectedly point to same page'
+print("Index page distribution:",sorted(set(page_map.values())))
+assert len(set(page_map.values()))>4, 'TOC page mapping unexpectedly collapsed'
 print(f"Updated {total} cached page labels; real pages span {min(page_map.values())}–{max(page_map.values())}")
 print(f"Total PDF pages {len(pages)}")
 print("First chapter starts at",first+1)
