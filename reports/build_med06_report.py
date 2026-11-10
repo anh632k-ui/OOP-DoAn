@@ -407,15 +407,10 @@ for n in [8,9,10]:
 h2("3.3. Biểu đồ tuần tự")
 for i,n in enumerate(range(11,17),1):
  h3("3.3."+str(i)+". "+PTTK_LABELS[n]);pttk(n)
-h2("3.4. Mô hình lớp thiết kế")
-pttk(17)
-h2("3.5. Các lớp chức năng")
-for i,n in enumerate(range(18,23),1):
- h3("3.5."+str(i)+". "+PTTK_LABELS[n]);pttk(n)
-h2("3.6. Biểu đồ hoạt động")
+h2("3.4. Biểu đồ hoạt động")
 for i,n in enumerate(range(23,26),1):
- h3("3.6."+str(i)+". "+PTTK_LABELS[n]);pttk(n)
-h2("3.7. Nguyên tắc thiết kế đối tượng")
+ h3("3.4."+str(i)+". "+PTTK_LABELS[n]);pttk(n)
+h2("3.5. Nguyên tắc thiết kế đối tượng")
 multi("""Tách boundary, control/service và entity giúp giảm phụ thuộc giữa giao diện và quy tắc nghiệp vụ. Boundary nhận dữ liệu và hiển thị trạng thái; service xử lý trường hợp sử dụng và transaction; entity biểu diễn thông tin nghiệp vụ có định danh.
 Tính đóng gói được thể hiện ở việc trạng thái đăng ký, vé và suất không được chuyển tùy tiện từ trang web. Từng trường hợp sử dụng phải đi qua các hàm nghiệp vụ và điều kiện chuyển trạng thái.
 Đa hình ở mức chiến lược phân bổ cho phép thay đổi cách xét người nhận vé theo chính sách từng suất. Dù dùng FCFS, Lottery hay MIXED, số vé phát ra vẫn bị kiểm soát bởi cùng các bất biến trong CSDL.
@@ -517,6 +512,12 @@ h2("5.8. Giới hạn và kiểm soát rủi ro")
 multi("""Chống bot hiện tập trung vào giới hạn tần suất, kiểm tra trạng thái người dùng và chống đăng ký trùng; chưa thể coi là giải pháp chống bot toàn diện.
 Kiểm tra QR trên trình duyệt phụ thuộc vào khả năng hỗ trợ camera và môi trường bảo mật. Đường nhập mã dự phòng là phương án vận hành thay thế, cần giữ nguyên mã thực khi sao chép.
 Phần quản lý chứng cứ cần tránh đưa giá trị mã QR đang dùng, mật khẩu, JWT hoặc khóa object storage vào hình báo cáo. Những trường hợp chưa có ảnh xác thực từ sản phẩm không được ghi là đã nghiệm thu trên Windows.""")
+
+h2("5.9. Sơ đồ lớp thiết kế chi tiết")
+pttk(17)
+h2("5.10. Thiết kế lớp cho từng chức năng")
+for i,n in enumerate(range(18,23),1):
+ h3("5.10."+str(i)+". "+PTTK_LABELS[n]);pttk(n)
 
 exp.ch5()
 
