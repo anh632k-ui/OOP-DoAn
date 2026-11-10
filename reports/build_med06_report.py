@@ -292,6 +292,9 @@ lof=doc.add_paragraph()
 add_field(lof,'TOC \\h \\z \\c "Hinh"','')
 doc.add_page_break()
 
+from med06_deep_sections import Expansion
+exp = Expansion(doc, h2, h3, add_text, table)
+
 # Chapter I
 h1("CHƯƠNG I. GIỚI THIỆU ĐỀ TÀI")
 h2("1.1. Bối cảnh và bài toán")
@@ -345,6 +348,8 @@ table(["Mã","Quy tắc và ý nghĩa"],[
 h2("1.7. Phương pháp thực hiện")
 add_text("Đề tài áp dụng quy trình phân tích – thiết kế hướng đối tượng: mô tả bài toán và tác nhân, xác định Use Case, phân rã các tình huống quan trọng, dựng mô hình lớp và trạng thái, mô tả tương tác theo sequence/activity, thiết kế bảng dữ liệu và kiến trúc triển khai, sau đó hiện thực và kiểm thử các bất biến. Khi thêm yêu cầu mới, cần rà soát ảnh hưởng đến mã nguồn, migration và các sơ đồ có liên quan.")
 
+exp.ch1()
+
 # Chapter II
 h1("CHƯƠNG II. MÔ HÌNH USE CASE")
 h2("2.1. Phạm vi hệ thống và Use Case tổng quát")
@@ -390,6 +395,8 @@ for title,actor,pre,flow,alt,post in [
  h3(title)
  table(["Thành phần đặc tả","Nội dung"],[("Actor",actor),("Tiền điều kiện",pre),("Luồng chính",flow),("Luồng thay thế/ngoại lệ",alt),("Hậu điều kiện",post)])
 
+exp.ch2()
+
 # Chapter III
 h1("CHƯƠNG III. PHÂN TÍCH VÀ THIẾT KẾ HƯỚNG ĐỐI TƯỢNG")
 h2("3.1. Mô hình lớp phân tích")
@@ -413,6 +420,8 @@ multi("""Tách boundary, control/service và entity giúp giảm phụ thuộc g
 Tính đóng gói được thể hiện ở việc trạng thái đăng ký, vé và suất không được chuyển tùy tiện từ trang web. Từng trường hợp sử dụng phải đi qua các hàm nghiệp vụ và điều kiện chuyển trạng thái.
 Đa hình ở mức chiến lược phân bổ cho phép thay đổi cách xét người nhận vé theo chính sách từng suất. Dù dùng FCFS, Lottery hay MIXED, số vé phát ra vẫn bị kiểm soát bởi cùng các bất biến trong CSDL.
 Quan hệ composition giữa sự kiện và suất mang ý nghĩa vòng đời nghiệp vụ: suất phụ thuộc sự kiện để tồn tại một cách hợp lệ. Tuy nhiên không bắt buộc phải ánh xạ thành ON DELETE CASCADE trên khóa ngoại. Việc giữ lịch sử tham dự và vé dẫn tới lựa chọn chuyển trạng thái hủy thay vì xóa vật lý.""")
+
+exp.ch3()
 
 # Chapter IV
 h1("CHƯƠNG IV. THIẾT KẾ DỮ LIỆU")
@@ -457,6 +466,8 @@ table(["Migration","Thay đổi","Lý do"],[
 ("010","Bảng yeu_cau_to_chuc","Người dùng gửi yêu cầu và ADMIN xét duyệt quyền tổ chức."),
 ])
 add_text("Các thay đổi bổ sung này không tự sửa ảnh ERD gốc. Khi thuyết trình, cần phân biệt sơ đồ phân tích thiết kế ban đầu với cấu trúc vật lý đã cập nhật bởi migration. Cách làm này cho phép truy vết sự phát triển của hệ thống mà không xóa lịch sử thiết kế.")
+
+exp.ch4()
 
 # Chapter V
 h1("CHƯƠNG V. THIẾT KẾ KIẾN TRÚC VÀ HIỆN THỰC")
@@ -507,6 +518,8 @@ multi("""Chống bot hiện tập trung vào giới hạn tần suất, kiểm t
 Kiểm tra QR trên trình duyệt phụ thuộc vào khả năng hỗ trợ camera và môi trường bảo mật. Đường nhập mã dự phòng là phương án vận hành thay thế, cần giữ nguyên mã thực khi sao chép.
 Phần quản lý chứng cứ cần tránh đưa giá trị mã QR đang dùng, mật khẩu, JWT hoặc khóa object storage vào hình báo cáo. Những trường hợp chưa có ảnh xác thực từ sản phẩm không được ghi là đã nghiệm thu trên Windows.""")
 
+exp.ch5()
+
 # Chapter VI
 h1("CHƯƠNG VI. THIẾT KẾ GIAO DIỆN")
 h2("6.1. Nguyên tắc thiết kế")
@@ -536,6 +549,8 @@ table(["Vấn đề","Quyết định thiết kế khi triển khai"],[
 ])
 add_text("Bộ 12 hình trong chương này là thiết kế màn hình, không phải ảnh chụp xác nhận sản phẩm đã chạy. Phần minh chứng chạy thực tế được hoàn thiện bằng ảnh thao tác riêng khi nghiệm thu sản phẩm.")
 
+exp.ch6()
+
 # Chapter VII
 h1("CHƯƠNG VII. KẾT LUẬN")
 h2("7.1. Kết quả đạt được")
@@ -563,6 +578,8 @@ for v in [
 "Ma trận kiểm thử: docs/MED06_TEST_CASES.md; tệp đối chiếu: docs/MED06_PTTK_TRACE.md.",
 ]:add_text(v)
 
+
+exp.ch7()
 
 # Populate a single Word TOC field and a single Table-of-Figures field.
 # These are cached, clickable field results, not separate hand-written lists.
