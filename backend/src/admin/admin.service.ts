@@ -93,7 +93,7 @@ export class AdminService {
     };
   }
 
-  async listAudit(page?: unknown, action?: unknown) {
+  async listAudit(page?: unknown, action?: unknown, q?: unknown) {
     const requestedPage = pagination(page);
     const filter = action === undefined ? 'ALL' : action;
     if (typeof filter !== 'string' || (
@@ -101,11 +101,22 @@ export class AdminService {
     )) {
       throw new BadRequestException('Bộ lọc nhật ký không hợp lệ');
     }
-    const [count] = await this.db.queryRows<{ total: number }>(
-      `SELECT count(*)::int AS total FROM nhat_ky_he_thong
-        WHERE ($1::text='ALL' OR hanh_dong=$1)`, [filter],
+    if (q !== undefined && (typeof q !== 'string' || q.length > 100)) {
+      throw new BadRequestException('Từ khóa tìm kiếm tối đa 100 ký tự');
+    }
+    const search = typeof q === 'string' ? q.trim() || null : null;
+    const where = `FROM nhat_ky_he_thong a
+      LEFT JOIN nguoi_dung n ON n.ma_nguoi_dung = a.ma_nguoi_dung
+      WHERE ($1::text = 'ALL' OR a.hanh_dong = $1)
+        AND ($2::text IS NULL
+          OR POSITION(lower($2::text) IN lower(coalesce(n.ho_ten,''))) > 0
+          OR POSITION(lower($2::text) IN lower(a.hanh_dong)) > 0)`;
+    const [result] = await this.db.queryRows<{ total: number }>(
+      `SELECT count(*)::int AS total ${where}`, [filter, search],
     );
-    const pageSize = 50;
+    const pageSize = 25;
+    const pageCount = Math.ceil(result.total / pageSize);
+    const actualPage = Math.min(requestedPage, Math.max(1, pageCount));
     const items = await this.db.queryRows<{
       id: string; action: string; createdAt: Date;
       details: Record<string, unknown>; actorName: string | null;
@@ -113,16 +124,14 @@ export class AdminService {
       `SELECT a.ma_nhat_ky AS id,a.hanh_dong AS action,
          a.thoi_gian AS "createdAt",a.chi_tiet AS details,
          n.ho_ten AS "actorName"
-       FROM nhat_ky_he_thong a
-       LEFT JOIN nguoi_dung n ON n.ma_nguoi_dung=a.ma_nguoi_dung
-       WHERE ($1::text='ALL' OR a.hanh_dong=$1)
+       ${where}
        ORDER BY a.thoi_gian DESC,a.ma_nhat_ky DESC
-       LIMIT $2 OFFSET $3`,
-      [filter,pageSize,(requestedPage-1)*pageSize],
+       LIMIT $3 OFFSET $4`,
+      [filter, search, pageSize, (actualPage - 1) * pageSize],
     );
     return {
-      items, total: count.total, page: requestedPage, pageSize,
-      pages: Math.ceil(count.total/pageSize), action: filter,
+      items, total: result.total, page: actualPage, pageSize,
+      pages: pageCount, action: filter,
     };
   }
 
