@@ -1,0 +1,81 @@
+name: MED-06 Word report
+
+on:
+  push:
+    branches: [med06-report]
+    paths:
+      - 'reports/build_med06_report.py'
+      - '.github/workflows/med06-report.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout report branch and original diagram files
+        uses: actions/checkout@v4
+        with:
+          ref: med06-report
+          persist-credentials: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install document libraries
+        run: python -m pip install --disable-pip-version-check python-docx Pillow
+      - name: Build report from 27 PTTK and 12 original UI PNGs
+        run: python reports/build_med06_report.py
+      - name: Check Word content and captions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from docx import Document
+          p=Path("reports/MED06_BaoCao_DoAn.docx")
+          d=Document(p)
+          print(f"DOCX bytes: {p.stat().st_size}")
+          print(f"Embedded figures: {len(d.inline_shapes)}")
+          print(f"Figure captions: {sum(1 for x in d.paragraphs if x.style.name == 'Caption')}")
+          print(f"Heading 1: {sum(1 for x in d.paragraphs if x.style.name == 'Heading 1')}")
+          assert len(d.inline_shapes)==39
+          assert p.stat().st_size > 15000000
+          PY
+      - name: Render for page count and visual preview
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libreoffice-writer poppler-utils
+          mkdir -p reports/_render reports/qa_preview
+          libreoffice -env:UserInstallation=file:///tmp/lo_med06_report --headless --convert-to pdf --outdir reports/_render reports/MED06_BaoCao_DoAn.docx
+          pdfinfo reports/_render/MED06_BaoCao_DoAn.pdf | grep 'Pages:'
+          python -m pip install --disable-pip-version-check pymupdf
+          python - <<'PY'
+          from pathlib import Path
+          import fitz
+          p=fitz.open('reports/_render/MED06_BaoCao_DoAn.pdf')
+          out=Path('reports/qa_preview')
+          indices=sorted(set([0,1,2,3,4,5,10,20,30,40,len(p)//2,len(p)-1]))
+          for i in indices:
+              if i>=len(p):continue
+              image=p[i].get_pixmap(matrix=fitz.Matrix(0.9,0.9),alpha=False)
+              image.save(out/f'page_{i+1:03d}.png')
+          with (Path('reports/QA_SUMMARY.txt')).open('a',encoding='utf-8') as f:
+              f.write(f'\nSố trang PDF sau khi kết xuất: {len(p)}\n')
+              f.write(f'Các trang đã render để rà: {",".join(str(i+1) for i in indices if i<len(p))}\n')
+          print('Rendered pages:',len(p))
+          PY
+      - name: Commit finished Word and QA previews
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/MED06_BaoCao_DoAn.docx reports/QA_SUMMARY.txt reports/qa_preview/
+          git commit -m "docs(report): publish MED-06 Word report with all 39 embedded figures" || exit 0
+          git push origin med06-report
+      - name: Upload Word artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MED06-BaoCao-Word
+          path: reports/MED06_BaoCao_DoAn.docx
+          retention-days: 30
