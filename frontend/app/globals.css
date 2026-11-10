@@ -1421,3 +1421,78 @@ body:has(.admin-workspace) > .site-footer { display: none; }
   .admin-dashboard-metrics { grid-template-columns: minmax(0,1fr); }
   .tickets-page .ticket-pass-main { grid-template-columns: minmax(0,1fr); }
 }
+
+
+/* Final attendee refinements from the MED-06 interface boards. */
+.home-page { max-width: 1460px; }
+.hero-section { grid-template-columns: 1fr 1fr; gap: 44px; padding: 38px 0 50px; }
+.hero-content h1 { font-size: clamp(2.6rem, 4.3vw, 4.25rem); line-height: 1.09; letter-spacing: -.055em; }
+.hero-description { margin: 22px 0 25px; }
+.hero-details { margin-top: 30px; }
+.hero-art { min-height: 390px; max-height: 450px; border-radius: 44px; }
+.discover-section { padding: 34px 0 60px; }
+.discover-card-link { display: grid; grid-template-columns: minmax(120px, 40%) minmax(0, 1fr); }
+.discover-card .discover-poster { min-height: 210px; height: 100%; aspect-ratio: auto; }
+.discover-card-body { min-width: 0; }
+.discover-card .discover-description { font-size: .82rem; }
+.container.detail-page { max-width: 1380px; }
+.detail-page .event-detail-hero { margin: 16px 0 28px; }
+.detail-page .event-detail-copy { padding: 8px 0; }
+.detail-page .event-detail-art { min-height: 320px; max-height: 420px; border-radius: 42px; }
+.detail-page .detail-content-grid { grid-template-columns: minmax(0, 2fr) minmax(255px, .9fr); }
+.detail-page .session-section, .detail-page .accessibility-panel { border-radius: 28px; }
+.auth-page { max-width: 1320px; }
+.auth-visual { min-height: 535px; }
+.auth-visual-bottom p {
+  max-width: 13ch; font-size: clamp(1.8rem, 2.5vw, 2.65rem);
+  line-height: 1.17; letter-spacing: -.04em;
+  text-shadow: 0 2px 7px rgba(10,40,42,.3);
+}
+.auth-curve { bottom: -150px; opacity: .88; }
+.registration-content-grid {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(255px, .95fr);
+  gap: 22px; align-items: start;
+}
+.registration-state-guide {
+  border: 1px solid var(--line); border-radius: 27px;
+  padding: 26px; background: #e5f4ec;
+}
+.registration-state-guide h2 { font-size: 1.5rem; margin: 0 0 16px; }
+.registration-state-guide dl { display: grid; gap: 14px; }
+.registration-state-guide dl > div { padding-bottom: 13px; border-bottom: 1px solid #cee0d4; }
+.registration-state-guide dt { display: flex; gap: 10px; align-items: center; font-weight: 800; font-size: .94rem; }
+.registration-state-guide dd { margin: 7px 0 0 23px; font-size: .84rem; color: #55756b; }
+.registration-state-guide a { font-size: .9rem; font-weight: 800; }
+.state-dot { width: 12px; height: 12px; display: inline-block; border-radius: 100%; flex: none; }
+.state-dot.confirmed { background: #176c4a; }
+.state-dot.pending { background: #9c6b16; }
+.state-dot.waiting { background: #25708e; }
+.state-dot.canceled { background: #aa3939; }
+.registration-card { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 17px; padding: 18px; }
+.registration-card-thumbnail {
+  border-radius: 15px; min-height: 110px; padding: 12px;
+  display: flex; align-items: flex-end; color: #fff9e7; font-size: .8rem;
+  letter-spacing: .09em; font-weight: 900;
+  background: linear-gradient(145deg, #d87355 10%, #a7433b);
+}
+.registration-card:nth-child(3n + 2) .registration-card-thumbnail { background: #176b67; }
+.registration-card:nth-child(3n) .registration-card-thumbnail { background: #b08a53; }
+.registration-card-body { min-width: 0; }
+@media (max-width: 1060px) {
+  .registration-content-grid { grid-template-columns: minmax(0, 1fr); }
+  .registration-state-guide dl { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .discover-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 800px) {
+  .hero-section { grid-template-columns: minmax(0,1fr); }
+  .hero-art { min-height: 280px; }
+  .detail-page .detail-content-grid { grid-template-columns: minmax(0,1fr); }
+  .auth-visual { display: none; }
+}
+@media (max-width: 590px) {
+  .discover-grid { grid-template-columns: minmax(0,1fr); }
+  .registration-state-guide dl { grid-template-columns: minmax(0,1fr); }
+  .registration-card { grid-template-columns: 70px minmax(0,1fr); gap: 10px; }
+  .registration-card-thumbnail { min-height: 85px; font-size: .68rem; }
+  .registration-card-top { display: block; }
+}
