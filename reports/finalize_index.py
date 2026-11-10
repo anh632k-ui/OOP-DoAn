@@ -80,10 +80,19 @@ def patch_paragraph(p):
         if not m:continue
         page=page_map.get(m.group(1))
         if page is None:continue
-        for run in runs[i+1:]:
-            tag=run.find(W+"t")
-            if tag is not None:
-                tag.text=str(page);changed+=1;break
+        # Keep the outer Word TOC/TOF field automatic. Make the inner
+        # page label a stable cached string, because headless LibreOffice
+        # otherwise recalculates every nested PAGEREF as page 1.
+        if i < 1 or i+3 >= len(runs):
+            raise RuntimeError("Unexpected PAGEREF field structure")
+        begin, separator, cached, end = runs[i-1], runs[i+1], runs[i+2], runs[i+3]
+        tag=cached.find(W+"t")
+        if tag is None:
+            raise RuntimeError("Missing cached page label")
+        tag.text=str(page)
+        for element in (begin,el,separator,end):
+            p.remove(element)
+        changed+=1
     return changed
 
 total=sum(patch_paragraph(p) for p in root.findall(".//w:body/w:p",XMLNS))
