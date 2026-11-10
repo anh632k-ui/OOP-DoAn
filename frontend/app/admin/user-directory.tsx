@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Fragment, useEffect, useState } from 'react';
 import AccountStatusButton from './user-status-button';
 import { labelRole, labelStatus } from '../../lib/status-label';
 
@@ -61,6 +61,7 @@ export default function UserDirectory({ currentUserId }: { currentUserId: string
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [revision, setRevision] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [result, setResult] = useState<DirectoryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -89,6 +90,7 @@ export default function UserDirectory({ currentUserId }: { currentUserId: string
     e.preventDefault();
     setPage(1);
     setQuery(typedQuery.trim().slice(0, 100));
+    setEditingId(null);
   }
 
   return <section className="panel">
@@ -108,25 +110,51 @@ export default function UserDirectory({ currentUserId }: { currentUserId: string
     {result && <>
       <p>{result.total} tài khoản · Trang {result.page}/{Math.max(1,result.pages)}</p>
       {result.items.length === 0 && <p>Không có tài khoản phù hợp.</p>}
-      <div className="admin-user-list">
-        {result.items.map(user => (
-          <article key={user.id} className="admin-user">
-            <h3>{user.name}</h3>
-            <p>{user.email} · {labelStatus(user.status)}</p>
-            <p>Vai trò hiện tại: {user.roles.map(labelRole).join(', ') || 'Chưa có'}</p>
-            <AccountStatusButton
-              id={user.id} name={user.name} status={user.status}
-              isSelf={user.id === currentUserId} isAdmin={user.roles.includes('ADMIN')}
-              onSaved={() => setRevision(v => v+1)}
-            />
-            <RoleEditor
-              key={user.id + ':' + user.roles.join('-')}
-              user={user}
-              currentUserId={currentUserId}
-              onSaved={() => setRevision(v => v + 1)}
-            />
-          </article>
-        ))}
+      <div className="table-scroll admin-directory-scroll">
+        <table className="admin-directory-table">
+          <thead><tr>
+            <th scope="col">Người dùng</th>
+            <th scope="col">Vai trò</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col">Thao tác</th>
+          </tr></thead>
+          <tbody>{result.items.map(user => <Fragment key={user.id}>
+            <tr>
+              <td><strong>{user.name}</strong><small>{user.email}</small></td>
+              <td>{user.roles.length
+                ? user.roles.map(role => <span key={role} className="admin-role-tag">
+                  {labelRole(role)}
+                </span>)
+                : <span className="note">Chưa có vai trò</span>}</td>
+              <td><span className={user.status === 'HOAT_DONG'
+                ? 'admin-status-active' : 'admin-status-locked'}>
+                {labelStatus(user.status)}
+              </span></td>
+              <td><button type="button" className="button-secondary admin-edit-button"
+                aria-expanded={editingId === user.id}
+                aria-controls={'editor-' + user.id}
+                onClick={() => setEditingId(previous => previous === user.id ? null : user.id)}>
+                {editingId === user.id ? 'Đóng' : 'Xem / sửa quyền'}
+              </button></td>
+            </tr>
+            {editingId === user.id && <tr className="admin-directory-detail">
+              <td colSpan={4} id={'editor-' + user.id}>
+                <div className="admin-directory-editor">
+                  <h3>Quản lý tài khoản: {user.name}</h3>
+                  <p className="note">Chỉ quyền Ban tổ chức và Check-in được chỉnh sửa.
+                    Thao tác khóa/mở khóa được ghi vào nhật ký hệ thống.</p>
+                  <AccountStatusButton id={user.id} name={user.name}
+                    status={user.status} isSelf={user.id === currentUserId}
+                    isAdmin={user.roles.includes('ADMIN')}
+                    onSaved={() => { setRevision(v => v+1); setEditingId(null); }} />
+                  <RoleEditor key={user.id + ':' + user.roles.join('-')}
+                    user={user} currentUserId={currentUserId}
+                    onSaved={() => { setRevision(v => v+1); setEditingId(null); }} />
+                </div>
+              </td>
+            </tr>}
+          </Fragment>)}</tbody>
+        </table>
       </div>
       <nav className="insights-pager" aria-label="Phân trang tài khoản">
         <button type="button" disabled={loading || page <= 1}
