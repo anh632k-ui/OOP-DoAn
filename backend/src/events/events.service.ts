@@ -8,6 +8,7 @@ export type EventSummary = {
   status: string;
   sessionCount: number;
   nextSessionAt: Date | null;
+  hasCover: boolean;
 };
 
 export type EventDetail = {
@@ -58,6 +59,7 @@ export class EventsService {
              e.ten_su_kien AS title,
              e.mo_ta AS description,
              e.trang_thai AS status,
+             (e.anh_bia_key IS NOT NULL) AS "hasCover",
              count(s.ma_suat)::int AS "sessionCount",
              min(s.bat_dau) AS "nextSessionAt"
       FROM su_kien e
