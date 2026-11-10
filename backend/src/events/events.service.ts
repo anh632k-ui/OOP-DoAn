@@ -5,6 +5,7 @@ export type EventSummary = {
   id: string;
   title: string;
   description: string;
+  status: string;
   sessionCount: number;
   nextSessionAt: Date | null;
 };
@@ -13,6 +14,7 @@ export type EventDetail = {
   id: string;
   title: string;
   description: string;
+  status: string;
   accessibility: Array<{ name: string; note: string }>;
   hasCover: boolean;
 };
@@ -55,12 +57,13 @@ export class EventsService {
       SELECT e.ma_su_kien AS id,
              e.ten_su_kien AS title,
              e.mo_ta AS description,
+             e.trang_thai AS status,
              count(s.ma_suat)::int AS "sessionCount",
              min(s.bat_dau) AS "nextSessionAt"
       FROM su_kien e
       LEFT JOIN suat_su_kien s
         ON s.ma_su_kien = e.ma_su_kien AND s.trang_thai <> 'DA_HUY'
-      WHERE e.trang_thai = 'DA_CONG_BO'
+      WHERE e.trang_thai IN ('DA_CONG_BO','TAM_NGUNG')
         AND ($1::text IS NULL OR e.ten_su_kien ILIKE $1 ESCAPE '\\'
           OR e.mo_ta ILIKE $1 ESCAPE '\\')
         AND ($2::uuid IS NULL OR EXISTS (
@@ -89,6 +92,7 @@ export class EventsService {
       SELECT e.ma_su_kien AS id,
              e.ten_su_kien AS title,
              e.mo_ta AS description,
+             e.trang_thai AS status,
              (e.anh_bia_key IS NOT NULL) AS "hasCover",
              COALESCE((
                SELECT jsonb_agg(jsonb_build_object(
@@ -99,7 +103,7 @@ export class EventsService {
                WHERE sd.ma_su_kien=e.ma_su_kien
              ), '[]'::jsonb) AS accessibility
       FROM su_kien e
-      WHERE e.ma_su_kien = $1 AND e.trang_thai = 'DA_CONG_BO'
+      WHERE e.ma_su_kien = $1 AND e.trang_thai IN ('DA_CONG_BO','TAM_NGUNG')
       `,
       [id],
     );
