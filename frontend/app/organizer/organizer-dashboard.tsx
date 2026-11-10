@@ -28,7 +28,8 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [inspectedSession, setInspectedSession] = useState('');
   const [reload, setReload] = useState(0);
-  const [activeTab, setActiveTab] = useState<'sessions' | 'people' | 'settings' | 'create'>('sessions');
+  const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'allocation' | 'people' | 'settings' | 'create'>('overview');
+  const [eventFilter, setEventFilter] = useState('');
   const [allocationChoice, setAllocationChoice] = useState<'FCFS'|'LOTTERY'|'MIXED'>('FCFS');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -233,44 +234,43 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       {message && <p role="status" className="success-note">{message}</p>}
       {error && <p role="alert" className="form-error">{error}</p>}
 
-      <section className="panel">
-        <h2>Danh sách sự kiện của bạn</h2>
-        {events.length === 0 ? <p>Chưa có sự kiện.</p> : (
-          <ul className="event-list">{events.map(event => (
-            <li key={event.id} className="event-item">
-              <strong>{event.title}</strong> — {labelStatus(event.status)}
-            </li>
-          ))}</ul>
-        )}
-        <label className="management-label">Chọn sự kiện để quản lý
-          <select value={eventId} onChange={e => {
-            setEventId(e.target.value);
-            setSessions([]);
-            setInspectedSession('');
-          }}>
-            <option value="">-- Chọn --</option>
-            {events.map(event => <option key={event.id} value={event.id}>
-              {event.title} — {labelStatus(event.status)}
-            </option>)}
-          </select>
-        </label>
-        {chosen && <p className="note">Đang chọn: {chosen.title} ({labelStatus(chosen.status)})</p>}
-      </section>
-
-      <nav className="organizer-tabs" aria-label="Chức năng quản lý sự kiện">
-        {([
-          ['sessions', 'Danh sách suất'],
-          ['people', 'Đăng ký & check-in'],
-          ['settings', 'Thiết lập & địa điểm'],
-          ['create', 'Tạo sự kiện mới'],
-        ] as const).map(([value,label]) => (
-          <button key={value} type="button"
-            className={activeTab === value ? 'organizer-tab current' : 'organizer-tab'}
-            aria-pressed={activeTab === value} onClick={() => setActiveTab(value)}>
-            {label}
-          </button>
-        ))}
-      </nav>
+      <div className="organizer-summary-strip">
+        <div><span>Sự kiện</span><strong>{events.length}</strong><small>Đang quản lý</small></div>
+        <div><span>Đã công bố</span><strong>{events.filter(e => e.status === 'DA_CONG_BO').length}</strong><small>Sự kiện</small></div>
+        <div><span>Suất tổ chức</span><strong>{sessions.length}</strong><small>Của sự kiện đang chọn</small></div>
+        <div><span>Chưa có chính sách</span><strong>{sessions.filter(s => !s.method).length}</strong><small>Cần cấu hình</small></div>
+      </div>
+      <div className="organizer-event-grid">
+        <aside className="panel organizer-event-selector">
+          <h2>Danh sách sự kiện</h2>
+          <label className="management-label">Tìm sự kiện
+            <input type="search" value={eventFilter} onChange={e => setEventFilter(e.target.value)} placeholder="Tên sự kiện" />
+          </label>
+          <ul className="organizer-event-choices">
+            {events.filter(e => e.title.toLocaleLowerCase('vi-VN').includes(eventFilter.trim().toLocaleLowerCase('vi-VN')))
+              .map(e => <li key={e.id}>
+                <button type="button" aria-pressed={eventId === e.id} className={eventId === e.id ? 'selected' : ''}
+                  onClick={() => { setEventId(e.id); setSessions([]); setInspectedSession(''); }}>
+                  <strong>{e.title}</strong><span>{labelStatus(e.status)}</span>
+                </button>
+              </li>)}
+          </ul>
+          {events.length === 0 && <p className="note">Chưa có sự kiện.</p>}
+        </aside>
+        <div className="organizer-main-panel">
+          <nav className="organizer-tabs" aria-label="Chức năng quản lý sự kiện">
+            {([
+              ['overview', 'Tổng quan'],
+              ['sessions', 'Suất tổ chức'],
+              ['allocation', 'Phân bổ vé'],
+              ['people', 'Đăng ký & danh sách chờ'],
+              ['settings', 'Thiết lập'],
+              ['create', 'Tạo sự kiện'],
+            ] as const).map(([value,label]) => <button key={value} type="button"
+                className={activeTab === value ? 'organizer-tab current' : 'organizer-tab'}
+                aria-pressed={activeTab === value}
+                onClick={() => setActiveTab(value)}>{label}</button>)}
+          </nav>
       <p className="note">Mọi ngày giờ trong hệ thống theo giờ Hà Nội (UTC+7).</p>
 
       {activeTab === 'create' && (
@@ -503,6 +503,8 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       )}
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 }
