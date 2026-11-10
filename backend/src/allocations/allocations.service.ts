@@ -1,5 +1,5 @@
 import {
-  ConflictException, ForbiddenException, Injectable, NotFoundException,
+  ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit,
 } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseService } from '../database/database.service';
@@ -12,20 +12,59 @@ type DrawSession = {
   id: string; eventId: string; organizerId: string;
   status: string; eventStatus: string;
   startsAt: Date; closesAt: Date; capacity: number;
-  method: 'FCFS' | 'LOTTERY';
+  method: 'FCFS' | 'LOTTERY' | 'MIXED';
 };
 type Pending = { id: string };
 type Seats = { seats: number };
 type DrawInfo = { id: string; seed: string; sha256: string; status: string };
 
 @Injectable()
-export class AllocationsService {
+export class AllocationsService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(AllocationsService.name);
+  private drawTimer: ReturnType<typeof setInterval> | null = null;
+  private checking = false;
+
+  onModuleInit() {
+    void this.drawDueSessions();
+    this.drawTimer = setInterval(() => void this.drawDueSessions(), 60_000);
+    this.drawTimer.unref?.();
+  }
+
+  onModuleDestroy() {
+    if (this.drawTimer) clearInterval(this.drawTimer);
+  }
+
+  // Work is performed by the backend, even when no organizer is logged in.
+  // A session row lock and one-round rule prevent duplicate allocation.
+  private async drawDueSessions() {
+    if (this.checking) return;
+    this.checking = true;
+    try {
+      const due = await this.db.queryRows<{ id: string }>(
+        `SELECT s.ma_suat AS id FROM suat_su_kien s
+         JOIN su_kien e ON e.ma_su_kien=s.ma_su_kien
+         JOIN chinh_sach_phan_bo c ON c.ma_suat=s.ma_suat
+         WHERE e.trang_thai='DA_CONG_BO'
+           AND s.trang_thai NOT IN ('DA_HUY','HOAN_TAT')
+           AND c.phuong_thuc IN ('LOTTERY','MIXED')
+           AND s.dong_dang_ky<=now() AND s.bat_dau>now()
+           AND NOT EXISTS(SELECT 1 FROM dot_phan_bo d WHERE d.ma_suat=s.ma_suat)
+         ORDER BY s.dong_dang_ky LIMIT 20`,
+      );
+      for (const { id } of due) {
+        try { await this.draw(null,id); }
+        catch (e) { this.logger.warn(`Bốc thăm tự động thất bại cho suất ${id}: ${String(e)}`); }
+      }
+    } catch (e) { this.logger.warn('Không thể kiểm tra lịch bốc thăm: ' + String(e)); }
+    finally { this.checking = false; }
+  }
+
   constructor(
     private readonly db: DatabaseService,
     private readonly registrations: RegistrationsService,
   ) {}
 
-  async draw(user: PublicUser, sessionId: string) {
+  async draw(user: PublicUser | null, sessionId: string) {
     return this.db.transaction(async client => {
       const result = await client.query<DrawSession>(
         `SELECT s.ma_suat AS id, s.ma_su_kien AS "eventId",
@@ -40,11 +79,11 @@ export class AllocationsService {
       );
       const session = result.rows[0];
       if (!session) throw new NotFoundException('Không tìm thấy suất');
-      if (!user.roles.includes('ADMIN') && session.organizerId !== user.id) {
+      if (user && !user.roles.includes('ADMIN') && session.organizerId !== user.id) {
         throw new ForbiddenException('Không được phân bổ vé cho suất này');
       }
-      if (session.method !== 'LOTTERY') {
-        throw new ConflictException('Chỉ suất LOTTERY mới được bốc thăm');
+      if (session.method !== 'LOTTERY' && session.method !== 'MIXED') {
+        throw new ConflictException('Suất này không sử dụng bốc thăm');
       }
       const now = new Date();
       if (session.eventStatus !== 'DA_CONG_BO' || session.status === 'DA_HUY'
@@ -110,12 +149,12 @@ export class AllocationsService {
         `UPDATE suat_su_kien SET trang_thai='DONG_DANG_KY'
           WHERE ma_suat=$1`, [sessionId],
       );
-      await appendAudit(client,user.id,'PHAN_BO_LOTTERY',{
+      await appendAudit(client,user?.id ?? null,'PHAN_BO_LOTTERY',{
         sessionId,roundId,applicants:order.length,winners,
         waiting:order.length-winners,seedSha256:sha256,
       });
       return {
-        roundId, sessionId, method: 'LOTTERY', applicantCount: order.length,
+        roundId, sessionId, method: session.method, applicantCount: order.length,
         winners, waitlisted: order.length-winners, seedSha256: sha256, auditSeed: seed,
       };
     });
