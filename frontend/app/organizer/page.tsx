@@ -59,7 +59,7 @@ export default async function OrganizerPage() {
   }
 
   return (
-    <main id="main-content" className="container">
+    <main id="main-content" className="container organizer-page">
       <Link href="/">← Trang sự kiện</Link>
       <header>
         <p className="eyebrow">MED-06 · QUẢN LÝ SỰ KIỆN</p>
