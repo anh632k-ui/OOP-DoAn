@@ -124,7 +124,7 @@ export default function SessionInsights({ sessionId, refreshVersion }: {
         ))}
       </dl>
 
-      {overview.session.method === 'LOTTERY' && (
+      {(overview.session.method === 'LOTTERY' || overview.session.method === 'MIXED') && (
         <div className="report-panel">
           <button type="button" onClick={() => void fetchReport()}>
             Xem biên bản bốc thăm
