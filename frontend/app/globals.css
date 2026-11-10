@@ -1496,3 +1496,41 @@ body:has(.admin-workspace) > .site-footer { display: none; }
   .registration-card-thumbnail { min-height: 85px; font-size: .68rem; }
   .registration-card-top { display: block; }
 }
+
+
+/* Role-based workspaces use the dark sidebar specified by the UI design. */
+@media (min-width: 761px) {
+  .admin-workspace-sidebar {
+    background: #0b5552; color: #f8fffc; border-color: #0b5552;
+    border-radius: 14px; min-height: calc(100vh - 70px);
+    box-shadow: none;
+  }
+  .admin-workspace-brand span, .admin-workspace-brand small { color: #fff; }
+  .admin-workspace-caption { color: #bedfd4; }
+  .admin-workspace-nav a { color: #e5f6f2; }
+  .admin-workspace-nav a[aria-current="page"] {
+    background: rgba(224,255,247,.17); color: #fff;
+  }
+  .admin-workspace-nav a:hover, .admin-workspace-nav a:focus-visible {
+    background: rgba(224,255,247,.14); color: #fff;
+  }
+  .admin-workspace-bottom { border-color: rgba(255,255,255,.24); }
+  .admin-workspace-bottom span, .admin-workspace-bottom strong,
+  .admin-workspace-bottom a { color: #f3fffc; }
+  .organizer-event-selector { background: #0b5552; color: #f6fffa; border-color: #0b5552; }
+  .organizer-event-selector h2, .organizer-event-selector .management-label { color: white; }
+  .organizer-event-selector .organizer-event-choices button { color: #eaf8f3; background: transparent; border-color: rgba(255,255,255,.3); }
+  .organizer-event-selector .organizer-event-choices button span { color: #dbf1e7; }
+  .organizer-event-selector .organizer-event-choices button.selected,
+  .organizer-event-selector .organizer-event-choices button:hover {
+    background: rgba(238,255,250,.18); color: white; border-color: rgba(255,255,255,.6);
+  }
+  .admin-workspace .organizer-event-selector { background: #e5f3ec; color: var(--ink); border-color: var(--line); }
+  .admin-workspace .organizer-event-selector h2,
+  .admin-workspace .organizer-event-selector .management-label { color: var(--ink); }
+  .admin-workspace .organizer-event-selector .organizer-event-choices button {
+    color: var(--ink); border-color: var(--line); background: white;
+  }
+  .admin-workspace .organizer-event-selector .organizer-event-choices button.selected { background: #cee9dd; }
+  .admin-workspace .organizer-event-selector .organizer-event-choices button span { color: var(--teal); }
+}
