@@ -88,7 +88,7 @@ export default async function RegistrationsPage({
               <li className="registration-card" key={item.id}>
                 <div className="registration-card-thumbnail" aria-hidden="true">MED·06</div>
                 <div className="registration-card-body">
-                <div className="registration-card-top"
+                <div className="registration-card-top">
                   <div>
                     <h2>{item.eventTitle}</h2>
                     <p>{formatVietnamDate(item.startsAt, 'short')} · Giờ Hà Nội (UTC+7)</p>
