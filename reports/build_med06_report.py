@@ -463,6 +463,7 @@ table(["Migration","Thay đổi","Lý do"],[
 add_text("Các thay đổi bổ sung này không tự sửa ảnh ERD gốc. Khi thuyết trình, cần phân biệt sơ đồ phân tích thiết kế ban đầu với cấu trúc vật lý đã cập nhật bởi migration. Cách làm này cho phép truy vết sự phát triển của hệ thống mà không xóa lịch sử thiết kế.")
 
 exp.ch4()
+exp.ch4_more()
 
 # Chapter V
 h1("CHƯƠNG V. THIẾT KẾ KIẾN TRÚC VÀ HIỆN THỰC")
@@ -520,6 +521,7 @@ for i,n in enumerate(range(18,23),1):
  h3("5.10."+str(i)+". "+PTTK_LABELS[n]);pttk(n)
 
 exp.ch5()
+exp.ch5_more()
 
 # Chapter VI
 h1("CHƯƠNG VI. THIẾT KẾ GIAO DIỆN")
@@ -581,6 +583,7 @@ for v in [
 
 
 exp.ch7()
+exp.ch7_more()
 
 # Populate a single Word TOC field and a single Table-of-Figures field.
 # These are cached, clickable field results, not separate hand-written lists.
