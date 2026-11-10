@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Ghi số trang thực vào kết quả hiển thị của các trường PAGEREF trong DOCX.
+Các trường TOC, TOC-c và PAGEREF vẫn giữ nguyên để Word cập nhật được.
+"""
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from zipfile import ZipFile
+from lxml import etree
+import re
+import unicodedata
+import fitz
+
+ROOT=Path(__file__).resolve().parent.parent
+docx=ROOT/"reports/MED06_BaoCao_DoAn.docx"
+pdf=ROOT/"reports/_render/MED06_BaoCao_DoAn.pdf"
+W="{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+XMLNS={"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+
+def normalize(text):
+    return re.sub(r"\s+"," ",unicodedata.normalize("NFC",text).casefold()).strip()
+
+with ZipFile(docx) as z:
+    xml=z.read("word/document.xml")
+root=etree.fromstring(xml)
+refs={}
+for p in root.findall(".//w:body/w:p",XMLNS):
+    bookmarks=p.findall("w:bookmarkStart",XMLNS)
+    for bm in bookmarks:
+        name=bm.get(W+"name")
+        if name and (name.startswith("bm_heading_") or name.startswith("bm_figure_")):
+            txt="".join(t.text or "" for t in p.findall(".//w:t",XMLNS))
+            refs[name]=txt
+
+pages=fitz.open(pdf)
+texts=[normalize(p.get_text("text")) for p in pages]
+first=next((i for i,t in enumerate(texts) if "chương i. giới thiệu đề tài" in t
+            and "1.1. bối cảnh và bài toán" in t),None)
+if first is None:
+    raise RuntimeError("Không xác định được trang bắt đầu chương I")
+page_map={}
+missing=[]
+for name,label in refs.items():
+    needle=normalize(label)
+    if not needle:
+        missing.append((name,label))
+        continue
+    # Caption labels in PDF include the SEQ field result, p text includes cached figure number.
+    candidates=[i+1 for i in range(first,len(texts)) if needle in texts[i]]
+    if not candidates:
+        # Some PDF extractors add line breaks around hyphen punctuation.
+        compact=needle.replace(" – "," ").replace("—"," ")
+        candidates=[i+1 for i in range(first,len(texts))
+                    if compact in texts[i].replace(" – "," ").replace("—"," ")]
+    if candidates:
+        page_map[name]=candidates[0]
+    else:
+        missing.append((name,label))
+
+# Check every heading and figure page reference.
+if missing:
+    print("Unmatched labels:",missing[:30])
+    raise RuntimeError(f"Không tìm thấy số trang cho {len(missing)} tiêu đề/hình")
+
+def patch_paragraph(p):
+    runs=[el for el in p if el.tag==W+"r"]
+    changed=0
+    for i,el in enumerate(runs):
+        it=el.find(W+"instrText")
+        if it is None or not it.text or "PAGEREF" not in it.text:
+            continue
+        m=re.search(r"PAGEREF\s+(bm_(?:heading|figure)_\d+)",it.text)
+        if not m:continue
+        page=page_map.get(m.group(1))
+        if page is None:continue
+        for run in runs[i+1:]:
+            tag=run.find(W+"t")
+            if tag is not None:
+                tag.text=str(page);changed+=1;break
+    return changed
+
+total=sum(patch_paragraph(p) for p in root.findall(".//w:body/w:p",XMLNS))
+expected=len(refs)
+if total!=expected:
+    raise RuntimeError(f"Cập nhật {total} số trang, mong đợi {expected}")
+with NamedTemporaryFile(dir=docx.parent,suffix=".docx",delete=False) as tmp:
+    replacement=Path(tmp.name)
+with ZipFile(docx,"r") as source,ZipFile(replacement,"w") as target:
+    for item in source.infolist():
+        data=etree.tostring(root,xml_declaration=True,encoding="UTF-8",standalone=True) if item.filename=="word/document.xml" else source.read(item.filename)
+        target.writestr(item,data)
+replacement.replace(docx)
+assert len(page_map)==len(refs)
+print(f"Updated {total} dynamic PAGEREF cached pages; total PDF pages {len(pages)}")
+print("First chapter starts at",first+1)
