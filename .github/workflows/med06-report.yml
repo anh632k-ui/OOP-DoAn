@@ -5,6 +5,7 @@ on:
     branches: [med06-report]
     paths:
       - 'reports/build_med06_report.py'
+      - 'reports/finalize_index.py'
       - '.github/workflows/med06-report.yml'
   workflow_dispatch:
 
