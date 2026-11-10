@@ -8,12 +8,12 @@ describe('EventsService', () => {
 
   beforeEach(() => queryRows.mockReset());
 
-  it('only asks for published events', async () => {
+  it('only asks for published or paused events', async () => {
     queryRows.mockResolvedValue([{ id: 'event-1', title: 'Demo' }]);
     await expect(service.listPublished()).resolves.toEqual({
       items: [{ id: 'event-1', title: 'Demo' }],
     });
-    expect(queryRows.mock.calls[0][0]).toContain("e.trang_thai = 'DA_CONG_BO'");
+    expect(queryRows.mock.calls[0][0]).toContain("e.trang_thai IN ('DA_CONG_BO','TAM_NGUNG')");
   });
 
   it('returns 404 for a missing or unpublished event', async () => {
@@ -22,7 +22,7 @@ describe('EventsService', () => {
       NotFoundException,
     );
     expect(queryRows).toHaveBeenCalledWith(
-      expect.stringContaining("trang_thai = 'DA_CONG_BO'"),
+      expect.stringContaining("trang_thai IN ('DA_CONG_BO','TAM_NGUNG')"),
       ['missing'],
     );
   });
