@@ -9,7 +9,7 @@ async function handle(request: NextRequest, {
   const { segments } = await params;
   const path = segments.join('/');
   const allowed = request.method === 'GET'
-      && (path === 'users' || path === 'audit' || path === 'organizer-requests')
+      && (path === 'overview' || path === 'users' || path === 'audit' || path === 'organizer-requests')
     || request.method === 'PUT'
       && new RegExp('^users/' + UUID + '/roles$').test(path)
     || request.method === 'PATCH'
