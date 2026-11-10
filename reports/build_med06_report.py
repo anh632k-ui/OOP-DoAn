@@ -293,6 +293,7 @@ add_field(lof,'TOC \\h \\z \\c "Hinh"','')
 doc.add_page_break()
 
 from med06_deep_sections import Expansion
+from med06_references import cite, bibliography
 exp = Expansion(doc, h2, h3, add_text, table)
 
 # Chapter I
@@ -400,6 +401,7 @@ exp.ch2()
 # Chapter III
 h1("CHƯƠNG III. PHÂN TÍCH VÀ THIẾT KẾ HƯỚNG ĐỐI TƯỢNG")
 h2("3.1. Mô hình lớp phân tích")
+cite(add_text("Ký hiệu lớp, quan hệ liên kết, thành phần và mô hình tương tác được trình bày theo hệ thống khái niệm UML 2.5.1."),1)
 pttk(7)
 h2("3.2. Biểu đồ trạng thái")
 for n in [8,9,10]:
@@ -448,6 +450,7 @@ table(["Bảng","Khóa / ràng buộc","Mục đích"],[
 ("yeu_cau_to_chuc","ma_nguoi_dung UNIQUE","Một yêu cầu xét duyệt theo mô hình hiện tại."),
 ])
 h2("4.4. Bảo đảm toàn vẹn và tính nhất quán")
+cite(add_text("Việc khóa dòng dữ liệu FOR UPDATE ở PostgreSQL được dùng làm cơ sở để xử lý thao tác đồng thời trong giao dịch."),4)
 multi("""Sức chứa được bảo vệ ở hai lớp. Backend khóa bản ghi suất trước khi xác nhận và phát vé; trigger trg_ve_capacity trong PostgreSQL kiểm tra số vé hợp lệ không vượt sức chứa. Trigger trg_suat_capacity chặn giảm sức chứa dưới số vé đã cấp.
 Một vé được tiêu thụ trong giao dịch Check-in. Trigger trg_checkin_consume yêu cầu vé chưa sử dụng và cùng suất; chỉ mục uq_one_successful_checkin ngăn hai bản ghi thành công trên cùng một vé.
 Danh sách chờ có khóa thứ tự thu_tu, trong khi trạng thái mục chờ phản ánh việc còn chờ, đã được đôn hay rút. Khi hủy đăng ký được xác nhận, hệ thống xử lý hủy vé và đôn người tiếp theo trong cùng transaction.
@@ -470,6 +473,8 @@ h1("CHƯƠNG V. THIẾT KẾ KIẾN TRÚC VÀ HIỆN THỰC")
 h2("5.1. Kiến trúc hệ thống")
 pttk(27)
 h2("5.2. Công nghệ và trách nhiệm thành phần")
+qp=add_text("Mô hình controller/provider của NestJS, cơ chế App Router trong Next.js và cách vận hành Docker Compose được đối chiếu với tài liệu chính thức của các công nghệ này.")
+for item_no in [2,3,5]: cite(qp,item_no)
 table(["Thành phần","Công nghệ","Chức năng"],[
 ("Frontend","Next.js và React","Hiển thị giao diện theo vai trò, gọi API, điều hướng."),
 ("Backend","NestJS và TypeScript","Xác thực, phân quyền, điều phối đăng ký, phân bổ, Check-in."),
@@ -584,6 +589,8 @@ for v in [
 
 exp.ch7()
 exp.ch7_more()
+
+bibliography(doc,h1,h2,table,add_text)
 
 # Populate a single Word TOC field and a single Table-of-Figures field.
 # These are cached, clickable field results, not separate hand-written lists.
