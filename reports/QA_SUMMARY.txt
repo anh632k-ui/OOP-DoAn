@@ -1,4 +1,4 @@
-Ảnh nguồn PTTK: 27/27\nẢnh thiết kế giao diện: 12/12\nẢnh nhúng trong DOCX: 39/39\nChú thích hình: 39\nHeading 1: 10\nFile bytes: 7517120\nMục lục Word: TOC field; danh mục hình: TOC-c field; SEQ hình\nẢnh sản phẩm thực tế: không chèn vì chưa có bằng chứng chụp sản phẩm\n
-Số trang PDF sau khi kết xuất: 46
-Các trang đã render để rà: 1,2,3,4,5,6,11,21,24,31,41,46
-Chỉ mục đã đối chiếu số trang thực tế: 46 trang.
+Ảnh nguồn PTTK: 27/27\nẢnh thiết kế giao diện: 12/12\nẢnh nhúng trong DOCX: 39/39\nChú thích hình: 39\nHeading 1: 10\nFile bytes: 7555490\nMục lục Word: TOC field; danh mục hình: TOC-c field; SEQ hình\nẢnh sản phẩm thực tế: không chèn vì chưa có bằng chứng chụp sản phẩm\n
+Số trang PDF sau khi kết xuất: 104
+Các trang đã render để rà: 1,2,3,4,5,6,11,21,31,41,53,104
+Chỉ mục đã đối chiếu số trang thực tế: 104 trang.
