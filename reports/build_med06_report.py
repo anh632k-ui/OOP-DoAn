@@ -197,9 +197,27 @@ def add_text(text="", bold_start=None, style=None):
 def multi(text):
     for s in text.strip().split("\n"):
         if s.strip():add_text(s.strip())
-def h1(s):doc.add_heading(s,1)
-def h2(s):doc.add_heading(s,2)
-def h3(s):doc.add_heading(s,3)
+index_headings=[]
+index_bookmark_id=20
+def bookmark(p,name):
+    global index_bookmark_id
+    index_bookmark_id+=1
+    start=OxmlElement("w:bookmarkStart")
+    start.set(qn("w:id"),str(index_bookmark_id))
+    start.set(qn("w:name"),name)
+    end=OxmlElement("w:bookmarkEnd")
+    end.set(qn("w:id"),str(index_bookmark_id))
+    p._p.insert(0,start)
+    p._p.append(end)
+def heading(s,level):
+    p=doc.add_heading(s,level)
+    name="bm_heading_"+str(len(index_headings)+1)
+    bookmark(p,name)
+    index_headings.append((level,s,name))
+    return p
+def h1(s):return heading(s,1)
+def h2(s):return heading(s,2)
+def h3(s):return heading(s,3)
 def bullet(s):doc.add_paragraph(s,style='List Bullet')
 def table(headers,rows,widths=None):
     t=doc.add_table(rows=1,cols=len(headers))
@@ -232,7 +250,8 @@ def fig(path,label,source,notes=None):
     q.add_run("Hình ")
     add_field(q,"SEQ Hinh \\* ARABIC",str(capnum))
     q.add_run(" – "+label)
-    figures.append((capnum,label))
+    bookmark(q,"bm_figure_"+str(capnum))
+    figures.append((capnum,label,"bm_figure_"+str(capnum)))
     if notes:add_text(notes,style="Source note")
 def pttk(n):
     x,y=D_ANALYSIS[n]
@@ -543,6 +562,64 @@ for v in [
 "Migration dữ liệu: database/migrations/001_init.sql đến 010_organizer_applications.sql.",
 "Ma trận kiểm thử: docs/MED06_TEST_CASES.md; tệp đối chiếu: docs/MED06_PTTK_TRACE.md.",
 ]:add_text(v)
+
+
+# Populate a single Word TOC field and a single Table-of-Figures field.
+# These are cached, clickable field results, not separate hand-written lists.
+from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
+for label,size,bold in [
+    ("Report TOC 1",10.0,True),("Report TOC 2",9.4,False),
+    ("Report TOC 3",9.0,False),("Report TOF",9.2,False),
+]:
+    st=doc.styles.add_style(label,WD_STYLE_TYPE.PARAGRAPH)
+    st.base_style=body;st.font.name="Times New Roman";st.font.size=Pt(size)
+    st.font.bold=bold
+    st.paragraph_format.space_after=Pt(0)
+    st.paragraph_format.line_spacing=1.12
+
+def add_hyperlink(p,text,anchor):
+    h=OxmlElement("w:hyperlink")
+    h.set(qn("w:anchor"),anchor)
+    h.set(qn("w:history"),"1")
+    r=OxmlElement("w:r")
+    pr=OxmlElement("w:rPr")
+    color=OxmlElement("w:color");color.set(qn("w:val"),"174D50");pr.append(color)
+    r.append(pr)
+    t=OxmlElement("w:t");t.text=text;r.append(t)
+    h.append(r);p._p.append(h)
+
+def populate_index(field_p,entries,kind):
+    # Separate -> cached results in new paragraphs -> closing field.
+    tail=field_p._p[-1]
+    field_p._p.remove(tail)
+    position=field_p._p
+    for level,caption,anchor in entries:
+        sty=("Report TOF" if kind=="fig" else "Report TOC "+str(level))
+        p=doc.add_paragraph(style=sty)
+        p.paragraph_format.keep_together=True
+        p.paragraph_format.left_indent=Cm(0.4*(level-1) if kind!="fig" else 0)
+        p.paragraph_format.tab_stops.add_tab_stop(
+            Cm(15.5-0.4*(level-1)),WD_TAB_ALIGNMENT.RIGHT,WD_TAB_LEADER.DOTS)
+        add_hyperlink(p,caption,anchor)
+        p.add_run("\t")
+        add_field(p,"PAGEREF "+anchor+" \\h","1")
+        position.addnext(p._p)
+        position=p._p
+    last=doc.add_paragraph()
+    last.paragraph_format.space_after=Pt(0)
+    last._p.append(tail)
+    position.addnext(last._p)
+
+toc_entries=[]
+live=False
+for level,title,anchor in index_headings:
+    if title.startswith("CHƯƠNG I. "):
+        live=True
+    if live:
+        toc_entries.append((level,title,anchor))
+populate_index(toc,toc_entries,"toc")
+populate_index(lof,[(1,"Hình "+str(n)+" – "+label,anchor)
+                    for n,label,anchor in figures],"fig")
 
 # Running header/footer; page numbers only, without cover-specific special handling.
 head=sec.header.paragraphs[0]
