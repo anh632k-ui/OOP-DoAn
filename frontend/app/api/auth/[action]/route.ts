@@ -43,7 +43,8 @@ export async function POST(
     // request.url may use Docker's 0.0.0.0 bind address, which is not a
     // browser destination. The Host header is the browser-facing authority.
     const publicHost = request.headers.get('host');
-    if (!publicHost || /[\\s/?#@]/.test(publicHost) || publicHost.startsWith('0.0.0.0')) {
+    if (!publicHost || !/^(localhost|127\.0\.0\.1|\[[0-9a-fA-F:]+\]|[a-zA-Z0-9.-]+)(:\d{1,5})?$/.test(publicHost)
+      || publicHost.startsWith('0.0.0.0')) {
       return NextResponse.json({ message: 'Địa chỉ truy cập không hợp lệ' }, { status: 400 });
     }
     const protocol = request.headers.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
