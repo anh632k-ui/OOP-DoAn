@@ -18,8 +18,9 @@ export class AdminController {
   }
 
   @Get('audit')
-  audit(@Query('page') page?: string, @Query('action') action?: string) {
-    return this.service.listAudit(page, action);
+  audit(@Query('page') page?: string, @Query('action') action?: string,
+    @Query('q') q?: string) {
+    return this.service.listAudit(page, action, q);
   }
 
   @Get('organizer-requests')
