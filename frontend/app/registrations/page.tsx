@@ -70,6 +70,7 @@ export default async function RegistrationsPage({
         ))}
       </nav>
 
+      <div className="registration-content-grid">
       <section className="panel wallet-panel" aria-live="polite">
         {content.length === 0 ? (
           <div className="wallet-empty">
@@ -118,6 +119,21 @@ export default async function RegistrationsPage({
           </ul>
         )}
       </section>
+      <aside className="registration-state-guide" aria-label="Giải thích trạng thái đăng ký">
+        <h2>Trạng thái cần biết</h2>
+        <dl>
+          <div><dt><span className="state-dot confirmed"/>Đã xác nhận</dt>
+            <dd>Đã có vé hợp lệ, xuất trình QR tại cổng.</dd></div>
+          <div><dt><span className="state-dot pending"/>Chờ phân bổ</dt>
+            <dd>Đăng ký đã được ghi nhận, đang đợi kết quả cấp vé.</dd></div>
+          <div><dt><span className="state-dot waiting"/>Danh sách chờ</dt>
+            <dd>Chờ bổ sung vé khi có chỗ trống.</dd></div>
+          <div><dt><span className="state-dot canceled"/>Đã hủy / từ chối</dt>
+            <dd>Đăng ký chỉ còn trong lịch sử và không có vé sử dụng.</dd></div>
+        </dl>
+        <Link href="/registrations?tab=history">Xem lịch sử đăng ký →</Link>
+      </aside>
+      </div>
     </main>
   );
 }
