@@ -6,6 +6,7 @@ type EventSummary = {
   id: string;
   title: string;
   description: string;
+  status: string;
   sessionCount: number;
   nextSessionAt: string | null;
 };
@@ -155,7 +156,7 @@ export default async function Home({
                   <span className="discover-poster-bottom">SỰ KIỆN VĂN HÓA</span>
                 </div>
                 <div className="discover-card-body">
-                  <span className="event-category"><span aria-hidden="true">●</span> Vé miễn phí</span>
+                  <span className="event-category"><span aria-hidden="true">●</span> {event.status === 'TAM_NGUNG' ? 'Tạm ngưng đăng ký' : 'Vé miễn phí'}</span>
                   <h3>{event.title}</h3>
                   <p className="discover-description">{event.description}</p>
                   <div className="discover-card-meta">
