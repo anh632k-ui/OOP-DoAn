@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const sections = [
   { href: '/admin', label: 'Tổng quan' },
   { href: '/admin/users', label: 'Người dùng & phân quyền' },
+  { href: '/admin/requests', label: 'Duyệt Ban tổ chức' },
   { href: '/admin/audit', label: 'Nhật ký hệ thống' },
   { href: '/admin/organizer', label: 'Sự kiện & suất' },
   { href: '/admin/checkin', label: 'Kiểm tra vé' },
