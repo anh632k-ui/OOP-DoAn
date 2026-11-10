@@ -35,7 +35,7 @@ for p in root.findall(".//w:body/w:p",XMLNS):
 needed=set()
 for el in root.findall(".//w:instrText",XMLNS):
     if el.text and "PAGEREF" in el.text:
-        m=re.search(r"PAGEREF\\s+(bm_(?:heading|figure)_\\d+)",el.text)
+        m=re.search(r"PAGEREF\s+(bm_(?:heading|figure)_\d+)",el.text)
         if m:needed.add(m.group(1))
 refs={name:label for name,label in refs.items() if name in needed}
 
