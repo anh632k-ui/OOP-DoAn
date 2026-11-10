@@ -136,7 +136,7 @@ export class EventsService {
              ) AS "issuedSeats"
       FROM suat_su_kien s
       JOIN dia_diem d ON d.ma_dia_diem = s.ma_dia_diem
-      LEFT JOIN chinh_sach_phan_bo c ON c.ma_suat = s.ma_suat
+      JOIN chinh_sach_phan_bo c ON c.ma_suat = s.ma_suat
       WHERE s.ma_su_kien = $1 AND s.trang_thai <> 'DA_HUY'
       ORDER BY s.bat_dau, s.ma_suat
       LIMIT 100
