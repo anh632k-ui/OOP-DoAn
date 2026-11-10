@@ -14,13 +14,13 @@ const sections = [
     description: 'Tra cứu thành viên, quản lý trạng thái và phân công vai trò.',
   },
   {
-    path: '/organizer',
+    path: '/admin/organizer',
     tag: '02 · SỰ KIỆN',
     title: 'Quản lý sự kiện',
     description: 'Tạo chương trình, thiết lập suất, sức chứa và chính sách phân bổ.',
   },
   {
-    path: '/checkin',
+    path: '/admin/checkin',
     tag: '03 · VẬN HÀNH',
     title: 'Kiểm tra vé',
     description: 'Truy cập công cụ quét QR và giám sát check-in của suất.',
