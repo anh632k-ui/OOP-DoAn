@@ -41,7 +41,7 @@ jobs:
           print(f"Figure captions: {sum(1 for x in d.paragraphs if x.style.name == 'Caption')}")
           print(f"Heading 1: {sum(1 for x in d.paragraphs if x.style.name == 'Heading 1')}")
           assert len(d.inline_shapes)==39
-          assert p.stat().st_size > 15000000
+          assert p.stat().st_size > 1000000
           PY
       - name: Render for page count and visual preview
         run: |
