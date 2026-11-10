@@ -320,6 +320,68 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       )}
         </>
       )}
+      {activeTab === 'sessions' && chosen &&
+        ['NHAP','DA_CONG_BO'].includes(chosen.status) && (
+          <>
+          <section className="panel">
+            <h2>Thêm suất tổ chức</h2>
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <p className="note">Nhập giờ Hà Nội (UTC+7), không phụ thuộc múi giờ trên máy tính. Suất phải ở tương lai.</p>
+            <form className="auth-form" onSubmit={createSession}>
+              <label>Địa điểm
+                <select name="venueId" required defaultValue="">
+                  <option value="" disabled>Chọn địa điểm</option>
+                  {venues.map(v => <option key={v.id} value={v.id}>
+                    {v.name} · {v.address}
+                  </option>)}
+                </select>
+              </label>
+              <label>Sức chứa <input name="capacity" type="number" min={1} max={100000} required /></label>
+              <label>Bắt đầu <input name="startsAt" type="datetime-local" required /></label>
+              <label>Kết thúc <input name="endsAt" type="datetime-local" required /></label>
+              <label>Mở đăng ký <input name="registrationOpensAt" type="datetime-local" required /></label>
+              <label>Đóng đăng ký <input name="registrationClosesAt" type="datetime-local" required /></label>
+              <button type="submit" disabled={busy || !venues.length}>Thêm suất</button>
+            </form>
+          </section>
+
+          <section className="panel">
+            <h2>Chính sách phân bổ</h2>
+            {sessions.length ? (
+              <ul>{sessions.map(s => <li key={s.id}>
+                {formatVietnamDate(s.startsAt, 'short')} ·
+                {' '}{s.capacity} vé · {s.method ?? 'Chưa cấu hình'}
+              </li>)}</ul>
+            ) : <p>Chưa có suất.</p>}
+            <form className="auth-form" onSubmit={setPolicy}>
+              <label>Suất
+                <select name="sessionId" required defaultValue="">
+                  <option value="" disabled>Chọn suất</option>
+                  {sessions.map(s => <option key={s.id} value={s.id}>
+                    {formatVietnamDate(s.startsAt, 'short')}
+                  </option>)}
+                </select>
+              </label>
+              <label>Phương thức
+                <select name="method" value={allocationChoice}
+                  onChange={e => setAllocationChoice(e.target.value as 'FCFS'|'LOTTERY'|'MIXED')}>
+                  <option value="FCFS">Theo thứ tự đăng ký</option>
+                  <option value="LOTTERY">Bốc thăm công bằng</option>
+                  <option value="MIXED">Kết hợp cấp sớm và bốc thăm</option>
+                </select>
+              </label>
+              {allocationChoice === 'MIXED' && <label>Số vé cấp theo thứ tự đăng ký
+                <input name="fcfsQuota" type="number" min={1} max={99999} required
+                  placeholder="Ví dụ: 50 trong 100 vé" />
+                <span className="note">Phần còn lại sẽ bốc thăm khi đóng đăng ký.</span>
+              </label>}
+              <button type="submit" disabled={busy || !sessions.length}>Lưu chính sách</button>
+            </form>
+          </section>
+
+
+          </>
+      )}
       {activeTab === 'people' && (
         <>
       {chosen && sessions.length > 0 && (
@@ -409,62 +471,6 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
 
       {chosen && chosen.status === 'NHAP' && (
         <>
-          <section className="panel">
-            <h2>Thêm suất tổ chức</h2>
-            {error && <p className="form-error" role="alert">{error}</p>}
-            <p className="note">Nhập giờ Hà Nội (UTC+7), không phụ thuộc múi giờ trên máy tính. Suất phải ở tương lai.</p>
-            <form className="auth-form" onSubmit={createSession}>
-              <label>Địa điểm
-                <select name="venueId" required defaultValue="">
-                  <option value="" disabled>Chọn địa điểm</option>
-                  {venues.map(v => <option key={v.id} value={v.id}>
-                    {v.name} · {v.address}
-                  </option>)}
-                </select>
-              </label>
-              <label>Sức chứa <input name="capacity" type="number" min={1} max={100000} required /></label>
-              <label>Bắt đầu <input name="startsAt" type="datetime-local" required /></label>
-              <label>Kết thúc <input name="endsAt" type="datetime-local" required /></label>
-              <label>Mở đăng ký <input name="registrationOpensAt" type="datetime-local" required /></label>
-              <label>Đóng đăng ký <input name="registrationClosesAt" type="datetime-local" required /></label>
-              <button type="submit" disabled={busy || !venues.length}>Thêm suất</button>
-            </form>
-          </section>
-
-          <section className="panel">
-            <h2>Chính sách phân bổ</h2>
-            {sessions.length ? (
-              <ul>{sessions.map(s => <li key={s.id}>
-                {formatVietnamDate(s.startsAt, 'short')} ·
-                {' '}{s.capacity} vé · {s.method ?? 'Chưa cấu hình'}
-              </li>)}</ul>
-            ) : <p>Chưa có suất.</p>}
-            <form className="auth-form" onSubmit={setPolicy}>
-              <label>Suất
-                <select name="sessionId" required defaultValue="">
-                  <option value="" disabled>Chọn suất</option>
-                  {sessions.map(s => <option key={s.id} value={s.id}>
-                    {formatVietnamDate(s.startsAt, 'short')}
-                  </option>)}
-                </select>
-              </label>
-              <label>Phương thức
-                <select name="method" value={allocationChoice}
-                  onChange={e => setAllocationChoice(e.target.value as 'FCFS'|'LOTTERY'|'MIXED')}>
-                  <option value="FCFS">Theo thứ tự đăng ký</option>
-                  <option value="LOTTERY">Bốc thăm công bằng</option>
-                  <option value="MIXED">Kết hợp cấp sớm và bốc thăm</option>
-                </select>
-              </label>
-              {allocationChoice === 'MIXED' && <label>Số vé cấp theo thứ tự đăng ký
-                <input name="fcfsQuota" type="number" min={1} max={99999} required
-                  placeholder="Ví dụ: 50 trong 100 vé" />
-                <span className="note">Phần còn lại sẽ bốc thăm khi đóng đăng ký.</span>
-              </label>}
-              <button type="submit" disabled={busy || !sessions.length}>Lưu chính sách</button>
-            </form>
-          </section>
-
           <section className="panel">
             <h2>Accessibility (khả năng tiếp cận)</h2>
             <form className="auth-form" onSubmit={setAccessibility}>
