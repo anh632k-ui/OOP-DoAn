@@ -106,6 +106,24 @@ with ZipFile(docx,"r") as source,ZipFile(replacement,"w") as target:
         data=etree.tostring(root,xml_declaration=True,encoding="UTF-8",standalone=True) if item.filename=="word/document.xml" else source.read(item.filename)
         target.writestr(item,data)
 replacement.replace(docx)
+# Keep cached entries until the user explicitly chooses 'Update field' in Word.
+# This does not remove either TOC field or the SEQ figure-caption fields.
+with ZipFile(docx) as z:
+    settings_xml=z.read('word/settings.xml')
+settings_root=etree.fromstring(settings_xml)
+updated=settings_root.find('w:updateFields',XMLNS)
+if updated is not None:
+    updated.set(W+'val','false')
+with NamedTemporaryFile(dir=docx.parent,suffix='.docx',delete=False) as tmp:
+    safe=Path(tmp.name)
+with ZipFile(docx,'r') as source,ZipFile(safe,'w') as dest:
+    for item in source.infolist():
+        data=(etree.tostring(settings_root,xml_declaration=True,encoding='UTF-8',standalone=True)
+              if item.filename=='word/settings.xml' else source.read(item.filename))
+        dest.writestr(item,data)
+safe.replace(docx)
 assert len(page_map)==len(refs)
-print(f"Updated {total} dynamic PAGEREF cached pages; total PDF pages {len(pages)}")
+assert len(set(page_map.values()))>10, 'Most page references unexpectedly point to same page'
+print(f"Updated {total} cached page labels; real pages span {min(page_map.values())}–{max(page_map.values())}")
+print(f"Total PDF pages {len(pages)}")
 print("First chapter starts at",first+1)
