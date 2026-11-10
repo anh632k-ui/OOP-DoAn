@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import {
-  sessionInput, allocationMethod, optionalPatch, verifiedAccessibility,
+  sessionInput, allocationMethod, allocationPolicy, optionalPatch, verifiedAccessibility,
 } from './management.validation';
 
 describe('Management validation', () => {
@@ -24,6 +24,10 @@ describe('Management validation', () => {
 
   it('restricts policy and patch shape', () => {
     expect(allocationMethod({ method: 'FCFS' })).toBe('FCFS');
+    expect(allocationPolicy({ method: 'MIXED', fcfsQuota: 50 }))
+      .toEqual({ method: 'MIXED', fcfsQuota: 50 });
+    expect(() => allocationPolicy({ method: 'MIXED', fcfsQuota: 0 }))
+      .toThrow(BadRequestException);
     expect(() => allocationMethod({ method: 'HYBRID' }))
       .toThrow(BadRequestException);
     expect(() => optionalPatch({ ownerId: 'malicious' }))
