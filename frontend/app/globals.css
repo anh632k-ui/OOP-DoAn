@@ -1534,3 +1534,121 @@ body:has(.admin-workspace) > .site-footer { display: none; }
   .admin-workspace .organizer-event-selector .organizer-event-choices button.selected { background: #cee9dd; }
   .admin-workspace .organizer-event-selector .organizer-event-choices button span { color: var(--teal); }
 }
+
+
+/* UI polish: audit traceability, cover consistency, poster layers, organizer and backup tickets. */
+.audit-workspace { padding: clamp(19px, 2.4vw, 30px); }
+.audit-workspace-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 18px; margin-bottom: 20px;
+}
+.audit-workspace-heading h2 { margin: 0 0 6px; font-size: clamp(1.35rem, 2vw, 1.65rem); }
+.audit-workspace-heading .eyebrow { margin-bottom: 7px; }
+.audit-record-count {
+  background: #e4f3e9; color: #116155; border-radius: 999px;
+  padding: 9px 15px; white-space: nowrap; font-weight: 800; font-size: .81rem;
+}
+.audit-filters {
+  display: grid; grid-template-columns: minmax(200px, 1fr) minmax(210px, 1fr) auto;
+  align-items: end; gap: 12px; padding: 17px; border-radius: 15px;
+  background: #f2f7f3; border: 1px solid var(--line); margin-bottom: 20px;
+}
+.audit-filters .management-label { margin: 0; display: grid; gap: 8px; font-weight: 700; }
+.audit-filters input, .audit-filters select {
+  display: block; width: 100%; min-width: 0; min-height: 44px;
+  border-radius: 9px; background: white; border: 1px solid #c5d7cd;
+  color: var(--ink); padding: 9px 12px;
+}
+.audit-filters button { height: 44px; padding: 8px 18px; }
+.audit-loading { color: var(--muted); }
+.audit-table-scroll { width: 100%; overflow-x: auto; }
+.audit-data-table { border-collapse: collapse; width: 100%; min-width: 810px; }
+.audit-data-table th {
+  padding: 13px 14px; text-align: left; font-size: .81rem;
+  color: #486a60; background: #e7f1eb; border-bottom: 1px solid #d3e2d8;
+}
+.audit-data-table td { padding: 17px 14px; vertical-align: middle; border-bottom: 1px solid var(--line); font-size: .87rem; }
+.audit-data-table .audit-when { white-space: nowrap; font-variant-numeric: tabular-nums; color: #5b716c; }
+.audit-data-table td strong { font-weight: 760; }
+.audit-action-pill {
+  display: inline-block; border-radius: 8px; padding: 7px 10px;
+  background: #e9f5ed; color: #075b55; font-weight: 750; font-size: .8rem;
+}
+.audit-description { color: #516760; line-height: 1.5; }
+.audit-data-table .audit-detail-button { padding: 9px 15px; min-height: 38px; white-space: nowrap; }
+.audit-expanded-row td { background: #f4f9f5; }
+.audit-detail-panel { padding: 4px 12px 12px; }
+.audit-detail-panel h3 { font-size: 1.02rem; margin: 0 0 13px; }
+.audit-detail-panel dl { display: grid; gap: 8px; margin: 0; }
+.audit-detail-panel dl > div { display: grid; grid-template-columns: minmax(180px, .55fr) minmax(0, 1fr); gap: 15px; }
+.audit-detail-panel dt { color: var(--muted); font-weight: 700; }
+.audit-detail-panel dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
+.audit-table-footer { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding-top: 18px; color: var(--muted); font-size: .84rem; }
+.audit-table-footer .insights-pager { margin: 0; }
+.audit-table-footer .insights-pager button { min-height: 40px; }
+
+.discover-card .discover-poster { padding: 0; }
+.discover-cover-photo { display: block; width: 100%; height: 100%; object-fit: cover; min-height: 210px; }
+.discover-card .discover-poster:has(.poster-graphic) { padding: 18px; }
+.hero-art-figure { z-index: 0; pointer-events: none; }
+.hero-art-top { position: relative; z-index: 2; }
+.hero-art-bottom { position: relative; z-index: 3; gap: 12px; align-items: flex-end; }
+.hero-art-bottom span:first-child {
+  position: relative; z-index: 3;
+  font-size: clamp(1.8rem, 2.85vw, 3rem);
+  line-height: 1.08; max-width: 75%;
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 9px rgba(30, 50, 50, .4);
+}
+.hero-art-bottom span:last-child { flex: none; position: relative; z-index: 3; }
+.hero-art-figure .hero-wave { z-index: 1; }
+.hero-art-figure .hero-sun, .hero-art-figure .hero-ring { z-index: 0; }
+
+.organizer-event-selector { position: static; align-self: start; }
+.organizer-event-choices { max-height: none; overflow: visible; gap: 8px; }
+.organizer-event-choices li { margin: 0; padding: 0; }
+.organizer-event-choices li button {
+  margin: 0; min-height: 64px; padding: 12px 14px;
+  text-align: left; gap: 5px; border-radius: 12px;
+}
+.organizer-event-choices li button strong { overflow-wrap: anywhere; font-size: .92rem; }
+.organizer-event-choices li button span { font-size: .75rem; }
+.organizer-main-panel .organizer-tabs {
+  display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin;
+  gap: 5px; align-items: stretch; padding: 7px;
+}
+.organizer-main-panel .organizer-tabs .organizer-tab {
+  flex: 1 0 auto; white-space: nowrap; width: auto;
+  min-width: max-content; padding: 10px 13px; font-size: .82rem;
+}
+.ticket-backup-note { color: var(--muted); font-size: .82rem; margin: 12px 0; }
+.ticket-backup-tools { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; }
+.ticket-backup-tools .ticket-code {
+  margin: 0; padding: 14px 16px; border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: .83rem; letter-spacing: .035em; line-height: 1.6;
+  overflow-wrap: anywhere; word-break: break-all; user-select: all;
+  background: #f0f5f1; border: 1px solid #d6e3d9; color: #153f3a;
+}
+.ticket-backup-tools button { min-height: 43px; padding: 9px 14px; white-space: nowrap; }
+.ticket-copy-feedback { margin: 10px 0 0; color: #116155; font-weight: 750; font-size: .82rem; }
+
+@media (max-width: 940px) {
+  .audit-filters { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .audit-filters button { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .audit-workspace-heading { align-items: flex-start; flex-direction: column; }
+  .audit-filters { grid-template-columns: minmax(0,1fr); }
+  .audit-filters button { grid-column: auto; }
+  .audit-table-footer { align-items: flex-start; flex-direction: column; }
+  .audit-detail-panel dl > div { grid-template-columns: minmax(0,1fr); gap: 3px; }
+  .organizer-main-panel .organizer-tabs { display: flex; flex-wrap: nowrap; }
+  .organizer-event-choices { display: grid; }
+  .ticket-backup-tools { grid-template-columns: minmax(0,1fr); }
+  .ticket-backup-tools button { width: 100%; }
+  .hero-art-bottom span:first-child { font-size: clamp(1.45rem,5.5vw,2.1rem); }
+}
+@media print {
+  .ticket-backup-tools button { display: none !important; }
+}
