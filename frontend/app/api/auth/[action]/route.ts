@@ -40,7 +40,14 @@ export async function POST(
   }
 
   if (action === 'logout') {
-    const response = NextResponse.redirect(new URL('/', request.url), { status: 303 });
+    // request.url may use Docker's 0.0.0.0 bind address, which is not a
+    // browser destination. The Host header is the browser-facing authority.
+    const publicHost = request.headers.get('host');
+    if (!publicHost || /[\\s/?#@]/.test(publicHost) || publicHost.startsWith('0.0.0.0')) {
+      return NextResponse.json({ message: 'Địa chỉ truy cập không hợp lệ' }, { status: 400 });
+    }
+    const protocol = request.headers.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+    const response = NextResponse.redirect(new URL('/', `${protocol}://${publicHost}`), { status: 303 });
     response.cookies.delete('med06_session');
     return response;
   }
