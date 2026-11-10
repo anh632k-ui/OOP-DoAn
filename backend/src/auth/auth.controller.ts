@@ -32,6 +32,19 @@ export class AuthController {
     return request.user;
   }
 
+  @Get('organizer-request')
+  @UseGuards(JwtAuthGuard)
+  organizerRequest(@Req() request: AuthenticatedRequest) {
+    return this.auth.organizerRequestStatus(request.user!);
+  }
+
+  @Post('organizer-request')
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  requestOrganizer(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
+    return this.auth.requestOrganizer(request.user!, body);
+  }
+
   // RBAC demonstration. Future admin endpoints will use this guard.
   @Get('organizer-check')
   @UseGuards(JwtAuthGuard, RolesGuard)
