@@ -17,7 +17,7 @@ export default async function CheckinPage() {
       <p>Chỉ nhân viên CHECKIN hoặc ADMIN được sử dụng chức năng này.</p>
     </main>;
   }
-  return <main id="main-content" className="container">
+  return <main id="main-content" className="container checkin-page">
     <Link href="/">← Danh sách sự kiện</Link>
     <header>
       <p className="eyebrow">MED-06 · KIỂM TRA VÉ</p>
