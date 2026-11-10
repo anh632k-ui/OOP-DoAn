@@ -40,16 +40,16 @@ export async function POST(
   }
 
   if (action === 'logout') {
-    // request.url may use Docker's 0.0.0.0 bind address, which is not a
-    // browser destination. The Host header is the browser-facing authority.
-    const publicHost = request.headers.get('host');
-    if (!publicHost || !/^(localhost|127\.0\.0\.1|\[[0-9a-fA-F:]+\]|[a-zA-Z0-9.-]+)(:\d{1,5})?$/.test(publicHost)
-      || publicHost.startsWith('0.0.0.0')) {
-      return NextResponse.json({ message: 'Địa chỉ truy cập không hợp lệ' }, { status: 400 });
-    }
-    const protocol = request.headers.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-    const response = NextResponse.redirect(new URL('/', `${protocol}://${publicHost}`), { status: 303 });
-    response.cookies.delete('med06_session');
+    // Relative Location is resolved by the browser against its own origin.
+    // Docker may expose 0.0.0.0 as the internal bind address, which must
+    // never be used as a public redirect target.
+    const response = new NextResponse(null, {
+      status: 303,
+      headers: { Location: '/', 'Cache-Control': 'no-store' },
+    });
+    response.cookies.set('med06_session', '', {
+      path: '/', httpOnly: true, sameSite: 'lax', maxAge: 0,
+    });
     return response;
   }
 
