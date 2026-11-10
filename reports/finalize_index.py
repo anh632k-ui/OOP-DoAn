@@ -32,6 +32,13 @@ for p in root.findall(".//w:body/w:p",XMLNS):
             txt="".join(t.text or "" for t in p.findall(".//w:t",XMLNS))
             refs[name]=txt
 
+needed=set()
+for el in root.findall(".//w:instrText",XMLNS):
+    if el.text and "PAGEREF" in el.text:
+        m=re.search(r"PAGEREF\\s+(bm_(?:heading|figure)_\\d+)",el.text)
+        if m:needed.add(m.group(1))
+refs={name:label for name,label in refs.items() if name in needed}
+
 pages=fitz.open(pdf)
 texts=[normalize(p.get_text("text")) for p in pages]
 first=next((i for i,t in enumerate(texts) if "chương i. giới thiệu đề tài" in t
