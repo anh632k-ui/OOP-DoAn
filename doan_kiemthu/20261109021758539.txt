@@ -1,0 +1,267 @@
+rồi chắc là các bạn nghỉ đi ha ờ chuẩn bị ờ ngồi làm đi
+rồi thầy có thông
+ờ các bạn Theo dõi ở trên cái Lightroom á
+thầy sẽ thông báo ờ cả cái công việc
+ví dụ như là nộp bài rap
+nha nhớ nộp Cho đúng giờ tui mở Ra tui khóa lại đó
+rồi à thì chắc là Chủ Nhật à
+các bạn tự tin tinh thần là Chủ Nhật à
+là là thầy sẽ mở nha trên chủ nhật á
+thời thường thì là thầy sẽ về rất là muộn thì
+khoảng à 12 giờ đêm thầy mở nha
+thầy mở khoảng đâu đấy khoảng à
+tới sáng thì thầy thầy thầy đóng lại nha
+rồi đó là bài rap
+còn về cái a báo cáo cuối kỳ
+thì các bạn hoàn thiện cái quan báo cáo cuối kỳ
+đây thầy hướng dẫn lại một lần nữa
+đúng 120 trang nha đúng 120 trang
+thằng nào mà hơn 120 trang là tui không nhận được chưa
+thì nó sẽ có những cái mục ờ
+rồi đây là cái báo cáo à
+mục 6 báo cáo ha thì ở đây các bạn thấy là chương một
+chương một là mình sẽ giới Thiệu về cái đề tài
+thì ở đây mình sẽ khảo sát hiện trạng rồi
+yêu cầu hệ thống sơ đồ tổ chức
+hệ thống chức năng nhiệm vụ được chưa
+danh sách các yêu cầu danh sách các biểu mẫu
+được chưa rồi
+qua cái chương 2 thì mình sẽ có mô hình UK
+thì ở đây chúng ta có mô hình UK
+tổng quát danh sách các cái ờ
+tác nhân danh sách các cái UK
+và mình sẽ đặt tạm cả cái UK
+được chưa
+đặt tại các UK ở đây được chưa
+nè đặt tại UK thì chúng ta đặt lại hết được chưa
+rồi sau cái là chương 2 về à cái phần là à mô hình UK
+thì đến là cái phần là chương BA đó là phân tích
+thì trong phân tích này chúng ta có là sơ đồ lớp
+sơ đồ trạng thái
+sơ đồ toàn tờ được chưa
+thì đây chúng ta có các cái sơ đồ được chưa
+và sau cái chương BA về sơ đồ
+thì chúng ta thấy là gì ạ ờ chương BA phân tích
+thì ở chương 4 của chúng ta là thiết kế dữ liệu
+thì ở đây
+trong thiết kế dữ liệu chúng ta sẽ có sơ đồ logic
+và mô tả Chi tiết các thành phần
+ờ sơ đồ logic chúng ta phải có được chưa
+và sau đó thì đến chương năm
+thì chúng ta sẽ có cái thiết kế kiến trúc
+thì ở đây các bạn có mô tả cái kiến trúc hệ thống của
+bạn bạn sử dụng Facebook nào
+mô hình kiến trúc bạn đang sử dụng MPC hay là gì đấy
+bạn mở rã Ra và mô tả Chi tiết hình à
+thành phần bên trong cái hệ thống đó được chưa
+thì đây là cái chương
+ờ chương năm về thiết kế kiến trúc được chưa
+về à
+chương 6 là các bạn sẽ thiết kế giao diện
+dựa vào các cái biểu mẫu ở trên
+thì đây chúng ta có
+danh sách các cái màn hình
+mô tả các cái màn hình được chưa
+và đây thì có bao nhiêu chức năng
+YouTube chúng ta đem vào
+đây chúng ta có
+và sau cái chương a 6 thì chúng ta có
+chương 7 là chúng ta kết luận
+kết luận thì ở đây chúng ta sẽ có là gì ạ
+môi trường phát triển cái phần mềm này à kết quả
+à về lý thuyết chúng ta đạt được gì ờ
+về ứng dụng chúng ta đã làm được cái gì
+và cái
+nữa đó là về hướng phát triển là chúng ta sẽ làm gì
+đối với cái đồ án này
+thì đấy chính là các cái cuốn báo cáo
+ờ báo cáo của cái ờ đồ án này được chưa
+và độ dài của nó thì 120 trang
+kể cả mục 6 và trang bìa được chưa
+cả tài liệu tham khảo
+được chưa nè rồi
+và ở đây đứa nào mà làm 121 thì tôi cũng trả lại
+đứa nào làm 119 thì tôi cũng trả lại được chưa
+tôi không nhận cứ về cái số trang cái đã được chưa nào
+và ở đây thì các
+bạn không cần in Ra thầy sẽ
+tạo cái thư mục các bạn nộp vào đấy
+để khi nào mà bên khoa họ cần
+thì thầy tự bỏ tiền túi Ra
+thầy in thôi
+chứ cũng không cần in Ra chắc làm gì Cho nó tốn tiền
+các bạn được chưa
+về tài liệu tham khảo
+thì các bạn sẽ sử dụng cái phần mềm zo
+để các bạn làm
+thì đây mình sẽ có cái à hướng dẫn demo Cho các bạn
+một cái về Zoro
+rồi ví dụ ở đây mình có một cái đoạn văn bản ờ
+cái báo cáo của mình
+được chưa
+thì bây giờ mình sẽ đưa cái tài liệu tham khảo này vào
+trong này như thế nào
+bằng cái vô Tay rô
+các bạn lên trên mạng bạn sẽ tìm hiểu về vô Tay rô
+ờ mấy cái đoạn mà bữa trước mình có làm rồi
+rồi đây mình sẽ giới Thiệu Cho các bạn
+cái giao diện của vô Tay rô
+đây là cái vô Tay rô à
+thì các bạn thấy là đây là chính là cái à
+tool mà các bạn có thể cài và cài thì
+thì khi các bạn cài thì nó sẽ à
+adding vào trong Google
+và adding vào trong Word của mình
+thì trên này các bạn thấy là
+chúng ta sẽ tạo Ra các cái kho lotion
+và ở đây
+trong này
+thì mình sẽ tạo Ra cái collagen để mình lưu trữ
+thì cái tài liệu tham khảo
+đây bạn thấy là cái cái tài liệu tham khảo ở đây
+thì các bạn nhấp vào một cái tài liệu
+thì ngay lập tức ở bên này nó sẽ hiện Ra
+cả cái thông tin của cái a
+tác giả của cái cái này được chưa
+thì bây giờ mình sẽ inbox từ cái thư viện này vào
+thì ở đây chúng ta ờ
+nếu mà có thời gian thì tui giới Thiệu nhiều
+còn bây giờ chúng ta có thời gian ờ
+cái môn này là cái môn hướng dẫn ờ
+cái môn phương pháp nghiên cứu khoa học
+thì chắc là thầy cô đã dạy Cho các bạn
+về sử dụng tài liệu tham khảo rồi
+được chưa nè
+thì bây giờ trên cái Word mình sẽ chèn vào như thế nào
+thì đây mình sẽ chèn trên Word ờ
+và các bạn làm Cho đúng
+nếu mà tui kiểm tra mà Sai
+thì ngay lập tức và tui cũng trả lại
+tui không cần đọc được chưa
+rồi ví dụ ở đây
+thì khi mà ờ
+thêm tài liệu tham khảo á thì các bạn thường á
+là chúng ta sẽ đứng trước dấu chấm hoặc dấu phẩy
+ví dụ ở đây là chúng ta sẽ đứng trước dấu chấm
+được chưa thì ví dụ
+tại cái cái câu này
+tui có tham khảo một cái tài liệu ờ
+thì ở đây tui sẽ mở Ra
+được chưa thì ở đây tui sẽ chọn cái chuẩn là ờ
+e hoặc là ABA đều được thì ở đây tui chọn cái e
+e đây tui chọn luôn rồi
+thì khi mà tui chọn như vậy thì ngay lập tức ở chỗ này
+nó sẽ hiện Ra Cho tui cái tài liệu tham khảo mà tui đã
+ờ thu 10 ở đây rồi nè thì tui nhập vào đây
+rồi sau đó thì tui sẽ
+ờ tránh tích vào thì ngay lập tức các bạn thấy là
+ờ nó sẽ vào đây rồi
+ta đứng ở đây cái đã
+tụt của mình nó giãy
+rồi đây các bạn thấy là con
+đây tài liệu tham khảo mình đã được vào đây được chưa
+nè rồi tiếp tục thì mình sẽ thêm một vài cái số tài
+là nếu đó là tại cái chỗ đó
+thì tui đã thêm cái tài liệu tham khảo đó vô
+đây đây số 2 rồi đây số BA
+rồi đây số BA ha số BA
+rồi số 4
+tương tự số 4 thì tôi mở ở đây
+cái đoạn này tôi coi ở đây
+rồi đây số 4 được chưa rồi số năm
+ờ
+rồi đây số năm
+như vậy thì đây là cả cái tài liệu mà mình đã tham khảo
+các bạn
+ha rồi dưới này thì cái danh mục tài liệu tham khảo
+đây là danh mục tài liệu tham khảo
+hoặc là mình ghi tài liệu tham khảo đi
+Thảo
+rồi và sau
+đó thì mình add năm cái tài liệu tham khảo mình vô đây
+các bạn thấy ở đây
+như vậy
+là cái tài liệu số một mình đã tham chiếu ở chỗ này
+tài liệu số 2 mình đã tham chiếu ở chỗ này được chưa
+các bạn thấy là
+thế còn có một số anh chị á
+làm đại hải xong
+xuống dưới
+làm một cái list danh sách tài liệu tham khảo
+nhưng mà tui không biết cái tài liệu tham khảo đó
+các bạn đã ờ tham khảo ở chỗ nào tích dẫn vào chỗ nào
+như vậy tui dò vô
+cái mô đồ của tui nó sẽ chấm như vậy
+nếu quét mà không có
+cái cityon có nghĩa là dưới có tài liệu tham khảo
+nhưng mà không biết tích dẫn cái chỗ nào
+thì ngay lập tức cũng sẽ trả lại
+hiểu chưa như vậy thì
+đấy là những cái mà nhắc với các bạn sẽ làm được chưa
+làm Cho đúng thì bạn thấy ở đây chúng ta thấy là
+nó sẽ rất là hợp lý đúng hông
+nó hợp lý ở chỗ này
+đúng hông
+thì đấy là những cái bắt buộc các bạn phải làm
+năm BA năm tư
+rồi
+chúng ta không có lý do gì mà nói chúng ta không biết
+ta học môn phương pháp nghiên cứu khoa học
+rồi những cái này người ta sẽ dạy Cho các bạn
+về cách trình bày một cái văn bản
+đúng với quy phạm pháp luật
+đúng với cái văn bản của khoa học
+như vậy thì đây chúng ta đấy
+báo cáo của chúng ta là báo cáo khoa học
+được chưa nè
+như vậy thì đây chính là cái mà các bạn cần phải có
+được chưa rồi thì à thầy sẽ dừng lại ở đây và
+thầy sẽ thông báo ở trên lớp trùm
+tất cả mọi cái thông tin thầy đều để trên lớp trùm
+các bạn thể Theo dõi
+và làm Cho đúng tui tránh trường hợp là
+tui đánh rớt môn ý kiến
+à trong khi đó tôi đã ghi rõ hết rồi thấy chưa
+nếu ý kiến tâm cái điều kiện là gì ạ
+hợp lý hợp tình thì tôi xem xét
+còn những cái ý kiến mà
+không Theo dõi không chú ý
+được chưa thì tui sẽ Xin phép không trả lời
+bất cứ dưới hình thức nào
+được chưa nè lưu ý giúp được chưa
+còn môn này thì Hiển nhiên là rớt nhiều lắm
+chứ không phải rớt một người 2 người đâu
+rớt nhiều lắm
+đó các anh chị làm không chuẩn chính chủ à
+chính Chu là các bạn sẽ rớt được chưa
+nà rồi ô kê rồi chúng ta sẽ nghĩ ở đây
+rồi ờ cảm ơn các bạn nha
+vì là chỉ có học bù thôi Cho nên là chúng ta bài
+lá thì thầy vẫn để là 4 giờ 46 thì các bạn cứ ngồi
+làm lá bình thường được chưa nào
+rồi ô kê chúng ta nghỉ ở đây nhé
+rồi có AI hỏi gì hông thì hỏi đi
+thầy ừm nói đi
+hồi nãy thầy kêu cái cái
+là là tối nay thầy mở link bài rap này Ra á thầy
+11 ờ tối Chủ Nhật
+tối Chủ Nhật
+là bao là bao gồm cả bài rap này với lại cái bài ờ
+một tổng hợp luôn
+đúng hông thầy
+đúng rồi ờ bài láp hôm nay là tới cái ơ 4 giờ 4 5 quên
+tổng hợp Xin lỗi
+bài láp của ngày hôm nay là 4 giờ 4
+5 còn cái tổng hợp bài láp là tối Chủ Nhật
+được chưa
+thầy Cho em Cho Cho Cho em Xin luôn
+Cho em Xin cái cái cái cái gì ta ờ
+cái chỗ một 6 ờ
+hồi nãy thầy chiếu á thầy Cho em Xin cái mục luật
+á thầy hổng có làm gì có chuyện mà Cho Xin một lúc
+làm gì mai giờ giới Thiệu rồi mà phải vậy thôi
+làm gì mà có cơm mà đút Cho mà ăn nước chảy
+không ý là em Xin để em lấy cái mẫu khác
+để lấy cái mẫu Ra em làm Cho dẹp dẹp dẹp dẹp dẹp
+mai giờ nói rồi không nghe thì chịu
+rồi thôi chúng ta nghỉ ở đây rồi ô kê bai bai
