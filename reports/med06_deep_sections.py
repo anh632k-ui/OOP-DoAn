@@ -644,3 +644,56 @@ class Expansion:
           ("Minh chứng chưa đủ","Lưu kịch bản thử, dữ liệu thử và kết quả thật trước khi đánh dấu hoàn thành."),
         ])
         self.add("Định hướng tiếp theo là cải thiện kiểm thử tích hợp, tăng độ ổn định khi nhiều người đăng ký đồng thời và xác nhận tính dễ sử dụng trên điện thoại. Các hoạt động này phải được phân biệt với chức năng đã có trong mã hiện hành.")
+
+    def appendix_a(self):
+        self.h2("Phụ lục A. Ma trận truy vết yêu cầu – Use Case – kiểm thử")
+        self.add("Ma trận sau lấy 24 yêu cầu chức năng FR-01 đến FR-24 trong hồ sơ yêu cầu nghiệp vụ làm mốc. Cột Use Case và testcase là bản đồ kiểm tra đề xuất để kiểm chứng việc hiện thực; không phải kết quả PASS độc lập.")
+        links=[
+         ("FR-01","UC01, UC02","AuthService","TC04–TC06"),
+         ("FR-02","UC15","RolesGuard, AdminService","TC07, TC19"),
+         ("FR-03","UC03","EventsService","TC21"),
+         ("FR-04","UC04","EventsService","TC21"),
+         ("FR-05","UC09, UC11","ManagementService","TC08, TC09"),
+         ("FR-06","UC10","ManagementService","TC08–TC09"),
+         ("FR-07","UC10, UC12","ManagementService","TC14–TC16"),
+         ("FR-08","UC05","RegistrationsService","TC10, TC12"),
+         ("FR-09","UC05","RegistrationsService","TC11"),
+         ("FR-10","UC05, UC07","RegistrationsService","TC10, TC12"),
+         ("FR-11","UC05, UC12","RegistrationsService, AllocationsService","TC14"),
+         ("FR-12","UC12, UC13","AllocationsService","TC14, TC15"),
+         ("FR-13","UC05, UC08","RegistrationsService","TC10, TC13"),
+         ("FR-14","UC07, UC08","RegistrationsService","TC12–TC14"),
+         ("FR-15","UC06","RegistrationsService","TC13"),
+         ("FR-16","UC06, UC07","RegistrationsService","TC13"),
+         ("FR-17","UC14","CheckinService","TC17"),
+         ("FR-18","UC14","CheckinService","TC18"),
+         ("FR-19","UC10","ManagementService","TC20–TC21"),
+         ("FR-20","UC03","EventsService","TC21"),
+         ("FR-21","UC05","AccountThrottlerGuard","TC11"),
+         ("FR-22","UC13","OrganizerInsightsService","TC12–TC18"),
+         ("FR-23","UC15","AdminService","TC07, TC19"),
+         ("FR-24","UC12","AllocationsService, Audit","TC14–TC16"),
+        ]
+        self.t(["Yêu cầu","Use Case liên quan","Thành phần cần đối chiếu","Testcase tham chiếu"],links)
+        self.add("Phương pháp đọc: chọn một yêu cầu, kiểm tra Use Case thể hiện mục tiêu đó, tìm controller/service có trách nhiệm, xem migration bảo vệ trạng thái và chạy testcase tương ứng. Khi thiếu một khâu, yêu cầu chưa thể coi là đã được chứng minh đầy đủ.")
+    def appendix_b(self):
+        self.h2("Phụ lục B. Bộ minh chứng nghiệm thu sản phẩm thực tế")
+        self.add("Hình PTTK và mockup trong các chương trước không được thay cho ảnh sản phẩm đã chạy. Danh sách dưới đây là kế hoạch thu thập bằng chứng trên máy Windows; khi chưa có ảnh, báo cáo không đánh dấu là đã chụp.")
+        photo=[
+         ("B01","Khởi động dịch vụ và health","Docker Compose, frontend/backend/db, phản hồi /health","Chưa đính kèm"),
+         ("B02","Đăng nhập và phân quyền","Tài khoản mới chỉ là Attendee; thử truy cập ADMIN","Chưa đính kèm"),
+         ("B03","Tạo sự kiện và cấu hình suất","Sự kiện nháp, giờ, địa điểm, sức chứa, policy","Chưa đính kèm"),
+         ("B04","Công bố khi hợp lệ","Màn hình sự kiện có suất và trạng thái DA_CONG_BO","Chưa đính kèm"),
+         ("B05","Đăng ký FCFS cạnh tranh","Hai phiên đăng ký chỗ cuối cùng, một vé và một chờ","Chưa đính kèm"),
+         ("B06","Hủy và đôn danh sách chờ","Trạng thái hai tài khoản trước/sau hủy","Chưa đính kèm"),
+         ("B07","Bốc thăm Lottery","Đợt phân bổ sau hạn đóng; số vé và danh sách chờ","Chưa đính kèm"),
+         ("B08","Vé QR hợp lệ","Trang vé với thông tin suất; không lộ mã thật trong báo cáo","Chưa đính kèm"),
+         ("B09","Check-in lần đầu","Phản hồi được chấp nhận và vé DA_SU_DUNG","Chưa đính kèm"),
+         ("B10","Check-in lặp lại","Từ chối với cùng mã, chỉ một lượt thành công","Chưa đính kèm"),
+         ("B11","Tìm kiếm và tiếp cận","Lọc sự kiện theo đặc tính đã xác nhận","Chưa đính kèm"),
+         ("B12","Quản trị và audit","Đổi role, khóa tài khoản, nội dung nhật ký dễ đọc","Chưa đính kèm"),
+         ("B13","Ảnh sự kiện","Ảnh bìa trên chi tiết và thẻ khám phá","Chưa đính kèm"),
+         ("B14","Sao lưu và DB","Tệp sao lưu có dữ liệu; schema vẫn còn sau restart","Chưa đính kèm"),
+        ]
+        self.t(["Mã","Nội dung","Cần chứng minh","Tình trạng"],photo)
+        self.add("Quy tắc an toàn: trước khi chụp, che mật khẩu, access token, mã QR còn hiệu lực và khóa dịch vụ lưu ảnh. Ảnh của tài khoản cá nhân trong demo phải có quyền sử dụng. Mỗi bằng chứng cần ghi nguồn thao tác và thời điểm để đối chiếu trạng thái cuối.")
