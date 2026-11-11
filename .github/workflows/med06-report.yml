@@ -6,6 +6,7 @@ on:
     paths:
       - 'reports/build_med06_report.py'
       - 'reports/med06_deep_sections.py'
+      - 'reports/med06_references.py'
       - 'reports/finalize_index.py'
       - 'reports/preview_static.py'
       - '.github/workflows/med06-report.yml'
