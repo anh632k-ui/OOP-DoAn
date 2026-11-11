@@ -1664,3 +1664,40 @@ body:has(.admin-workspace) > .site-footer { display: none; }
 .management-area .organizer-event-selector .organizer-event-choices li button {
   margin: 0; width: 100%;
 }
+
+/* Biên bản bốc thăm: ưu tiên kết quả nghiệp vụ, giữ bằng chứng kỹ thuật trong phần mở rộng. */
+.draw-report {
+  margin-top: 18px; padding: clamp(16px, 2.2vw, 26px);
+  border: 1px solid #d5e3da; border-radius: 18px; background: #fbfdfb;
+  color: var(--ink);
+}
+.draw-report-heading { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; }
+.draw-report-heading h4 { font-size: clamp(1.2rem, 2vw, 1.55rem); margin: 4px 0 10px; }
+.draw-report-heading .note { margin: 0; font-size: .83rem; }
+.draw-report-eyebrow { margin: 0; color: #a64733; font-size: .7rem; font-weight: 800; letter-spacing: .13em; }
+.draw-report-status { flex: none; border-radius: 999px; background: #f7e8db; color: #8a4d16; padding: 8px 13px; font-size: .8rem; font-weight: 800; }
+.draw-report-status.is-complete { background: #e3f4e9; color: #126044; }
+.draw-report-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 22px 0; }
+.draw-report-summary > div { padding: 14px; border: 1px solid #d7e6dd; border-radius: 12px; background: #edf6f0; }
+.draw-report-summary dt { color: #4c6b60; font-size: .79rem; }
+.draw-report-summary dd { font-size: 1.6rem; font-weight: 800; margin: 4px 0 0; color: #0b6257; }
+.draw-report h5 { font-size: 1rem; margin: 0 0 12px; }
+.draw-results-table { width: 100%; border-collapse: collapse; min-width: 525px; }
+.draw-results-table th { background: #e8f1ea; color: #375c50; text-align: left; font-size: .78rem; font-weight: 750; }
+.draw-results-table th, .draw-results-table td { padding: 12px; border-bottom: 1px solid #dbe7de; vertical-align: middle; }
+.draw-attendee-name { font-weight: 750; }
+.draw-results-table code { font-size: .83rem; color: #3d6056; }
+.draw-result-badge { display: inline-block; font-size: .79rem; font-weight: 750; padding: 6px 10px; border-radius: 999px; white-space: nowrap; }
+.draw-result-badge.won { background: #ddf2e4; color: #116247; }
+.draw-result-badge.standby { background: #fff0d8; color: #87560b; }
+.draw-report-note { color: var(--muted); font-size: .8rem; margin: 15px 0; }
+.draw-report-technical { margin-top: 17px; border-top: 1px solid #dbe7de; padding-top: 15px; }
+.draw-report-technical summary { cursor: pointer; color: #0a6256; font-weight: 750; }
+.draw-report-technical .ticket-code { margin-top: 6px; font-size: .8rem; }
+.draw-report-technical li { overflow-wrap: anywhere; margin: 5px 0; }
+@media (max-width: 720px) {
+  .draw-report-heading { flex-direction: column; }
+  .draw-report-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .draw-report-summary > div { padding: 11px; }
+  .draw-report-status { align-self: flex-start; }
+}
