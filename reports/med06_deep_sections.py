@@ -697,3 +697,18 @@ class Expansion:
         ]
         self.t(["Mã","Nội dung","Cần chứng minh","Tình trạng"],photo)
         self.add("Quy tắc an toàn: trước khi chụp, che mật khẩu, access token, mã QR còn hiệu lực và khóa dịch vụ lưu ảnh. Ảnh của tài khoản cá nhân trong demo phải có quyền sử dụng. Mỗi bằng chứng cần ghi nguồn thao tác và thời điểm để đối chiếu trạng thái cuối.")
+
+    def appendix_b_short(self):
+        self.h2("Phụ lục B. Danh mục bằng chứng sản phẩm cần nghiệm thu")
+        self.add("Bộ hình PTTK và bản thiết kế giao diện ở các chương trên là tài liệu thiết kế, không phải kết quả chạy phần mềm. Các tình huống dưới đây cần được đối chiếu trên môi trường MED-06 thực tế trước khi xác nhận hoàn thành nghiệm thu.")
+        self.t(["Mã","Nội dung minh chứng","Điều kiện kiểm tra","Tình trạng"],[
+          ("B01","Cơ sở dữ liệu và dịch vụ Docker","Backend, frontend, db và health trả kết quả phù hợp.","Chưa đính kèm"),
+          ("B02","Đăng ký và quyền tài khoản","Tài khoản mới không có quyền Ban tổ chức/ADMIN.","Chưa đính kèm"),
+          ("B03","Đăng ký FCFS cùng lúc","Suất còn một chỗ chỉ cấp một vé.","Chưa đính kèm"),
+          ("B04","Hủy vé và đôn danh sách chờ","Vé cũ vô hiệu, một lượt chờ được cấp.","Chưa đính kèm"),
+          ("B05","Bốc thăm Lottery","Đóng đăng ký, chạy một đợt, không phân bổ trùng.","Chưa đính kèm"),
+          ("B06","Check-in QR hai lần","Lượt đầu hợp lệ; lượt thứ hai bị từ chối.","Chưa đính kèm"),
+          ("B07","Bộ lọc và ảnh sự kiện","Chỉ lọc đặc tính đã xác nhận; ảnh đúng sự kiện.","Chưa đính kèm"),
+          ("B08","Quản trị và nhật ký","Cấp/thu hồi quyền, hiển thị lịch sử thao tác.","Chưa đính kèm"),
+        ])
+        self.add("Ảnh nghiệm thu phải được ghi nhận tại thời điểm thử nghiệm trên máy thực tế. Không đưa mật khẩu, access token, khóa lưu trữ hoặc mã QR còn hiệu lực vào hình công khai. Trạng thái 'Chưa đính kèm' chỉ rõ bằng chứng chưa được người thực hiện cung cấp, không được hiểu là chức năng đã PASS.")
