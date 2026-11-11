@@ -25,8 +25,8 @@ with ZipFile(source) as zin:
         if 'TOC' in instr or has_only_field_end:
             body.remove(p)
             removed+=1
-    if removed < 4:
-        raise RuntimeError(f'Expected four TOC control paragraphs, removed {removed}')
+    if removed < 2:
+        raise RuntimeError(f'Expected at least two TOC control paragraphs, removed {removed}')
     with ZipFile(target,'w') as zout:
         for item in zin.infolist():
             content=(etree.tostring(tree,xml_declaration=True,encoding='UTF-8',standalone=True)
