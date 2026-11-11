@@ -622,10 +622,17 @@ def add_hyperlink(p,text,anchor):
     h.append(r);p._p.append(h)
 
 def populate_index(field_p,entries,kind):
-    # Separate -> cached results in new paragraphs -> closing field.
-    tail=field_p._p[-1]
-    field_p._p.remove(tail)
+    # Keep the live TOC/TOF field, but place its begin/instruction/separator
+    # inside the first cached row. This avoids an otherwise empty control
+    # paragraph that added a spurious rendered page.
+    field_elements=list(field_p._p)
+    for el in field_elements:
+        field_p._p.remove(el)
+    field_end=field_elements[-1]
+    field_start=field_elements[:-1]
     position=field_p._p
+    first_row=None
+    last_row=None
     for level,caption,anchor in entries:
         sty=("Report TOF" if kind=="fig" else "Report TOC "+str(level))
         p=doc.add_paragraph(style=sty)
@@ -638,9 +645,15 @@ def populate_index(field_p,entries,kind):
         add_field(p,"PAGEREF "+anchor+" \\h","1")
         position.addnext(p._p)
         position=p._p
-    # End the TOC/figure field in the last index row itself, avoiding
-    # an otherwise empty trailing paragraph and unpredictable pagination.
-    position.append(tail)
+        if first_row is None: first_row=p._p
+        last_row=p._p
+    if first_row is None:
+        raise RuntimeError("Index cannot be empty")
+    insert_at=1 if first_row[0].tag==qn('w:pPr') else 0
+    for i,el in enumerate(field_start):
+        first_row.insert(insert_at+i,el)
+    last_row.append(field_end)
+    field_p._p.getparent().remove(field_p._p)
 
 toc_entries=[]
 live=False
