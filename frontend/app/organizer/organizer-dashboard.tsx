@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type {
   ManagedEvent, ManagedVenue, AccessibilityFeature,
@@ -34,6 +34,11 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+  }, [coverPreviewUrl]);
 
   useEffect(() => {
     if (!eventId) { setSessions([]); setInspectedSession(''); return; }
@@ -91,7 +96,10 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       const result = await request('events', 'POST', {
         title: data.get('title'), description: data.get('description'),
       });
-      if (result.id) setEventId(result.id);
+      if (result.id) {
+        setEventId(result.id);
+        setActiveTab('settings');
+      }
       form.reset();
     });
   }
@@ -137,6 +145,20 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
     });
   }
 
+  function chooseCover(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.currentTarget.files?.[0];
+    if (!file) { setCoverPreviewUrl(null); return; }
+    if (file.size === 0 || file.size > 2 * 1024 * 1024
+      || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      setError('Chỉ chấp nhận ảnh PNG, JPG hoặc WebP, dung lượng tối đa 2 MB.');
+      e.currentTarget.value = '';
+      setCoverPreviewUrl(null);
+      return;
+    }
+    setError('');
+    setCoverPreviewUrl(URL.createObjectURL(file));
+  }
+
   function uploadCover(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!eventId) return;
@@ -148,6 +170,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       const result = (await response.json()) as { message?: string };
       if (!response.ok) throw new Error(result.message ?? 'Không thể tải ảnh lên');
       form.reset();
+      setCoverPreviewUrl(null);
     });
   }
 
@@ -250,7 +273,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
             {events.filter(e => e.title.toLocaleLowerCase('vi-VN').includes(eventFilter.trim().toLocaleLowerCase('vi-VN')))
               .map(e => <li key={e.id}>
                 <button type="button" aria-pressed={eventId === e.id} className={eventId === e.id ? 'selected' : ''}
-                  onClick={() => { setEventId(e.id); setSessions([]); setInspectedSession(''); }}>
+                  onClick={() => { setEventId(e.id); setSessions([]); setInspectedSession(''); setCoverPreviewUrl(null); }}>
                   <strong>{e.title}</strong><span>{labelStatus(e.status)}</span>
                 </button>
               </li>)}
@@ -281,6 +304,10 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
             <p className="note">{chosen ? 'Trạng thái: ' + labelStatus(chosen.status)
               : 'Chọn sự kiện để xem chi tiết.'}</p>
           </div>
+          {chosen && chosen.status !== 'DA_HUY' && (
+            <button type="button" className="button-secondary"
+              onClick={() => setActiveTab('settings')}>Chỉnh sửa sự kiện / ảnh bìa →</button>
+          )}
           <button type="button" onClick={() => setActiveTab('create')}>+ Tạo sự kiện</button>
         </div>
         {chosen && <div className="organizer-overview-columns">
@@ -316,6 +343,7 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
         <>
       <section className="panel">
         <h2>Tạo sự kiện (bản nháp)</h2>
+        <p className="note">Sau khi tạo, hệ thống chuyển sang Thiết lập để bạn tải ảnh bìa và hoàn thiện thông tin.</p>
         <form className="auth-form" onSubmit={createEvent}>
           <label>Tên sự kiện <input name="title" maxLength={200} required /></label>
           <label>Mô tả <textarea name="description" maxLength={4000} rows={3}/></label>
@@ -467,9 +495,10 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
       )}
       {activeTab === 'settings' && (
         <>
-      {chosen && chosen.status === 'NHAP' && (
+      {chosen && ['NHAP', 'DA_CONG_BO', 'TAM_NGUNG'].includes(chosen.status) && (
         <section className="panel">
-          <h2>Chỉnh sửa sự kiện nháp</h2>
+          <h2>Chỉnh sửa sự kiện</h2>
+          <p className="note">Cập nhật tên và mô tả mà không thay đổi các suất, vé hoặc chính sách phân bổ.</p>
           <form className="auth-form" key={chosen.id} onSubmit={updateEvent}>
             <label>Tên sự kiện
               <input name="title" defaultValue={chosen.title} maxLength={200} required/>
@@ -481,15 +510,35 @@ export default function OrganizerDashboard({ events, venues, features }: Props) 
           </form>
         </section>
       )}
-      {chosen && chosen.status === 'NHAP' && (
+      {chosen && ['NHAP', 'DA_CONG_BO', 'TAM_NGUNG'].includes(chosen.status) && (
         <section className="panel">
           <h2>Ảnh bìa sự kiện</h2>
-          <p className="note">Lưu trong object storage S3-compatible, không lưu binary trong PostgreSQL.</p>
-          <form className="auth-form" onSubmit={uploadCover}>
-            <label>Chọn ảnh (PNG/JPEG/WebP, tối đa 2 MB)
-              <input name="image" type="file" accept="image/png,image/jpeg,image/webp" required/>
+          <p className="note">Chọn ảnh PNG, JPG hoặc WebP tối đa 2 MB. Ảnh mới sẽ thay thế ảnh cũ trên trang khám phá và trang chi tiết.</p>
+          {chosen.hasCover && (
+            <figure style={{ margin: '12px 0' }}>
+              <img src={`/api/event-cover/${chosen.id}?preview=1&v=${reload}`}
+                alt={`Ảnh bìa hiện tại của ${chosen.title}`} width={480} height={270}
+                style={{ width: '100%', maxWidth: 480, height: 'auto',
+                  aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: 12 }}/>
+              <figcaption className="note">Ảnh bìa hiện tại</figcaption>
+            </figure>
+          )}
+          <form className="auth-form" key={chosen.id} onSubmit={uploadCover}>
+            <label>Chọn ảnh mới
+              <input name="image" type="file" accept="image/png,image/jpeg,image/webp"
+                onChange={chooseCover} required/>
             </label>
-            <button type="submit" disabled={busy}>Tải ảnh bìa</button>
+            {coverPreviewUrl && (
+              <figure style={{ margin: '12px 0' }}>
+                <img src={coverPreviewUrl} alt="Xem trước ảnh bìa mới" width={480} height={270}
+                  style={{ width: '100%', maxWidth: 480, height: 'auto',
+                    aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: 12 }}/>
+                <figcaption className="note">Xem trước ảnh mới (chưa lưu)</figcaption>
+              </figure>
+            )}
+            <button type="submit" disabled={busy}>
+              {chosen.hasCover ? 'Thay ảnh bìa' : 'Tải ảnh bìa'}
+            </button>
           </form>
         </section>
       )}

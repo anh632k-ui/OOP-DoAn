@@ -22,8 +22,18 @@ export class MediaController {
     return this.media.uploadCover(req.user!, id, file);
   }
 
+  @Get('manage/events/:id/cover')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ORGANIZER', 'ADMIN')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async managedCover(@Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string): Promise<StreamableFile> {
+    return this.media.getManagedCover(req.user!, id);
+  }
+
   @Get('events/:id/cover')
-  @Header('Cache-Control', 'public, max-age=300')
+  @Header('Cache-Control', 'no-store')
   @Header('X-Content-Type-Options', 'nosniff')
   async cover(@Param('id', ParseUUIDPipe) id: string): Promise<StreamableFile> {
     return this.media.getCover(id);

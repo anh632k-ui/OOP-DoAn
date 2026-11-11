@@ -69,8 +69,8 @@ export class MediaService {
       if (!user.roles.includes('ADMIN') && event.owner !== user.id) {
         throw new ForbiddenException('Không được sửa ảnh sự kiện này');
       }
-      if (event.status !== 'NHAP') {
-        throw new ConflictException('Chỉ sửa ảnh của sự kiện nháp');
+      if (!['NHAP', 'DA_CONG_BO', 'TAM_NGUNG'].includes(event.status)) {
+        throw new ConflictException('Không thể sửa ảnh của sự kiện đã hủy');
       }
       try {
         await this.storage.send(new PutObjectCommand({
@@ -95,23 +95,41 @@ export class MediaService {
     return { eventId, hasCover: true };
   }
 
+  async getManagedCover(user: PublicUser, eventId: string): Promise<StreamableFile> {
+    const [event] = await this.db.queryRows<{ key: string | null; owner: string }>(
+      `SELECT anh_bia_key AS key, ma_nguoi_to_chuc AS owner
+        FROM su_kien WHERE ma_su_kien=$1`, [eventId],
+    );
+    if (!event) throw new NotFoundException('Không tìm thấy sự kiện');
+    if (!user.roles.includes('ADMIN') && event.owner !== user.id) {
+      throw new ForbiddenException('Không được xem ảnh quản lý sự kiện này');
+    }
+    return this.streamCover(event.key);
+  }
+
   async getCover(eventId: string): Promise<StreamableFile> {
     const [event] = await this.db.queryRows<{ key: string | null }>(
       `SELECT anh_bia_key AS key FROM su_kien
-        WHERE ma_su_kien=$1 AND trang_thai='DA_CONG_BO'`, [eventId],
+        WHERE ma_su_kien=$1 AND trang_thai IN ('DA_CONG_BO', 'TAM_NGUNG')`,
+      [eventId],
     );
-    if (!event?.key) throw new NotFoundException('Sự kiện không có ảnh công khai');
+    if (!event) throw new NotFoundException('Sự kiện không có ảnh công khai');
+    return this.streamCover(event.key);
+  }
+
+  private async streamCover(key: string | null): Promise<StreamableFile> {
+    if (!key) throw new NotFoundException('Sự kiện chưa có ảnh bìa');
     try {
       const response = await this.storage.send(new GetObjectCommand({
-        Bucket: this.bucket, Key: event.key,
+        Bucket: this.bucket, Key: key,
       }));
       if (!response.Body) throw new NotFoundException('Không tìm thấy tệp ảnh');
       const buffer = Buffer.from(await response.Body.transformToByteArray());
       if (buffer.byteLength > 2 * 1024 * 1024) {
         throw new ServiceUnavailableException('Tệp ảnh vượt kích thước cho phép');
       }
-      const type = event.key.endsWith('.png') ? 'image/png'
-        : event.key.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+      const type = key.endsWith('.png') ? 'image/png'
+        : key.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
       return new StreamableFile(buffer, {
         type, length: buffer.byteLength, disposition: 'inline',
       });
@@ -121,4 +139,5 @@ export class MediaService {
       throw new ServiceUnavailableException('Object storage chưa sẵn sàng');
     }
   }
+
 }

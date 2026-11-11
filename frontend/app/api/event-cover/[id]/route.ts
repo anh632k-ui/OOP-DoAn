@@ -20,11 +20,22 @@ export async function GET(
 ) {
   const { id } = await params;
   if (!ID.test(id)) return NextResponse.json({ message: 'ID không hợp lệ' }, { status: 400 });
+  const preview = req.nextUrl.searchParams.get('preview') === '1';
+  let authHeaders: Record<string, string> = {};
+  if (preview) {
+    const token = (await cookies()).get('med06_session')?.value;
+    if (!token) return NextResponse.json({ message: 'Vui lòng đăng nhập' }, { status: 401 });
+    authHeaders = { Authorization: `Bearer ${token}` };
+  }
   try {
-    const response = await fetch(`${api}/api/events/${id}/cover`, {
-      cache: 'no-store', signal: AbortSignal.timeout(10000),
+    const path = preview ? `manage/events/${id}/cover` : `events/${id}/cover`;
+    const response = await fetch(`${api}/api/${path}`, {
+      headers: authHeaders, cache: 'no-store', signal: AbortSignal.timeout(10000),
     });
-    if (!response.ok) return new NextResponse(null, { status: response.status });
+    if (!response.ok) return new NextResponse(null, {
+      status: response.status,
+      headers: { 'Cache-Control': 'no-store' },
+    });
     const bytes = await response.arrayBuffer();
     if (bytes.byteLength > 2 * 1024 * 1024) {
       return new NextResponse(null, { status: 502 });
@@ -34,7 +45,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': type,
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': 'no-store',
         'X-Content-Type-Options': 'nosniff',
       },
     });

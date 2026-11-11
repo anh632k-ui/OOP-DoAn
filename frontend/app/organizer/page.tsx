@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export type ManagedEvent = {
   id: string; title: string; description: string;
-  status: string; organizerId: string;
+  status: string; organizerId: string; hasCover: boolean;
 };
 export type ManagedVenue = {
   id: string; name: string; address: string; description: string;

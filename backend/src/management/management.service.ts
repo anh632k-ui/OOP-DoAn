@@ -13,7 +13,7 @@ import { rescheduleInput } from './reschedule.validation';
 
 type EventRow = {
   id: string; title: string; description: string;
-  status: string; organizerId: string;
+  status: string; organizerId: string; hasCover: boolean;
 };
 type IdRow = { id: string };
 type Venue = { id: string; name: string; address: string; description: string };
@@ -28,7 +28,8 @@ export class ManagementService {
     const result = await client.query<EventRow>(
       `SELECT ma_su_kien AS id, ten_su_kien AS title,
         mo_ta AS description, trang_thai AS status,
-        ma_nguoi_to_chuc AS "organizerId"
+        ma_nguoi_to_chuc AS "organizerId",
+        (anh_bia_key IS NOT NULL) AS "hasCover"
       FROM su_kien WHERE ma_su_kien=$1 FOR UPDATE`, [id],
     );
     const event = result.rows[0];
@@ -47,7 +48,8 @@ export class ManagementService {
     const items = await this.db.queryRows<EventRow>(
       `SELECT ma_su_kien AS id, ten_su_kien AS title,
         mo_ta AS description, trang_thai AS status,
-        ma_nguoi_to_chuc AS "organizerId"
+        ma_nguoi_to_chuc AS "organizerId",
+        (anh_bia_key IS NOT NULL) AS "hasCover"
       FROM su_kien WHERE ($1::boolean OR ma_nguoi_to_chuc=$2)
       ORDER BY (trang_thai='DA_HUY') ASC, tao_luc DESC, ma_su_kien DESC LIMIT 200`,
       [isAdmin, user.id],
@@ -64,7 +66,8 @@ export class ManagementService {
          VALUES($1,$2,$3)
          RETURNING ma_su_kien AS id, ten_su_kien AS title,
          mo_ta AS description, trang_thai AS status,
-         ma_nguoi_to_chuc AS "organizerId"`,
+         ma_nguoi_to_chuc AS "organizerId",
+        (anh_bia_key IS NOT NULL) AS "hasCover"`,
       [user.id, title, desc],
     );
     return event;
@@ -73,13 +76,17 @@ export class ManagementService {
   async updateEvent(user: PublicUser, id: string, body: unknown): Promise<EventRow> {
     const patch = optionalPatch(asObject(body));
     return this.db.transaction(async client => {
-      const previous = await this.lockEvent(client, user, id);
+      const previous = await this.lockEvent(client, user, id, false);
+      if (!['NHAP', 'DA_CONG_BO', 'TAM_NGUNG'].includes(previous.status)) {
+        throw new ConflictException('Không thể chỉnh sửa sự kiện đã hủy');
+      }
       const result = await client.query<EventRow>(
         `UPDATE su_kien SET ten_su_kien=$2,mo_ta=$3
          WHERE ma_su_kien=$1
          RETURNING ma_su_kien AS id, ten_su_kien AS title,
          mo_ta AS description, trang_thai AS status,
-         ma_nguoi_to_chuc AS "organizerId"`,
+         ma_nguoi_to_chuc AS "organizerId",
+        (anh_bia_key IS NOT NULL) AS "hasCover"`,
         [id, patch.title ?? previous.title, patch.description ?? previous.description],
       );
       return result.rows[0];
