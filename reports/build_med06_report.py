@@ -594,7 +594,6 @@ bibliography(doc,h1,h2,table,add_text)
 doc.add_page_break()
 h1("PHỤ LỤC")
 exp.appendix_a()
-doc.add_page_break()
 exp.appendix_b()
 
 # Populate a single Word TOC field and a single Table-of-Figures field.
