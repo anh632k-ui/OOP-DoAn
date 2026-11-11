@@ -16,7 +16,13 @@ type DrawSession = {
 };
 type Pending = { id: string };
 type Seats = { seats: number };
-type DrawInfo = { id: string; seed: string; sha256: string; status: string };
+type DrawInfo = {
+  id: string; seed: string; sha256: string; status: string; drawnAt: Date;
+};
+type DrawResult = {
+  registrationId: string; attendeeName: string;
+  won: boolean; waitingPosition: number | null;
+};
 
 @Injectable()
 export class AllocationsService implements OnModuleInit, OnModuleDestroy {
@@ -163,7 +169,8 @@ export class AllocationsService implements OnModuleInit, OnModuleDestroy {
   async report(user: PublicUser, sessionId: string) {
     const rows = await this.db.queryRows<DrawInfo & { organizerId: string }>(
       `SELECT d.ma_dot AS id,d.audit_seed AS seed,d.seed_sha256 AS sha256,
-        d.trang_thai AS status,e.ma_nguoi_to_chuc AS "organizerId"
+        d.trang_thai AS status,d.thoi_gian AS "drawnAt",
+        e.ma_nguoi_to_chuc AS "organizerId"
       FROM dot_phan_bo d
       JOIN suat_su_kien s ON s.ma_suat=d.ma_suat
       JOIN su_kien e ON e.ma_su_kien=s.ma_su_kien
@@ -173,15 +180,23 @@ export class AllocationsService implements OnModuleInit, OnModuleDestroy {
     if (!user.roles.includes('ADMIN') && rows[0].organizerId !== user.id) {
       throw new ForbiddenException('Không được xem kết quả bốc thăm');
     }
-    const details = await this.db.queryRows(
-      `SELECT k.ma_dang_ky AS "registrationId",k.duoc_cap_ve AS won,
-        k.thu_tu_du_phong AS "waitingPosition"
-      FROM ket_qua_phan_bo k WHERE k.ma_dot=$1
+    const details = await this.db.queryRows<DrawResult>(
+      `SELECT k.ma_dang_ky AS "registrationId",n.ho_ten AS "attendeeName",
+        k.duoc_cap_ve AS won,k.thu_tu_du_phong AS "waitingPosition"
+      FROM ket_qua_phan_bo k
+      JOIN dang_ky d ON d.ma_dang_ky=k.ma_dang_ky
+      JOIN nguoi_dung n ON n.ma_nguoi_dung=d.ma_nguoi_dung
+      WHERE k.ma_dot=$1
       ORDER BY k.duoc_cap_ve DESC,k.thu_tu_du_phong NULLS FIRST,k.ma_dang_ky`,
       [rows[0].id],
     );
+    const [roundTotal] = await this.db.queryRows<{ count: number }>(
+      `SELECT count(*)::int AS count FROM dot_phan_bo WHERE ma_suat=$1`, [sessionId],
+    );
     return {
-      roundId: rows[0].id, seedSha256: rows[0].sha256,
+      roundId: rows[0].id, drawnAt: rows[0].drawnAt,
+      roundCount: roundTotal.count,
+      seedSha256: rows[0].sha256,
       auditSeed: rows[0].seed, status: rows[0].status,
       results: details,
     };
