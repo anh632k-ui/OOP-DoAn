@@ -608,7 +608,7 @@ for label,size,bold in [
     st.base_style=body;st.font.name="Times New Roman";st.font.size=Pt(size)
     st.font.bold=bold
     st.paragraph_format.space_after=Pt(0)
-    st.paragraph_format.line_spacing=1.02
+    st.paragraph_format.line_spacing=0.96
 
 def add_hyperlink(p,text,anchor):
     h=OxmlElement("w:hyperlink")
