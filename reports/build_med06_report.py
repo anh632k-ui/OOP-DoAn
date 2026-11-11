@@ -601,14 +601,14 @@ exp.appendix_b()
 # These are cached, clickable field results, not separate hand-written lists.
 from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
 for label,size,bold in [
-    ("Report TOC 1",10.0,True),("Report TOC 2",9.4,False),
-    ("Report TOC 3",9.0,False),("Report TOF",9.2,False),
+    ("Report TOC 1",9.5,True),("Report TOC 2",8.9,False),
+    ("Report TOC 3",8.5,False),("Report TOF",9.2,False),
 ]:
     st=doc.styles.add_style(label,WD_STYLE_TYPE.PARAGRAPH)
     st.base_style=body;st.font.name="Times New Roman";st.font.size=Pt(size)
     st.font.bold=bold
     st.paragraph_format.space_after=Pt(0)
-    st.paragraph_format.line_spacing=1.12
+    st.paragraph_format.line_spacing=1.02
 
 def add_hyperlink(p,text,anchor):
     h=OxmlElement("w:hyperlink")
