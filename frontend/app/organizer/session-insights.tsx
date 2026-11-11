@@ -24,8 +24,12 @@ type SessionOverview = {
   };
 };
 type DrawReport = {
-  roundId: string; seedSha256: string; auditSeed: string; status: string;
-  results: { registrationId: string; won: boolean; waitingPosition: number | null }[];
+  roundId: string; drawnAt: string; roundCount: number;
+  seedSha256: string; auditSeed: string; status: string;
+  results: {
+    registrationId: string; attendeeName: string;
+    won: boolean; waitingPosition: number | null;
+  }[];
 };
 type ApiError = { message?: string | string[] };
 const FILTERS = [
@@ -127,25 +131,56 @@ export default function SessionInsights({ sessionId, refreshVersion }: {
       {(overview.session.method === 'LOTTERY' || overview.session.method === 'MIXED') && (
         <div className="report-panel">
           <button type="button" onClick={() => void fetchReport()}>
-            Xem biên bản bốc thăm
+            {report ? 'Cập nhật biên bản' : 'Xem biên bản bốc thăm'}
           </button>
           {reportError && <p role="status">{reportError}</p>}
-          {report && <div>
-            <p>Mã đợt: <code>{report.roundId}</code></p>
-            <p>Kết quả: {report.results.filter(r => r.won).length} trúng,
-              {' '}{report.results.filter(r => !r.won).length} dự phòng.</p>
-            <p className="note">Mã hash SHA-256 của seed (kiểm chứng sau bốc thăm):</p>
-            <code className="ticket-code">{report.seedSha256}</code>
-            <details>
-              <summary>Xem seed kiểm chứng và mã đăng ký</summary>
-              <p>Seed: <code className="ticket-code">{report.auditSeed}</code></p>
-              <ol>{report.results.map(item =>
-                <li key={item.registrationId}>
-                  <code>{item.registrationId}</code>
-                  {' · '}{item.won ? 'Được cấp vé' : 'Dự phòng số ' + item.waitingPosition}
-                </li>)}</ol>
+          {report && <section className="draw-report" aria-label="Biên bản bốc thăm">
+            <div className="draw-report-heading">
+              <div>
+                <p className="draw-report-eyebrow">KẾT QUẢ PHÂN BỔ VÉ</p>
+                <h4>Biên bản bốc thăm</h4>
+                <p className="note">Mã đợt (rút gọn): <strong>{report.roundId.slice(0, 8).toUpperCase()}</strong>
+                  {' · '}Thực hiện: {formatVietnamDate(report.drawnAt, 'short')}</p>
+              </div>
+              <span className={report.status === 'HOAN_TAT' ? 'draw-report-status is-complete' : 'draw-report-status'}>
+                {report.status === 'HOAN_TAT' ? 'Đã hoàn tất' : labelStatus(report.status)}
+              </span>
+            </div>
+            <dl className="draw-report-summary">
+              <div><dt>Đăng ký xét duyệt</dt><dd>{report.results.length}</dd></div>
+              <div><dt>Được cấp vé</dt><dd>{report.results.filter(item => item.won).length}</dd></div>
+              <div><dt>Danh sách dự phòng</dt><dd>{report.results.filter(item => !item.won).length}</dd></div>
+              <div><dt>Đợt đã ghi nhận</dt><dd>{report.roundCount}</dd></div>
+            </dl>
+            <h5>Danh sách kết quả bốc thăm</h5>
+            <div className="table-scroll">
+              <table className="draw-results-table">
+                <thead><tr><th>STT</th><th>Người tham dự</th><th>Mã đăng ký</th><th>Kết quả</th></tr></thead>
+                <tbody>{report.results.map((item, index) => (
+                  <tr key={item.registrationId}>
+                    <td>{index + 1}</td>
+                    <td className="draw-attendee-name">{item.attendeeName}</td>
+                    <td><code title={item.registrationId}>{item.registrationId.slice(0, 8).toUpperCase()}</code></td>
+                    <td><span className={item.won ? 'draw-result-badge won' : 'draw-result-badge standby'}>
+                      {item.won ? 'Được cấp vé' : 'Dự phòng số ' + item.waitingPosition}
+                    </span></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+            <p className="draw-report-note">Biên bản lưu kết quả tại thời điểm bốc thăm.
+              Thông tin vé hiện tại được theo dõi ở danh sách đăng ký phía dưới.</p>
+            <details className="draw-report-technical">
+              <summary>Thông tin kiểm chứng kỹ thuật</summary>
+              <p><strong>Mã đợt đầy đủ:</strong> <code className="ticket-code">{report.roundId}</code></p>
+              <p><strong>SHA-256 của seed:</strong> <code className="ticket-code">{report.seedSha256}</code></p>
+              <p><strong>Seed kiểm chứng:</strong> <code className="ticket-code">{report.auditSeed}</code></p>
+              <p className="note">Mã đăng ký đầy đủ (đối chiếu khi cần):</p>
+              <ol>{report.results.map(item => (
+                <li key={item.registrationId}>{item.attendeeName}: <code>{item.registrationId}</code></li>
+              ))}</ol>
             </details>
-          </div>}
+          </section>}
         </div>
       )}
 
