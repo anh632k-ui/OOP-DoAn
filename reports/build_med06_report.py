@@ -638,10 +638,9 @@ def populate_index(field_p,entries,kind):
         add_field(p,"PAGEREF "+anchor+" \\h","1")
         position.addnext(p._p)
         position=p._p
-    last=doc.add_paragraph()
-    last.paragraph_format.space_after=Pt(0)
-    last._p.append(tail)
-    position.addnext(last._p)
+    # End the TOC/figure field in the last index row itself, avoiding
+    # an otherwise empty trailing paragraph and unpredictable pagination.
+    position.append(tail)
 
 toc_entries=[]
 live=False
